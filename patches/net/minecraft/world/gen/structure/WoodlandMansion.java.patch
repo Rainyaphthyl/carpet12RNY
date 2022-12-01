@@ -1,0 +1,23 @@
+--- ../src-base/minecraft/net/minecraft/world/gen/structure/WoodlandMansion.java
++++ ../src-work/minecraft/net/minecraft/world/gen/structure/WoodlandMansion.java
+@@ -1,5 +1,7 @@
+ package net.minecraft.world.gen.structure;
+ 
++import carpet.logging.LoggerRegistry;
++import carpet.logging.logHelpers.RNGMonitor;
+ import com.google.common.collect.Lists;
+ import java.util.Arrays;
+ import java.util.List;
+@@ -54,6 +56,12 @@
+         k = k + (random.nextInt(60) + random.nextInt(60)) / 2;
+         l = l + (random.nextInt(60) + random.nextInt(60)) / 2;
+ 
++        // CM start
++        if (LoggerRegistry.__rngManip) {
++            this.field_75039_c.rngMonitor.tryUpdateSeeds(RNGMonitor.RNGAppType.raw);
++        }
++        // CM end
++
+         if (p_75047_1_ == k && p_75047_2_ == l)
+         {
+             boolean flag = this.field_75039_c.func_72959_q().func_76940_a(p_75047_1_ * 16 + 8, p_75047_2_ * 16 + 8, 32, field_191072_a);
