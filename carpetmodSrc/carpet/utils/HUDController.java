@@ -70,6 +70,10 @@ public class HUDController
                     "TOTAL_IN", PacketCounter.totalIn,
                     "TOTAL_OUT", PacketCounter.totalOut);
 
+        if (LoggerRegistry.__rngManip){
+            server.worlds[0].rngMonitor.updateLogHUD();
+        }
+
         for (EntityPlayer player: player_huds.keySet())
         {
             SPacketPlayerListHeaderFooter packet = new SPacketPlayerListHeaderFooter();

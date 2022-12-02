@@ -48,12 +48,12 @@ public class LoggerRegistry
     public static boolean __items;
     public static boolean __rng;
     public static boolean __explosions;
-    public static boolean __rngManip;
     public static boolean __recipes;
     public static boolean __damageDebug;
     public static boolean __invisDebug;
     public static boolean __carefulBreak;
     public static boolean __normalCameraVision;
+    public static boolean __rngManip;
 
     public static void initLoggers(MinecraftServer server)
     {
@@ -69,13 +69,13 @@ public class LoggerRegistry
         registerLogger("items",new Logger(server, "items", "brief", new String[]{"brief", "full"}, LogHandler.CHAT));
         registerLogger("rng", new Logger(server, "rng", null, null, LogHandler.CHAT));
         registerLogger("explosions", new Logger(server, "explosions", "compact", new String[]{"brief", "full", "compact"}, LogHandler.CHAT));
-        registerLogger("rngManip", new Logger(server, "rngManip", "raw", new String[]{"raw", "fortune", "mobSpawning"}, LogHandler.CHAT));
 
         registerLogger("autosave", new Logger(server, "autosave", null, null, LogHandler.HUD));
         registerLogger("tps", new Logger(server, "tps", null, null, LogHandler.HUD));
         registerLogger("packets", new Logger(server, "packets", null, null, LogHandler.HUD));
         registerLogger("counter",new Logger(server, "counter","white", new String[]{"all","cactus","white","orange","magenta","light_blue","yellow","lime","pink","gray","silver","cyan","purple","blue","brown","green","red","black"}, LogHandler.HUD));
         registerLogger("mobcaps", new Logger(server, "mobcaps", "dynamic",new String[]{"dynamic", "overworld", "nether","end"}, LogHandler.HUD));
+        registerLogger("rngManip", new Logger(server, "rngManip", "raw", new String[]{"raw", "fortune", "mobSpawning"}, LogHandler.HUD));
 
         registerDebugger("recipes", new Logger(server, "recipes", null, null, LogHandler.CHAT));
         registerDebugger("damageDebug", new Logger(server, "damageDebug", null, null, LogHandler.CHAT));

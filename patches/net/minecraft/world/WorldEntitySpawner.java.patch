@@ -59,7 +59,6 @@
                  {
                      int k4 = p_77192_1_.func_72907_a(enumcreaturetype.func_75598_a());
 -                    int l4 = enumcreaturetype.func_75601_b() * i / field_180268_a;
--
 +                    //CM replaced: //int l4 = enumcreaturetype.getMaxNumberOfCreature() * i / MOB_COUNT_DIV;
 +                    int l4 = (int)(Math.pow(2.0,(SpawnReporter.mobcap_exponent/4)) * enumcreaturetype.func_75601_b() * i / field_180268_a);
 +                    SpawnReporter.mobcaps.get(did).put(enumcreaturetype, new Tuple<>(k4, l4));
@@ -71,7 +70,7 @@
 +                    }
 +                    if (SpawnReporter.mock_spawns) { k4 = 0; } // no mobcaps
 +                    //CM end
-+                    
+ 
                      if (k4 <= l4)
                      {
                          BlockPos.MutableBlockPos blockpos$mutableblockpos = new BlockPos.MutableBlockPos();
@@ -80,7 +79,7 @@
 +                      {
 +                        long local_spawns = 0;
 +                        /* end */
-+                        
++
                          label134:
  
                          for (ChunkPos chunkpos1 : this.field_77193_b)
@@ -129,7 +128,7 @@
                              }
                          }
 +                        /* carpet mod */
-+                        
++
 +                        if (SpawnReporter.track_spawns > 0L)
 +                        {
 +                            if (local_spawns > 0)

@@ -1,59 +1,86 @@
 package carpet.logging.logHelpers;
 
-import carpet.CarpetSettings;
-import carpet.carpetclient.CarpetClientChunkLogger;
 import carpet.logging.LoggerRegistry;
 import carpet.utils.Messenger;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.world.DimensionType;
-import net.minecraft.world.World;
+import net.minecraft.world.WorldServer;
 
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.NoSuchElementException;
 
 /**
  * {@code /log rngManip}
  */
 public class RNGMonitor {
-    public final World worldIn;
-    public final DimensionType dimension;
-    private final HashMap<RNGAppType, Long> allRandSeeds;
+    public static int rngTrackingRange = 20;
+    private final WorldServer worldServerIn;
+    private final MinecraftServer minecraftServer;
+    private final DimensionType dimension;
+    private final HashMap<RNGAppType, Long> currRandSeeds;
+    private final HashMap<RNGAppType, LinkedList<Integer>> updateTickLists;
 
-    public RNGMonitor(World worldIn) {
-        this.worldIn = worldIn;
-        if (worldIn != null && !worldIn.isRemote) {
-            this.dimension = worldIn.provider.getDimensionType();
-            this.allRandSeeds = new HashMap<>();
+    public RNGMonitor(WorldServer worldServerIn, MinecraftServer minecraftServer) {
+        this.worldServerIn = worldServerIn;
+        this.minecraftServer = minecraftServer;
+        if (worldServerIn != null && minecraftServer != null && !worldServerIn.isRemote) {
+            this.dimension = worldServerIn.provider.getDimensionType();
+            this.currRandSeeds = new HashMap<>();
+            this.updateTickLists = new HashMap<>();
             for (RNGAppType rngAppType : RNGAppType.values()) {
-                allRandSeeds.putIfAbsent(rngAppType, 0L);
+                this.currRandSeeds.putIfAbsent(rngAppType, 0L);
+                this.updateTickLists.putIfAbsent(rngAppType, new LinkedList<>());
             }
         } else {
             this.dimension = null;
-            this.allRandSeeds = null;
+            this.currRandSeeds = null;
+            this.updateTickLists = null;
         }
     }
 
     public boolean isValid() {
-        return LoggerRegistry.__rngManip && dimension == DimensionType.OVERWORLD;
+        return dimension == DimensionType.OVERWORLD;
     }
 
     public void tryUpdateSeeds(RNGAppType rngAppType) {
-        if (rngAppType == null || !this.isValid()) {
-            return;
-        }
-        Long currSeed = worldIn.getRandSeed();
-        if (!currSeed.equals(allRandSeeds.get(rngAppType))) {
-            allRandSeeds.replace(rngAppType, currSeed);
-            LoggerRegistry.getLogger("rngManip").log(playerOption -> {
-                if (rngAppType.name().equals(playerOption)) {
-                    if (CarpetSettings.chunkDebugTool && "raw".equals(playerOption)) {
-                        return new ITextComponent[]{Messenger.s(null, String.format("RNG on %s: %d", CarpetClientChunkLogger.reason, currSeed))};
-                    } else {
-                        return new ITextComponent[]{Messenger.s(null, String.format("RNG %s: %d", rngAppType.name(), currSeed))};
-                    }
+        if (this.isValid() && rngAppType != null) {
+            LinkedList<Integer> updateTicks = updateTickLists.get(rngAppType);
+            int currTick = minecraftServer.getTickCounter();
+            long currSeed = worldServerIn.getRandSeed();
+            // count only once per game tick
+            boolean tickFresh = updateTicks.isEmpty() || currTick > updateTicks.getLast();
+            if (tickFresh && currSeed != currRandSeeds.get(rngAppType)) {
+                currRandSeeds.replace(rngAppType, currSeed);
+                updateTicks.addLast(currTick);
+            }
+            // forget the ticks out of date
+            while (tickFresh && !updateTicks.isEmpty()) {
+                if (currTick - updateTicks.getFirst() >= rngTrackingRange) {
+                    updateTicks.removeFirst();
                 } else {
-                    return null;
+                    tickFresh = false;
                 }
-            });
+            }
+        }
+    }
+
+    public void updateLogHUD() {
+        if (this.isValid()) {
+            try {
+                LoggerRegistry.getLogger("rngManip").log(playerOption -> {
+                    RNGAppType rngAppType = RNGAppType.valueOf(playerOption);
+                    ITextComponent[] components = new ITextComponent[2];
+                    double faultRate = updateTickLists.get(rngAppType).size() * (100.0 / rngTrackingRange);
+                    String rateColor = Messenger.heatmap_color(faultRate + 75.0, 150.0);
+                    String typeColor = Messenger.rng_app_type_color(rngAppType);
+                    components[0] = Messenger.m(null, String.format("%s RNG %s: %d", typeColor, rngAppType, currRandSeeds.get(rngAppType)));
+                    components[1] = Messenger.m(null, "g RNG fault rate: ", String.format("%s %.4f%%", rateColor, faultRate));
+                    return components;
+                });
+            } catch (IllegalArgumentException | NullPointerException | NoSuchElementException ignored) {
+            }
         }
     }
 
