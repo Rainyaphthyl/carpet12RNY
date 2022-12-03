@@ -1,5 +1,6 @@
 package carpet.logging.logHelpers;
 
+import carpet.CarpetSettings;
 import carpet.logging.LoggerRegistry;
 import carpet.utils.Messenger;
 import net.minecraft.server.MinecraftServer;
@@ -15,12 +16,12 @@ import java.util.NoSuchElementException;
  * {@code /log rngManip}
  */
 public class RNGMonitor {
-    public static int rngTrackingRange = 20;
     private final WorldServer worldServerIn;
     private final MinecraftServer minecraftServer;
     private final DimensionType dimension;
     private final HashMap<RNGAppType, Long> currRandSeeds;
     private final HashMap<RNGAppType, LinkedList<Integer>> updateTickLists;
+    public static int rngTrackingRange = getRngTrackingRange();
 
     public RNGMonitor(WorldServer worldServerIn, MinecraftServer minecraftServer) {
         this.worldServerIn = worldServerIn;
@@ -40,6 +41,10 @@ public class RNGMonitor {
         }
     }
 
+    public static int getRngTrackingRange() {
+        return CarpetSettings.rngTrackingRange == 0 ? CarpetSettings.HUDUpdateInterval : CarpetSettings.rngTrackingRange;
+    }
+
     public boolean isValid() {
         return dimension == DimensionType.OVERWORLD;
     }
@@ -57,7 +62,7 @@ public class RNGMonitor {
             }
             // forget the ticks out of date
             while (tickFresh && !updateTicks.isEmpty()) {
-                if (currTick - updateTicks.getFirst() >= rngTrackingRange) {
+                if (currTick - updateTicks.getFirst() >= getRngTrackingRange()) {
                     updateTicks.removeFirst();
                 } else {
                     tickFresh = false;
@@ -72,7 +77,7 @@ public class RNGMonitor {
                 LoggerRegistry.getLogger("rngManip").log(playerOption -> {
                     RNGAppType rngAppType = RNGAppType.valueOf(playerOption);
                     ITextComponent[] components = new ITextComponent[2];
-                    double faultRate = updateTickLists.get(rngAppType).size() * (100.0 / rngTrackingRange);
+                    double faultRate = updateTickLists.get(rngAppType).size() * (100.0 / getRngTrackingRange());
                     String rateColor = Messenger.heatmap_color(faultRate + 75.0, 150.0);
                     String typeColor = Messenger.rng_app_type_color(rngAppType);
                     components[0] = Messenger.m(null, String.format("%s RNG %s: %d", typeColor, rngAppType, currRandSeeds.get(rngAppType)));
