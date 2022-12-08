@@ -150,7 +150,7 @@ public class RNGMonitor {
     }
 
     public enum RNGAppType {
-        raw, fortune, mobSpawning,
+        raw, fortune, mobSpawn, ironFarm, lightCheck, chunkTick, farmer
     }
 
     private static class RNGSeedBundle {

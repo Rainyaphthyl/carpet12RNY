@@ -105,7 +105,7 @@ public class Messenger
             case raw:
                 return "g";
             case fortune:
-            case mobSpawning:
+            case mobSpawn:
                 return "q";
             default:
                 return "w";

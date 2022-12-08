@@ -41,7 +41,7 @@
  
 +            // CM start
 +            if (LoggerRegistry.__rngManip) {
-+                p_77192_1_.rngMonitor.tryUpdateSeeds(RNGMonitor.RNGAppType.mobSpawning);
++                p_77192_1_.rngMonitor.tryUpdateSeeds(RNGMonitor.RNGAppType.mobSpawn);
 +            }
 +            // CM end
 +
