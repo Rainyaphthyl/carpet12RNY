@@ -45,7 +45,25 @@ public class CarpetSettings
     public static boolean locked = false;
 
     // TODO: replace these constants at build time
-    public static final String carpetVersion = "v22_03_22";
+    /**
+     * format of version in Carpet-Addition-Naftalluvia(RNY):
+     * <p>
+     *     (release) "RNY-v{@code <Vx>.<Vy>.<Vz>}-{@code <description | title>}"<br>
+     *     (example) "RNY-v1.0.0-initial"
+     * </p>
+     * <p>
+     *     (build) "RNY-build-{@code <count>}"<br>
+     *     (example) "RNY-build-1437"
+     * </p>
+     * <p>
+     *     (dev) "RNY-dev-{@code <date>}-{@code <time>}"<br>
+     *     (example) "RNY-dev-20221223-0329"
+     * </p>
+     * <p>
+     *     (undefined) "RNY-current-undefined"
+     * </p>
+     */
+    public static final String carpetVersion = "RNY-v1.0.0-initial";
     public static final String minecraftVersion = "1.12.2";
     public static final String mcpMappings = "39-1.12";
 

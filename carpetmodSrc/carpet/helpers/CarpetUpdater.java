@@ -18,7 +18,8 @@ import java.util.zip.ZipOutputStream;
 
 public class CarpetUpdater {
     static private String serverURL = "https://launcher.mojang.com/mc/game/1.12.2/server/886945bfb2b978778c3a0288fd7fab09d315b25f/server.jar";
-    static private String githubURL = "https://api.github.com/repos/gnembon/carpetmod112/releases/latest";
+    // static private String githubURL = "https://api.github.com/repos/gnembon/carpetmod112/releases/latest";
+    static private String githubURL = "https://api.github.com/repos/Rainyaphthyl/carpet12RNY/releases/latest";
     static private String vanillaJar = "update/MinecraftServer.1.12.2.jar";
     private static String carpetFileName = "update/Carpet.";
     private static final byte[] BUFFER = new byte[4096 * 1024];
