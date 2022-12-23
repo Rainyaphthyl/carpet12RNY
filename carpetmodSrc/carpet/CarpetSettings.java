@@ -62,6 +62,9 @@ public class CarpetSettings
      * <p>
      *     (undefined) "RNY-current-undefined"
      * </p>
+     * <p>
+     *     File Name: "carpet12.{@code <carpetVersion>}.zip"
+     * </p>
      */
     public static final String carpetVersion = "RNY-v1.0.0-initial";
     public static final String minecraftVersion = "1.12.2";

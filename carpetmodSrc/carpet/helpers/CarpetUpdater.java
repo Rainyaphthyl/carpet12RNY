@@ -21,7 +21,8 @@ public class CarpetUpdater {
     // static private String githubURL = "https://api.github.com/repos/gnembon/carpetmod112/releases/latest";
     static private String githubURL = "https://api.github.com/repos/Rainyaphthyl/carpet12RNY/releases/latest";
     static private String vanillaJar = "update/MinecraftServer.1.12.2.jar";
-    private static String carpetFileName = "update/Carpet.";
+    // private static String carpetFileName = "update/Carpet.";
+    private static String carpetFileName = "update/carpet12.";
     private static final byte[] BUFFER = new byte[4096 * 1024];
 
     public static void updateCarpet(MinecraftServer server) {
