@@ -63,7 +63,8 @@ public class CarpetSettings
      *     (undefined) "RNY-current-undefined"
      * </p>
      * <p>
-     *     File Name: "carpet12.{@code <carpetVersion>}.zip"
+     *     File Name: "carpet12{@code <carpetVersion>}.zip"<br>
+     *     version name starts with "RNY"
      * </p>
      */
     public static final String carpetVersion = "RNY-v1.0.0-initial";
