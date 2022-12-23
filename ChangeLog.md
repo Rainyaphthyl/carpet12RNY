@@ -1,12 +1,18 @@
-Carpet 1.12 with [RNY](https://github.com/Rainyaphthyl)'s Addition v1.0.0
+Carpet 1.12 with [RNY](https://github.com/Rainyaphthyl)'s Addition v1.0.1
 
 initial plain release of carpet12RNY
 
-## New Features
-- Players including fake players are able to click on blocks (e.g. use buttons, swtiches) using "`/player <playerName> use`" even if not holding items. The old feature seems a carpet bug.
-- Rainyaphthyl's GitHub URL, instead of [gnembon's](https://github.com/gnembon/carpetmod112), is used in "`/updateCarpet`".
-- **_Test_**
+## Rules
 
-## Ported Features
-> from [gnembon/carpetmod112](https://github.com/gnembon/carpetmod112)
-- Add non-Java-8 warning, and fix World.getRandSeed for new Java versions
+### creativeInvulnerableCrystal
+
+Makes invulnerable crystals really invulnerable in creative mode, as if in survival. Otherwise, you may accidentally blow it up.
+- Name: `creativeInvulnerableCrystal`<br>
+- Options: `true`, `false`<br>
+- Default: `false`<br>
+
+## Tools and Commands
+
+## Features and Details
+
+- Add non-Java-8 warning, and fix `World.getRandSeed` for new Java versions, **ported** from [gnembon/carpetmod112](https://github.com/gnembon/carpetmod112)
