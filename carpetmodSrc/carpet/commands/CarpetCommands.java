@@ -51,6 +51,9 @@ public class CarpetCommands {
         handler.registerCommand(new CommandWaypoint());
         handler.registerCommand(new CommandZetBlock());
 
+        // New Commands in carpet12RNY
+        handler.registerCommand(new CommandPortal());
+
         // ----- RSMM Start ----- //
         handler.registerCommand(new MeterCommand(CarpetServer.legacyRsmmServer));
         // ----- RSMM End ----- //

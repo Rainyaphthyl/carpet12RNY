@@ -1029,6 +1029,10 @@ public class CarpetSettings
             extra = "Otherwise, you may accidentally blow it up.")
     public static boolean creativeInvulnerableCrystal = false;
 
+    @Rule(desc = "Enables command \"/portal\" to query and search portal maps.",
+            category = {COMMANDS, NAFTALLUVIA})
+    public static boolean commandPortal;
+
     // ===== Ported ===== //
     // options ported from other forks
 

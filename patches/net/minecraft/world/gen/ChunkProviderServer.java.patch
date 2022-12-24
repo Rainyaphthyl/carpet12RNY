@@ -119,6 +119,15 @@
              this.field_73244_f.put(i, chunk);
              chunk.func_76631_c();
              chunk.func_186030_a(this, this.field_186029_c);
+@@ -137,7 +186,7 @@
+     {
+         try
+         {
+-            Chunk chunk = this.field_73247_e.func_75815_a(this.field_73251_h, p_73239_1_, p_73239_2_);
++            Chunk chunk = this.field_73247_e.loadChunk(this.field_73251_h, p_73239_1_, p_73239_2_, false);
+ 
+             if (chunk != null)
+             {
 @@ -185,6 +234,8 @@
  
      public boolean func_186027_a(boolean p_186027_1_)

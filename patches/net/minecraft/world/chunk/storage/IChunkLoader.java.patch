@@ -1,0 +1,11 @@
+--- ../src-base/minecraft/net/minecraft/world/chunk/storage/IChunkLoader.java
++++ ../src-work/minecraft/net/minecraft/world/chunk/storage/IChunkLoader.java
+@@ -9,7 +9,7 @@
+ public interface IChunkLoader
+ {
+     @Nullable
+-    Chunk func_75815_a(World p_75815_1_, int p_75815_2_, int p_75815_3_) throws IOException;
++    Chunk loadChunk(World worldIn, int x, int z, boolean silent) throws IOException;
+ 
+     void func_75816_a(World p_75816_1_, Chunk p_75816_2_) throws MinecraftException, IOException;
+ 

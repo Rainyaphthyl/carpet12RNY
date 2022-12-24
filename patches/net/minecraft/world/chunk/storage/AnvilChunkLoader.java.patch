@@ -1,24 +1,21 @@
 --- ../src-base/minecraft/net/minecraft/world/chunk/storage/AnvilChunkLoader.java
 +++ ../src-work/minecraft/net/minecraft/world/chunk/storage/AnvilChunkLoader.java
-@@ -1,14 +1,14 @@
+@@ -1,14 +1,11 @@
  package net.minecraft.world.chunk.storage;
  
 -import com.google.common.collect.Maps;
-+import com.google.common.collect.Maps; //CM unused import
  import java.io.DataInputStream;
  import java.io.DataOutputStream;
  import java.io.File;
  import java.io.IOException;
 -import java.util.Collections;
-+import java.util.Collections; //CM unused import
  import java.util.List;
  import java.util.Map;
 -import java.util.Set;
-+import java.util.Set; //CM unused import
  import javax.annotation.Nullable;
  import net.minecraft.block.Block;
  import net.minecraft.entity.Entity;
-@@ -34,12 +34,62 @@
+@@ -34,12 +31,62 @@
  import org.apache.logging.log4j.LogManager;
  import org.apache.logging.log4j.Logger;
  
@@ -84,17 +81,34 @@
      private final DataFixer field_193416_e;
      private boolean field_183014_e;
  
-@@ -53,7 +103,8 @@
-     public Chunk func_75815_a(World p_75815_1_, int p_75815_2_, int p_75815_3_) throws IOException
+@@ -50,14 +97,15 @@
+     }
+ 
+     @Nullable
+-    public Chunk func_75815_a(World p_75815_1_, int p_75815_2_, int p_75815_3_) throws IOException
++    public Chunk loadChunk(World worldIn, int x, int z, boolean silent) throws IOException
      {
-         ChunkPos chunkpos = new ChunkPos(p_75815_2_, p_75815_3_);
+-        ChunkPos chunkpos = new ChunkPos(p_75815_2_, p_75815_3_);
 -        NBTTagCompound nbttagcompound = this.field_75828_a.get(chunkpos);
++        ChunkPos chunkpos = new ChunkPos(x, z);
 +        //NBTTagCompound nbttagcompound = this.chunksToRemove.get(chunkpos);
 +        NBTTagCompound nbttagcompound = reloadChunkFromRemoveQueues(chunkpos);  // new for MC-119971
  
          if (nbttagcompound == null)
          {
-@@ -73,7 +124,10 @@
+-            DataInputStream datainputstream = RegionFileCache.func_76549_c(this.field_75825_d, p_75815_2_, p_75815_3_);
++            DataInputStream datainputstream = RegionFileCache.func_76549_c(this.field_75825_d, x, z);
+ 
+             if (datainputstream == null)
+             {
+@@ -67,43 +115,46 @@
+             nbttagcompound = this.field_193416_e.func_188257_a(FixTypes.CHUNK, CompressedStreamTools.func_74794_a(datainputstream));
+         }
+ 
+-        return this.func_75822_a(p_75815_1_, p_75815_2_, p_75815_3_, nbttagcompound);
++        return this.checkedReadChunkFromNBT(worldIn, x, z, nbttagcompound, silent);
+     }
+ 
      public boolean func_191063_a(int p_191063_1_, int p_191063_2_)
      {
          ChunkPos chunkpos = new ChunkPos(p_191063_1_, p_191063_2_);
@@ -106,7 +120,48 @@
          return nbttagcompound != null ? true : RegionFileCache.func_191064_f(this.field_75825_d, p_191063_1_, p_191063_2_);
      }
  
-@@ -132,37 +186,63 @@
+     @Nullable
+-    protected Chunk func_75822_a(World p_75822_1_, int p_75822_2_, int p_75822_3_, NBTTagCompound p_75822_4_)
++    protected Chunk checkedReadChunkFromNBT(World worldIn, int x, int z, NBTTagCompound compound, boolean silent)
+     {
+-        if (!p_75822_4_.func_150297_b("Level", 10))
++        if (!compound.func_150297_b("Level", 10))
+         {
+-            field_151505_a.error("Chunk file at {},{} is missing level data, skipping", Integer.valueOf(p_75822_2_), Integer.valueOf(p_75822_3_));
++            field_151505_a.error("Chunk file at {},{} is missing level data, skipping", Integer.valueOf(x), Integer.valueOf(z));
+             return null;
+         }
+         else
+         {
+-            NBTTagCompound nbttagcompound = p_75822_4_.func_74775_l("Level");
++            NBTTagCompound nbttagcompound = compound.func_74775_l("Level");
+ 
+             if (!nbttagcompound.func_150297_b("Sections", 9))
+             {
+-                field_151505_a.error("Chunk file at {},{} is missing block data, skipping", Integer.valueOf(p_75822_2_), Integer.valueOf(p_75822_3_));
++                field_151505_a.error("Chunk file at {},{} is missing block data, skipping", Integer.valueOf(x), Integer.valueOf(z));
+                 return null;
+             }
+             else
+             {
+-                Chunk chunk = this.func_75823_a(p_75822_1_, nbttagcompound);
++                Chunk chunk = this.readChunkFromNBT(worldIn, nbttagcompound, silent);
+ 
+-                if (!chunk.func_76600_a(p_75822_2_, p_75822_3_))
++                if (!chunk.func_76600_a(x, z))
+                 {
+-                    field_151505_a.error("Chunk file at {},{} is in the wrong location; relocating. (Expected {}, {}, got {}, {})", Integer.valueOf(p_75822_2_), Integer.valueOf(p_75822_3_), Integer.valueOf(p_75822_2_), Integer.valueOf(p_75822_3_), Integer.valueOf(chunk.field_76635_g), Integer.valueOf(chunk.field_76647_h));
+-                    nbttagcompound.func_74768_a("xPos", p_75822_2_);
+-                    nbttagcompound.func_74768_a("zPos", p_75822_3_);
+-                    chunk = this.func_75823_a(p_75822_1_, nbttagcompound);
++                    field_151505_a.error("Chunk file at {},{} is in the wrong location; relocating. (Expected {}, {}, got {}, {})", Integer.valueOf(x), Integer.valueOf(z), Integer.valueOf(x), Integer.valueOf(z), Integer.valueOf(chunk.field_76635_g), Integer.valueOf(chunk.field_76647_h));
++                    nbttagcompound.func_74768_a("xPos", x);
++                    nbttagcompound.func_74768_a("zPos", z);
++                    chunk = this.readChunkFromNBT(worldIn, nbttagcompound, silent);
+                 }
+ 
+                 return chunk;
+@@ -132,37 +183,63 @@
  
      protected void func_75824_a(ChunkPos p_75824_1_, NBTTagCompound p_75824_2_)
      {
@@ -182,7 +237,7 @@
                      try
                      {
                          this.func_183013_b(chunkpos, nbttagcompound);
-@@ -171,17 +251,19 @@
+@@ -171,17 +248,19 @@
                      {
                          field_151505_a.error("Failed to save chunk", (Throwable)exception);
                      }
@@ -211,7 +266,7 @@
      }
  
      private void func_183013_b(ChunkPos p_183013_1_, NBTTagCompound p_183013_2_) throws IOException
-@@ -249,7 +331,8 @@
+@@ -249,7 +328,8 @@
          });
      }
  
@@ -221,7 +276,7 @@
      {
          p_75820_3_.func_74768_a("xPos", p_75820_1_.field_76635_g);
          p_75820_3_.func_74768_a("zPos", p_75820_1_.field_76647_h);
-@@ -295,6 +378,10 @@
+@@ -295,6 +375,10 @@
          }
  
          p_75820_3_.func_74782_a("Sections", nbttaglist);
@@ -232,15 +287,99 @@
          p_75820_3_.func_74773_a("Biomes", p_75820_1_.func_76605_m());
          p_75820_1_.func_177409_g(false);
          NBTTagList nbttaglist1 = new NBTTagList();
-@@ -383,6 +470,11 @@
+@@ -347,19 +431,19 @@
+         }
+     }
+ 
+-    private Chunk func_75823_a(World p_75823_1_, NBTTagCompound p_75823_2_)
++    private Chunk readChunkFromNBT(World worldIn, NBTTagCompound compound, boolean silent)
+     {
+-        int i = p_75823_2_.func_74762_e("xPos");
+-        int j = p_75823_2_.func_74762_e("zPos");
+-        Chunk chunk = new Chunk(p_75823_1_, i, j);
+-        chunk.func_177420_a(p_75823_2_.func_74759_k("HeightMap"));
+-        chunk.func_177446_d(p_75823_2_.func_74767_n("TerrainPopulated"));
+-        chunk.func_177421_e(p_75823_2_.func_74767_n("LightPopulated"));
+-        chunk.func_177415_c(p_75823_2_.func_74763_f("InhabitedTime"));
+-        NBTTagList nbttaglist = p_75823_2_.func_150295_c("Sections", 10);
++        int i = compound.func_74762_e("xPos");
++        int j = compound.func_74762_e("zPos");
++        Chunk chunk = new Chunk(worldIn, i, j);
++        chunk.func_177420_a(compound.func_74759_k("HeightMap"));
++        chunk.func_177446_d(compound.func_74767_n("TerrainPopulated"));
++        chunk.func_177421_e(compound.func_74767_n("LightPopulated"));
++        chunk.func_177415_c(compound.func_74763_f("InhabitedTime"));
++        NBTTagList nbttaglist = compound.func_150295_c("Sections", 10);
+         int k = 16;
+         ExtendedBlockStorage[] aextendedblockstorage = new ExtendedBlockStorage[16];
+-        boolean flag = p_75823_1_.field_73011_w.func_191066_m();
++        boolean flag = worldIn.field_73011_w.func_191066_m();
+ 
+         for (int l = 0; l < nbttaglist.func_74745_c(); ++l)
+         {
+@@ -383,26 +467,38 @@
  
          chunk.func_76602_a(aextendedblockstorage);
  
+-        if (p_75823_2_.func_150297_b("Biomes", 7))
 +        // NewLight PHIPRO-CARPET
 +        //if(CarpetSettings.newLight){
 +        //	carpet.helpers.LightingHooks.readLightData(chunk, compound);
 +        //}
 +
-         if (p_75823_2_.func_150297_b("Biomes", 7))
++        if (compound.func_150297_b("Biomes", 7))
          {
-             chunk.func_76616_a(p_75823_2_.func_74770_j("Biomes"));
+-            chunk.func_76616_a(p_75823_2_.func_74770_j("Biomes"));
++            chunk.func_76616_a(compound.func_74770_j("Biomes"));
+         }
+ 
+-        NBTTagList nbttaglist1 = p_75823_2_.func_150295_c("Entities", 10);
++        // CM start
++        // carpet12RNY silent loading
++        if (silent) {
++            return chunk;
++        }
++        // CM end
+ 
++        NBTTagList nbttaglist1 = compound.func_150295_c("Entities", 10);
++
+         for (int j1 = 0; j1 < nbttaglist1.func_74745_c(); ++j1)
+         {
+             NBTTagCompound nbttagcompound1 = nbttaglist1.func_150305_b(j1);
+-            func_186050_a(nbttagcompound1, p_75823_1_, chunk);
++            func_186050_a(nbttagcompound1, worldIn, chunk);
+             chunk.func_177409_g(true);
+         }
+ 
+-        NBTTagList nbttaglist2 = p_75823_2_.func_150295_c("TileEntities", 10);
++        NBTTagList nbttaglist2 = compound.func_150295_c("TileEntities", 10);
+ 
+         for (int k1 = 0; k1 < nbttaglist2.func_74745_c(); ++k1)
+         {
+             NBTTagCompound nbttagcompound2 = nbttaglist2.func_150305_b(k1);
+-            TileEntity tileentity = TileEntity.func_190200_a(p_75823_1_, nbttagcompound2);
++            TileEntity tileentity = TileEntity.func_190200_a(worldIn, nbttagcompound2);
+ 
+             if (tileentity != null)
+             {
+@@ -410,9 +506,9 @@
+             }
+         }
+ 
+-        if (p_75823_2_.func_150297_b("TileTicks", 9))
++        if (compound.func_150297_b("TileTicks", 9))
+         {
+-            NBTTagList nbttaglist3 = p_75823_2_.func_150295_c("TileTicks", 10);
++            NBTTagList nbttaglist3 = compound.func_150295_c("TileTicks", 10);
+ 
+             for (int l1 = 0; l1 < nbttaglist3.func_74745_c(); ++l1)
+             {
+@@ -428,7 +524,7 @@
+                     block = Block.func_149729_e(nbttagcompound3.func_74762_e("i"));
+                 }
+ 
+-                p_75823_1_.func_180497_b(new BlockPos(nbttagcompound3.func_74762_e("x"), nbttagcompound3.func_74762_e("y"), nbttagcompound3.func_74762_e("z")), block, nbttagcompound3.func_74762_e("t"), nbttagcompound3.func_74762_e("p"));
++                worldIn.func_180497_b(new BlockPos(nbttagcompound3.func_74762_e("x"), nbttagcompound3.func_74762_e("y"), nbttagcompound3.func_74762_e("z")), block, nbttagcompound3.func_74762_e("t"), nbttagcompound3.func_74762_e("p"));
+             }
+         }
+ 
