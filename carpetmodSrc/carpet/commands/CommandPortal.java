@@ -1,7 +1,8 @@
 package carpet.commands;
 
-import carpet.utils.PortalRange;
-import carpet.utils.PortalSearcherSilent;
+import carpet.utils.portalcalculator.EnumTargetArea;
+import carpet.utils.portalcalculator.EnumTargetDirection;
+import carpet.utils.portalcalculator.PortalSilentSearcher;
 import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.command.WrongUsageException;
@@ -12,18 +13,21 @@ import net.minecraft.world.DimensionType;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 import java.util.List;
 
 public class CommandPortal extends CommandCarpetBase {
-    private static final String USAGE = "Usage: /portal <check|search> <src|dst> <x> <y> <z>";
+    private static final String USAGE = "Usage: /portal <from|to> <point|range> <x> <y> <z> [dimension]";
 
+    @Nonnull
     @Override
     public String getName() {
         return "portal";
     }
 
+    @Nonnull
     @Override
     @ParametersAreNonnullByDefault
     public String getUsage(ICommandSender sender) {
@@ -40,47 +44,51 @@ public class CommandPortal extends CommandCarpetBase {
         if (!(world instanceof WorldServer)) {
             return;
         }
-        EnumFunction function = null;
-        EnumDirection direction = null;
-        int dimensionID = sender.getEntityWorld().provider.getDimensionType().getId();
-        DimensionType dimensionType = DimensionType.getById(dimensionID);
-        Vec3d posAim = null;
-        if (args.length >= 5) {
-            if ("check".equalsIgnoreCase(args[0])) {
-                function = EnumFunction.CHECK;
-            } else if ("search".equalsIgnoreCase(args[0])) {
-                function = EnumFunction.SEARCH;
+        EnumTargetDirection direction = null;
+        EnumTargetArea area = null;
+        DimensionType dimension = null;
+        Vec3d posTarget = null;
+        if (args.length > 4) {
+            if ("from".equalsIgnoreCase(args[0])) {
+                direction = EnumTargetDirection.FROM;
+            } else if ("to".equalsIgnoreCase(args[0])) {
+                direction = EnumTargetDirection.TO;
             }
-            if ("src".equalsIgnoreCase(args[1])) {
-                direction = EnumDirection.SOURCE;
-            } else if ("dst".equalsIgnoreCase(args[1])) {
-                direction = EnumDirection.DESTINATION;
+            if ("point".equalsIgnoreCase(args[1])) {
+                area = EnumTargetArea.POINT;
+            } else if ("range".equalsIgnoreCase(args[1])) {
+                area = EnumTargetArea.RANGE;
             }
             Vec3d posBase = sender.getPositionVector();
             double posAimX = parseDouble(posBase.x, args[2], true);
             double posAimY = parseDouble(posBase.y, args[3], false);
             double posAimZ = parseDouble(posBase.z, args[4], true);
-            posAim = new Vec3d(posAimX, posAimY, posAimZ);
+            posTarget = new Vec3d(posAimX, posAimY, posAimZ);
+            if (args.length > 5) {
+                if (DimensionType.OVERWORLD.name().equalsIgnoreCase(args[4])) {
+                    dimension = DimensionType.OVERWORLD;
+                } else if (DimensionType.NETHER.name().equalsIgnoreCase(args[4]) || DimensionType.NETHER.getName().equalsIgnoreCase(args[4])) {
+                    dimension = DimensionType.NETHER;
+                } else {
+                    dimension = DimensionType.getById(parseInt(args[4], -1, 0));
+                }
+            } else {
+                dimension = sender.getEntityWorld().provider.getDimensionType();
+            }
         }
-        if (function != null && direction != null) {
-            PortalSearcherSilent searcher = new PortalSearcherSilent((WorldServer) world);
-            PortalRange range = searcher.getParentFrame(new BlockPos(posAim.x, posAim.y, posAim.z));
+        if (direction != null && area != null) {
+            PortalSilentSearcher searcher = new PortalSilentSearcher((WorldServer) world, posTarget, dimension, direction, area);
+            (new Thread(searcher)).start();
         } else {
             throw new WrongUsageException(USAGE);
         }
     }
 
+    @Nonnull
     @Override
     @ParametersAreNonnullByDefault
     public List<String> getTabCompletions(MinecraftServer server, ICommandSender sender, String[] args, @Nullable BlockPos targetPos) {
         return super.getTabCompletions(server, sender, args, targetPos);
     }
 
-    private enum EnumFunction {
-        CHECK, SEARCH
-    }
-
-    private enum EnumDirection {
-        SOURCE, DESTINATION
-    }
 }
