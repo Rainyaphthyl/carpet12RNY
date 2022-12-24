@@ -80,8 +80,11 @@ public class CommandPortal extends CommandCarpetBase {
             }
         }
         if (direction != null && area != null) {
-            PortalSilentSearcher searcher = new PortalSilentSearcher((WorldServer) world, posTarget, dimension, direction, area);
-            Messenger.print_server_message(server, "Hello!");
+            try {
+                PortalSilentSearcher searcher = new PortalSilentSearcher(server, posTarget, dimension, direction, area);
+                Messenger.print_server_message(server, "Hello!");
+            } catch (NullPointerException e) {
+            }
         } else {
             throw new WrongUsageException(USAGE);
         }
