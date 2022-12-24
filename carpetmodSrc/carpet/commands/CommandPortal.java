@@ -1,5 +1,7 @@
 package carpet.commands;
 
+import carpet.CarpetSettings;
+import carpet.utils.Messenger;
 import carpet.utils.portalcalculator.EnumTargetArea;
 import carpet.utils.portalcalculator.EnumTargetDirection;
 import carpet.utils.portalcalculator.PortalSilentSearcher;
@@ -16,6 +18,7 @@ import net.minecraft.world.WorldServer;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
+import java.util.Collections;
 import java.util.List;
 
 public class CommandPortal extends CommandCarpetBase {
@@ -65,12 +68,12 @@ public class CommandPortal extends CommandCarpetBase {
             double posAimZ = parseDouble(posBase.z, args[4], true);
             posTarget = new Vec3d(posAimX, posAimY, posAimZ);
             if (args.length > 5) {
-                if (DimensionType.OVERWORLD.name().equalsIgnoreCase(args[4])) {
+                if ("overworld".equalsIgnoreCase(args[5])) {
                     dimension = DimensionType.OVERWORLD;
-                } else if (DimensionType.NETHER.name().equalsIgnoreCase(args[4]) || DimensionType.NETHER.getName().equalsIgnoreCase(args[4])) {
+                } else if ("nether".equalsIgnoreCase(args[5])) {
                     dimension = DimensionType.NETHER;
                 } else {
-                    dimension = DimensionType.getById(parseInt(args[4], -1, 0));
+                    dimension = DimensionType.getById(parseInt(args[5], -1, 0));
                 }
             } else {
                 dimension = sender.getEntityWorld().provider.getDimensionType();
@@ -78,7 +81,7 @@ public class CommandPortal extends CommandCarpetBase {
         }
         if (direction != null && area != null) {
             PortalSilentSearcher searcher = new PortalSilentSearcher((WorldServer) world, posTarget, dimension, direction, area);
-            (new Thread(searcher)).start();
+            Messenger.print_server_message(server, "Hello!");
         } else {
             throw new WrongUsageException(USAGE);
         }
@@ -88,7 +91,29 @@ public class CommandPortal extends CommandCarpetBase {
     @Override
     @ParametersAreNonnullByDefault
     public List<String> getTabCompletions(MinecraftServer server, ICommandSender sender, String[] args, @Nullable BlockPos targetPos) {
-        return super.getTabCompletions(server, sender, args, targetPos);
+        if (!CarpetSettings.commandPortal) {
+            return Collections.emptyList();
+        }
+        if (args.length == 1) {
+            return getListOfStringsMatchingLastWord(args, "from", "to");
+        } else if (args.length == 2) {
+            return getListOfStringsMatchingLastWord(args, "point", "range");
+        } else if (args.length > 2 && args.length <= 5) {
+            return getTabCompletionCoordinate(args, 2, targetPos);
+        } else if (args.length == 6) {
+            DimensionType dimension = sender.getEntityWorld().provider.getDimensionType();
+            String[] possibleList = new String[2];
+            String nether = "nether", overworld = "overworld";
+            if (dimension == DimensionType.NETHER) {
+                possibleList[0] = nether;
+                possibleList[1] = overworld;
+            } else {
+                possibleList[0] = overworld;
+                possibleList[1] = nether;
+            }
+            return getListOfStringsMatchingLastWord(args, possibleList);
+        }
+        return Collections.emptyList();
     }
 
 }
