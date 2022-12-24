@@ -46,7 +46,29 @@ public class CarpetSettings
     public static boolean locked = false;
 
     // TODO: replace these constants at build time
-    public static final String carpetVersion = "v22_12_07";
+    /**
+     * format of version in Carpet-Addition-Naftalluvia(RNY):
+     * <p>
+     *     (release) "RNY-v{@code <Vx>.<Vy>.<Vz>}-{@code <description | title>}"<br>
+     *     (example) "RNY-v1.0.0-initial"
+     * </p>
+     * <p>
+     *     (build) "RNY-build-{@code <count>}"<br>
+     *     (example) "RNY-build-1437"
+     * </p>
+     * <p>
+     *     (dev) "RNY-dev-{@code <date>}-{@code <time>}"<br>
+     *     (example) "RNY-dev-20221223-0329"
+     * </p>
+     * <p>
+     *     (undefined) "RNY-current-undefined"
+     * </p>
+     * <p>
+     *     File Name: "carpet12{@code <carpetVersion>}.zip"<br>
+     *     version name starts with "RNY"
+     * </p>
+     */
+    public static final String carpetVersion = "RNY-current-undefined";
     public static final String minecraftVersion = "1.12.2";
     public static final String mcpMappings = "39-1.12";
 
@@ -106,7 +128,7 @@ public class CarpetSettings
     @Rule(desc = "Enables /lazychunkbehavior command", category = COMMANDS, extra = {
             "Makes a chunk act like a lazy chunk for entities and falling sand"
     })
-    
+
     public static boolean commandEntityInfo = true;
 
     @Rule(desc = "Enables /unload command to inspect chunk unloading order", category = COMMANDS)
@@ -1016,6 +1038,17 @@ public class CarpetSettings
     @Rule(desc = "Removes tnt applying velocity to other entities.", category = CREATIVE)
     public static boolean removeTNTVelocity = false;
 
+    // ===== Naftalluvia ===== //
+    // carpet-RNY-addition options
+
+    @Rule(desc = "Makes invulnerable crystals really invulnerable in creative mode, as if in survival.",
+            category = {CREATIVE, NAFTALLUVIA},
+            extra = "Otherwise, you may accidentally blow it up.")
+    public static boolean creativeInvulnerableCrystal = false;
+
+    // ===== Ported ===== //
+    // options ported from other forks
+
     // ===== API ===== //
 
     /**
@@ -1088,7 +1121,7 @@ public class CarpetSettings
     }
 
     public static enum RuleCategory {
-        TNT, FIX, SURVIVAL, CREATIVE, EXPERIMENTAL, OPTIMIZATIONS, FEATURE, COMMANDS
+        TNT, FIX, SURVIVAL, CREATIVE, EXPERIMENTAL, OPTIMIZATIONS, FEATURE, COMMANDS, NAFTALLUVIA
     }
 
     private static boolean validatePositive(int value) {
