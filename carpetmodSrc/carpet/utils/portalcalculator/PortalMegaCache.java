@@ -47,17 +47,9 @@ public class PortalMegaCache implements Set<BlockPos> {
     private BlockPos first, last;
 
     public PortalMegaCache() {
-        count = 0;
         cache = new Int2ObjectAVLTreeMap<>();
         cache.defaultReturnValue(null);
-        xFront = POS_EXTREME_END.getX();
-        yFront = POS_EXTREME_END.getY();
-        zFront = POS_EXTREME_END.getZ();
-        xBack = POS_EXTREME_START.getX();
-        yBack = POS_EXTREME_START.getY();
-        zBack = POS_EXTREME_START.getZ();
-        first = null;
-        last = null;
+        reset();
     }
 
     /**
@@ -77,6 +69,18 @@ public class PortalMegaCache implements Set<BlockPos> {
 
     public static boolean posEquals(BlockPos pos, int x, int y, int z) {
         return pos != null && x == pos.getX() && z == pos.getZ() && y == pos.getY();
+    }
+
+    private void reset() {
+        xFront = POS_EXTREME_END.getX();
+        yFront = POS_EXTREME_END.getY();
+        zFront = POS_EXTREME_END.getZ();
+        xBack = POS_EXTREME_START.getX();
+        yBack = POS_EXTREME_START.getY();
+        zBack = POS_EXTREME_START.getZ();
+        first = null;
+        last = null;
+        count = 0;
     }
 
     @Override
@@ -149,6 +153,7 @@ public class PortalMegaCache implements Set<BlockPos> {
             flag = column.put(y, pos) != pos;
         }
         if (flag) {
+            ++count;
             if (compare(x, y, z, xFront, yFront, zFront) < 0) {
                 first = null;
                 first = first();
@@ -163,7 +168,6 @@ public class PortalMegaCache implements Set<BlockPos> {
                 yBack = y;
                 zBack = z;
             }
-            ++count;
         }
         return flag;
     }
@@ -232,7 +236,7 @@ public class PortalMegaCache implements Set<BlockPos> {
             face.clear();
         }
         cache.clear();
-        count = 0;
+        reset();
     }
 
     public boolean add(int x, int y, int z) {
@@ -278,6 +282,7 @@ public class PortalMegaCache implements Set<BlockPos> {
             if (face.isEmpty()) {
                 cache.remove(x);
             }
+            --count;
             if (compare(x, y, z, xFront, yFront, zFront) == 0) {
                 first = null;
                 first = first();
@@ -292,7 +297,6 @@ public class PortalMegaCache implements Set<BlockPos> {
                 yBack = last.getY();
                 zBack = last.getZ();
             }
-            --count;
         }
         return modified;
     }
@@ -306,7 +310,7 @@ public class PortalMegaCache implements Set<BlockPos> {
             return first;
         }
         if (isEmpty()) {
-            return null;
+            return POS_EXTREME_END;
         } else {
             Int2ObjectSortedMap<Int2ObjectSortedMap<BlockPos>> face = cache.get(cache.firstIntKey());
             Int2ObjectSortedMap<BlockPos> column = face.get(face.firstIntKey());
@@ -319,7 +323,7 @@ public class PortalMegaCache implements Set<BlockPos> {
             return last;
         }
         if (isEmpty()) {
-            return null;
+            return POS_EXTREME_START;
         } else {
             Int2ObjectSortedMap<Int2ObjectSortedMap<BlockPos>> face = cache.get(cache.lastIntKey());
             Int2ObjectSortedMap<BlockPos> column = face.get(face.lastIntKey());

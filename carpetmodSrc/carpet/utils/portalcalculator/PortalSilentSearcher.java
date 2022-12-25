@@ -1,6 +1,8 @@
 package carpet.utils.portalcalculator;
 
 import carpet.utils.Messenger;
+import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectAVLTreeSet;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.init.Blocks;
@@ -39,6 +41,7 @@ public class PortalSilentSearcher implements Runnable {
      */
     private final SortedSet<BlockPos> portalImageCache = new ObjectAVLTreeSet<>(PortalMegaCache.BLOCK_POS_COMPARATOR);
     private final PortalMegaCache portalMegaCache = new PortalMegaCache();
+    private final Long2ObjectMap<Chunk> chunkCache = new Long2ObjectOpenHashMap<>(512);
     private final MinecraftServer server;
     private final Vec3d posTarget;
     private final EnumTargetDirection direction;
@@ -93,6 +96,10 @@ public class PortalSilentSearcher implements Runnable {
 
     @Nullable
     private Chunk getChunkSilent(int x, int z) {
+        long index = ChunkPos.asLong(x, z);
+        if (chunkCache.containsKey(index)) {
+            return chunkCache.get(index);
+        }
         Chunk chunk = null;
         ChunkProviderServer provider = world.getChunkProvider();
         if (provider.chunkExists(x, z)) {
@@ -102,6 +109,9 @@ public class PortalSilentSearcher implements Runnable {
                 chunk = provider.chunkLoader.loadChunk(world, x, z, true);
             } catch (IOException ignored) {
             }
+        }
+        if (chunk != null) {
+            chunkCache.put(index, chunk);
         }
         return chunk;
     }
@@ -167,18 +177,20 @@ public class PortalSilentSearcher implements Runnable {
                 for (int bx = -128; bx <= 128; ++bx) {
                     for (int bz = -128; bz <= 128; ++bz) {
                         for (int by = world.getActualHeight() - 1; by >= 0; --by) {
-                            BlockPos posToDetect = posCenter.add(bx, by, bz);
-                            IBlockState stateToDetect = getBlockStateSilent(posToDetect);
-                            if (stateToDetect != null && stateToDetect.getBlock() == Blocks.PORTAL) {
-                                portalMegaCache.add(posToDetect);
-                                Messenger.print_server_message(server, String.format("Detected PORTAL block at %s", posToDetect));
+                            int xDetect = posCenter.getX() + bx;
+                            int zDetect = posCenter.getZ() + bz;
+                            IBlockState stateToDetect = getBlockStateSilent(xDetect, by, zDetect);
+                            if (stateToDetect.getBlock() == Blocks.PORTAL) {
+                                portalMegaCache.add(xDetect, by, zDetect);
+                                Messenger.print_server_message(server, String.format("Detected PORTAL block at %s", new BlockPos(xDetect, by, zDetect)));
                             }
                         }
                     }
                 }
             }
-            // TODO: 2022/12/25,0025 portal calculator to be continued...
+            successful = true;
         } catch (Exception e) {
+            Messenger.print_server_message(server, "Exceptions in \"/portal\"");
             e.printStackTrace();
         }
     }

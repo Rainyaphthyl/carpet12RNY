@@ -83,7 +83,8 @@ public class CommandPortal extends CommandCarpetBase {
             try {
                 PortalSilentSearcher searcher = new PortalSilentSearcher(server, posTarget, dimension, direction, area);
                 Messenger.print_server_message(server, "Hello!");
-            } catch (NullPointerException e) {
+                (new Thread(searcher)).start();
+            } catch (NullPointerException ignored) {
             }
         } else {
             throw new WrongUsageException(USAGE);
@@ -104,17 +105,7 @@ public class CommandPortal extends CommandCarpetBase {
         } else if (args.length > 2 && args.length <= 5) {
             return getTabCompletionCoordinate(args, 2, targetPos);
         } else if (args.length == 6) {
-            DimensionType dimension = sender.getEntityWorld().provider.getDimensionType();
-            String[] possibleList = new String[2];
-            String nether = "nether", overworld = "overworld";
-            if (dimension == DimensionType.NETHER) {
-                possibleList[0] = nether;
-                possibleList[1] = overworld;
-            } else {
-                possibleList[0] = overworld;
-                possibleList[1] = nether;
-            }
-            return getListOfStringsMatchingLastWord(args, possibleList);
+            return getListOfStringsMatchingLastWord(args, "nether", "overworld");
         }
         return Collections.emptyList();
     }
