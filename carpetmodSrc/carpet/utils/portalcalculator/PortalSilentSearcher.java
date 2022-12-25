@@ -1,6 +1,7 @@
 package carpet.utils.portalcalculator;
 
-import it.unimi.dsi.fastutil.objects.ObjectSet;
+import carpet.utils.Messenger;
+import it.unimi.dsi.fastutil.objects.ObjectAVLTreeSet;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.init.Blocks;
 import net.minecraft.server.MinecraftServer;
@@ -18,6 +19,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.util.Objects;
+import java.util.SortedSet;
 
 /**
  * Runs portal searching and matching without making chunks loaded.
@@ -32,8 +34,11 @@ public class PortalSilentSearcher implements Runnable {
      * Ranges from [~-256, 0, ~-256] to [~+256, 255, ~+256],<br>
      * OR from [~-128, 0, ~-128] to [~+128, 255, ~+128],<br>
      * "~" ranges with pattern size, so the map size may be larger than 513.
+     * <p>
+     * order: x+, z+, y-
      */
-    private final ObjectSet<BlockPos> portalImageSource = null;
+    private final SortedSet<BlockPos> portalImageCache = new ObjectAVLTreeSet<>(PortalMegaCache.BLOCK_POS_COMPARATOR);
+    private final PortalMegaCache portalMegaCache = new PortalMegaCache();
     private final MinecraftServer server;
     private final Vec3d posTarget;
     private final EnumTargetDirection direction;
@@ -42,6 +47,7 @@ public class PortalSilentSearcher implements Runnable {
     private WorldServer world = null;
     private BlockPos posCenter = null;
     private PortalPattern patternCenter = null;
+    private PortalPattern patternResult = null;
     private boolean initialized = false;
     private boolean successful = false;
 
@@ -143,6 +149,10 @@ public class PortalSilentSearcher implements Runnable {
         initialized = true;
     }
 
+    private void pointPortalSearching() {
+        ;
+    }
+
     @Override
     public void run() {
         try {
@@ -153,8 +163,23 @@ public class PortalSilentSearcher implements Runnable {
             } else {
                 patternCenter = new PortalPattern(posCenter, posCenter);
             }
+            if (direction == EnumTargetDirection.FROM && area == EnumTargetArea.POINT) {
+                for (int bx = -128; bx <= 128; ++bx) {
+                    for (int bz = -128; bz <= 128; ++bz) {
+                        for (int by = world.getActualHeight() - 1; by >= 0; --by) {
+                            BlockPos posToDetect = posCenter.add(bx, by, bz);
+                            IBlockState stateToDetect = getBlockStateSilent(posToDetect);
+                            if (stateToDetect != null && stateToDetect.getBlock() == Blocks.PORTAL) {
+                                portalMegaCache.add(posToDetect);
+                                Messenger.print_server_message(server, String.format("Detected PORTAL block at %s", posToDetect));
+                            }
+                        }
+                    }
+                }
+            }
             // TODO: 2022/12/25,0025 portal calculator to be continued...
-        } catch (Throwable ignored) {
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 }
