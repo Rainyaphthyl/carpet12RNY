@@ -1,9 +1,6 @@
 package carpet.utils.portalcalculator;
 
-import it.unimi.dsi.fastutil.ints.Int2ObjectAVLTreeMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectSortedMap;
-import it.unimi.dsi.fastutil.ints.IntBidirectionalIterator;
-import it.unimi.dsi.fastutil.ints.IntIterator;
+import it.unimi.dsi.fastutil.ints.*;
 import net.minecraft.util.math.BlockPos;
 
 import javax.annotation.Nonnull;
@@ -42,6 +39,10 @@ public class PortalMegaCache implements Set<BlockPos> {
     public static final BlockPos POS_EXTREME_START = new BlockPos(Integer.MIN_VALUE, Integer.MAX_VALUE, Integer.MIN_VALUE);
     public static final BlockPos POS_EXTREME_END = new BlockPos(Integer.MAX_VALUE, Integer.MIN_VALUE, Integer.MAX_VALUE);
     private final Int2ObjectSortedMap<Int2ObjectSortedMap<Int2ObjectSortedMap<BlockPos>>> cache;
+    /**
+     * It's set to true when a slice is fully searched, where a slice is a {@code Z-Y} plane indexed with {@code X} coordinate. Defaults = {@code false}
+     */
+    private final Int2BooleanMap marks;
     private int count;
     private int xFront, yFront, zFront, xBack, yBack, zBack;
     private BlockPos first, last;
@@ -49,6 +50,8 @@ public class PortalMegaCache implements Set<BlockPos> {
     public PortalMegaCache() {
         cache = new Int2ObjectAVLTreeMap<>();
         cache.defaultReturnValue(null);
+        marks = new Int2BooleanOpenHashMap(257);
+        marks.defaultReturnValue(false);
         reset();
     }
 
@@ -81,6 +84,26 @@ public class PortalMegaCache implements Set<BlockPos> {
         first = null;
         last = null;
         count = 0;
+    }
+
+    public BlockPos getReference(int x, int y, int z) {
+        Int2ObjectSortedMap<Int2ObjectSortedMap<BlockPos>> face = cache.get(x);
+        if (face == null) {
+            return null;
+        }
+        Int2ObjectSortedMap<BlockPos> column = face.get(z);
+        if (column == null) {
+            return null;
+        }
+        return column.get(y);
+    }
+
+    public boolean isSliceMarked(int x) {
+        return marks.get(x);
+    }
+
+    public void markSlice(int x, boolean flag) {
+        marks.put(x, flag);
     }
 
     @Override

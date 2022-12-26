@@ -40,4 +40,22 @@ public class PortalPattern {
     public PortalPattern(BlockPos corner1, BlockPos corner2) {
         this(corner1.getX(), corner1.getY(), corner1.getZ(), corner2.getX(), corner1.getY(), corner2.getZ());
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == this) {
+            return true;
+        } else if (obj instanceof PortalPattern) {
+            return xMin == ((PortalPattern) obj).xMin && xMax == ((PortalPattern) obj).xMax
+                    && yMin == ((PortalPattern) obj).yMin && yMax == ((PortalPattern) obj).yMax
+                    && zMin == ((PortalPattern) obj).zMin && zMax == ((PortalPattern) obj).zMax;
+        } else {
+            return false;
+        }
+    }
+
+    @Override
+    public String toString() {
+        return String.format("PortalRange[(%d,%d,%d)->(%d,%d,%d)]", xMin, yMin, zMin, xMax, yMax, zMax);
+    }
 }

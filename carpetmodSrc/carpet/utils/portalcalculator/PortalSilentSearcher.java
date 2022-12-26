@@ -3,7 +3,6 @@ package carpet.utils.portalcalculator;
 import carpet.utils.Messenger;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.objects.ObjectAVLTreeSet;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.init.Blocks;
 import net.minecraft.server.MinecraftServer;
@@ -21,7 +20,6 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.util.Objects;
-import java.util.SortedSet;
 
 /**
  * Runs portal searching and matching without making chunks loaded.
@@ -39,9 +37,12 @@ public class PortalSilentSearcher implements Runnable {
      * <p>
      * order: x+, z+, y-
      */
-    private final SortedSet<BlockPos> portalImageCache = new ObjectAVLTreeSet<>(PortalMegaCache.BLOCK_POS_COMPARATOR);
-    private final PortalMegaCache portalMegaCache = new PortalMegaCache();
-    private final Long2ObjectMap<Chunk> chunkCache = new Long2ObjectOpenHashMap<>(512);
+    private final PortalMegaCache portalBlockCache = new PortalMegaCache();
+    /**
+     * Stores only the "valid" "lowest" portal block in portal patterns
+     */
+    private final PortalMegaCache portalBottomCache = new PortalMegaCache();
+    private final Long2ObjectMap<Chunk> chunkCache = new Long2ObjectOpenHashMap<>(289);
     private final MinecraftServer server;
     private final Vec3d posTarget;
     private final EnumTargetDirection direction;
@@ -53,6 +54,7 @@ public class PortalSilentSearcher implements Runnable {
     private PortalPattern patternResult = null;
     private boolean initialized = false;
     private boolean successful = false;
+    private double distSqCache = 0.0;
 
     public PortalSilentSearcher(MinecraftServer server, Vec3d posTarget, DimensionType dimension, EnumTargetDirection direction, EnumTargetArea area) {
         this.server = server;
@@ -72,7 +74,7 @@ public class PortalSilentSearcher implements Runnable {
         if (blockState == null) {
             return null;
         }
-        return new PortalPattern(0, 0, 0, 0, 0, 0);
+        return null;
     }
 
     @Nullable
@@ -159,8 +161,45 @@ public class PortalSilentSearcher implements Runnable {
         initialized = true;
     }
 
-    private void pointPortalSearching() {
-        ;
+    /**
+     * Simulates vanilla searching
+     */
+    @Nonnull
+    private BlockPos findPointDestination(BlockPos posOrigin) {
+        final int actualLimit = world.getActualHeight() - 1;
+        BlockPos.PooledMutableBlockPos posResult = BlockPos.PooledMutableBlockPos.retain();
+        BlockPos.PooledMutableBlockPos posPortal = BlockPos.PooledMutableBlockPos.retain();
+        double distSqMin = -1.0;
+        for (int bx = -128; bx <= 128; ++bx) {
+            int xDetect = posOrigin.getX() + bx;
+            for (int bz = -128; bz <= 128; ++bz) {
+                int zDetect = posOrigin.getZ() + bz;
+                posPortal.setPos(xDetect, 0, zDetect);
+                for (int yDetect = actualLimit; yDetect >= 0; --yDetect) {
+                    IBlockState stateToDetect = getBlockStateSilent(xDetect, yDetect, zDetect);
+                    if (stateToDetect.getBlock() == Blocks.PORTAL) {
+                        Messenger.print_server_message(server, String.format("Detected PORTAL block at %s", new BlockPos(xDetect, yDetect, zDetect)));
+                        // find the lowest portal block in current portal pattern to detect
+                        int yBottom = yDetect - 1;
+                        while (getBlockStateSilent(xDetect, yBottom, zDetect).getBlock() == Blocks.PORTAL) {
+                            Messenger.print_server_message(server, String.format("Detected PORTAL block at %s", new BlockPos(xDetect, yBottom, zDetect)));
+                            --yBottom;
+                        }
+                        yDetect = yBottom + 1;
+                        posPortal.setY(yBottom + 1);
+                        double distSqTemp = posPortal.distanceSq(posOrigin);
+                        Messenger.print_server_message(server, String.format("portal at %s, dist = %.1f", posPortal, Math.sqrt(distSqTemp)));
+                        if (distSqMin < 0.0 || distSqTemp < distSqMin) {
+                            Messenger.print_server_message(server, String.format("closer portal! %.1f -> %.1f", Math.sqrt(distSqMin), Math.sqrt(distSqTemp)));
+                            distSqMin = distSqTemp;
+                            posResult.setPos(posPortal);
+                        }
+                    }
+                }
+            }
+        }
+        distSqCache = distSqMin;
+        return posResult.toImmutable();
     }
 
     @Override
@@ -174,19 +213,10 @@ public class PortalSilentSearcher implements Runnable {
                 patternCenter = new PortalPattern(posCenter, posCenter);
             }
             if (direction == EnumTargetDirection.FROM && area == EnumTargetArea.POINT) {
-                for (int bx = -128; bx <= 128; ++bx) {
-                    for (int bz = -128; bz <= 128; ++bz) {
-                        for (int by = world.getActualHeight() - 1; by >= 0; --by) {
-                            int xDetect = posCenter.getX() + bx;
-                            int zDetect = posCenter.getZ() + bz;
-                            IBlockState stateToDetect = getBlockStateSilent(xDetect, by, zDetect);
-                            if (stateToDetect.getBlock() == Blocks.PORTAL) {
-                                portalMegaCache.add(xDetect, by, zDetect);
-                                Messenger.print_server_message(server, String.format("Detected PORTAL block at %s", new BlockPos(xDetect, by, zDetect)));
-                            }
-                        }
-                    }
-                }
+                BlockPos posDest = findPointDestination(posCenter);
+                PortalPattern patternDest = getParentPattern(posDest);
+                Messenger.print_server_message(server, String.format("Destination Block: %s, dist: %.1f", posDest, Math.sqrt(distSqCache)));
+                Messenger.print_server_message(server, String.format("Destination Frame: %s", patternDest));
             }
             successful = true;
         } catch (Exception e) {
