@@ -1,6 +1,5 @@
-Carpet 1.12 with [RNY](https://github.com/Rainyaphthyl)'s Addition v1.0.1
-
-initial plain release of carpet12RNY
+Carpet 1.12 with [RNY](https://github.com/Rainyaphthyl)'s Addition
+dev-20221226-1527
 
 ## Rules
 
@@ -15,4 +14,4 @@ Makes invulnerable crystals really invulnerable in creative mode, as if in survi
 
 ## Features and Details
 
-- Add non-Java-8 warning, and fix `World.getRandSeed` for new Java versions, **ported** from [gnembon/carpetmod112](https://github.com/gnembon/carpetmod112)
+- Add non-Java-8 warning, but does not fix `World.getRandSeed` for new Java versions, **ported** from [gnembon/carpetmod112](https://github.com/gnembon/carpetmod112)

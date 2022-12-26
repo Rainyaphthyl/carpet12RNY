@@ -67,7 +67,7 @@ public class CarpetSettings
      *     version name starts with "RNY"
      * </p>
      */
-    public static final String carpetVersion = "RNY-current-undefined";
+    public static final String carpetVersion = "RNY-dev-20221226-1527";
     public static final String minecraftVersion = "1.12.2";
     public static final String mcpMappings = "39-1.12";
 
