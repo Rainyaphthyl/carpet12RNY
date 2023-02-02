@@ -41,11 +41,15 @@
                  }
              }
              else if (this.field_73134_o.contains(p_73117_1_))
-@@ -470,14 +490,27 @@
+@@ -470,14 +490,31 @@
  
      public boolean func_180233_c(EntityPlayerMP p_180233_1_)
      {
 +        int r = this.field_73130_b;
++
++        // TISCM entityTrackerDistance
++        r = CarpetSettings.entityTrackerDistance;
++
 +        // Fix for minecarts and boats not track properly when riding them. Carpet-XCOM
 +        if(CarpetSettings.entityTrackerFix){
 +            if(field_73132_a instanceof EntityMinecart || field_73132_a instanceof EntityBoat){

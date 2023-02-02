@@ -105,7 +105,7 @@ public class CarpetSettings
     @Rule(desc = "Enables /lazychunkbehavior command", category = COMMANDS, extra = {
             "Makes a chunk act like a lazy chunk for entities and falling sand"
     })
-    
+
     public static boolean commandEntityInfo = true;
 
     @Rule(desc = "Enables /unload command to inspect chunk unloading order", category = COMMANDS)
@@ -999,6 +999,35 @@ public class CarpetSettings
     @Rule(desc = "Removes tnt applying velocity to other entities.", category = CREATIVE)
     public static boolean removeTNTVelocity = false;
 
+    /////////////////////// TISCM ///////////////////////
+
+    public static final double VANILLA_BLOCK_EVENT_PACKET_RANGE = 64.0D;
+    @Rule(
+            desc = "Set the range where player will receive a block event packet after a block event fires successfully",
+            validator = "validateNonNegative",
+            options = {"0", "16", "64", "128"},
+            category = CREATIVE
+    )
+    public static double blockEventPacketRange = VANILLA_BLOCK_EVENT_PACKET_RANGE;
+
+    @Rule(
+            desc = "The maximum horizontal chebyshev distance (in chunks) for the server to sync entities information to the client",
+            options = {"-1", "16", "64"},
+            category = {CREATIVE}
+    )
+    public static int entityTrackerDistance = -1;
+
+    public static final double VANILLA_EXPLOSION_PACKET_RANGE = 64.0D;  // sqrt(4096)
+    @Rule(
+            desc = "Set the range where player will receive an explosion packet when an explosion happens",
+            validator = "validateNonNegative",
+            options = {"0", "16", "64", "128", "2048"},
+            category = CREATIVE
+    )
+    public static double explosionPacketRange = VANILLA_EXPLOSION_PACKET_RANGE;
+
+    /////////////////////// TISCM ///////////////////////
+
     // ===== API ===== //
 
     /**
@@ -1079,6 +1108,10 @@ public class CarpetSettings
     }
 
     private static boolean validateNonNegative(int value) {
+        return value >= 0;
+    }
+
+    private static boolean validateNonNegative(double value) {
         return value >= 0;
     }
 

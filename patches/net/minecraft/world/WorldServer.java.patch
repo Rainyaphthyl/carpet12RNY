@@ -608,7 +608,19 @@
  
          if (aentity != null)
          {
-@@ -1139,10 +1397,15 @@
+@@ -1117,7 +1375,10 @@
+ 
+         for (EntityPlayer entityplayer : this.field_73010_i)
+         {
+-            if (entityplayer.func_70092_e(p_72885_2_, p_72885_4_, p_72885_6_) < 4096.0D)
++            // TISCM explosionPacketRange
++            double rangeSq = CarpetSettings.explosionPacketRange * CarpetSettings.explosionPacketRange;
++
++            if (entityplayer.func_70092_e(p_72885_2_, p_72885_4_, p_72885_6_) < rangeSq /* 4096.0D */)
+             {
+                 ((EntityPlayerMP)entityplayer).field_71135_a.func_147359_a(new SPacketExplosion(p_72885_2_, p_72885_4_, p_72885_6_, p_72885_8_, explosion.func_180343_e(), (Vec3d)explosion.func_77277_b().get(entityplayer)));
+             }
+@@ -1139,10 +1400,15 @@
          }
  
          this.field_147490_S[this.field_147489_T].add(blockeventdata);
@@ -624,7 +636,7 @@
          while (!this.field_147490_S[this.field_147489_T].isEmpty())
          {
              int i = this.field_147489_T;
-@@ -1150,19 +1413,33 @@
+@@ -1150,19 +1416,40 @@
  
              for (BlockEventData blockeventdata : this.field_147490_S[i])
              {
@@ -632,7 +644,15 @@
 +                    carpet.carpetclient.CarpetClientChunkLogger.setReason("Queued block event: " + blockeventdata);
                  if (this.func_147485_a(blockeventdata))
                  {
-                     this.field_73061_a.func_184103_al().func_148543_a((EntityPlayer)null, (double)blockeventdata.func_180328_a().func_177958_n(), (double)blockeventdata.func_180328_a().func_177956_o(), (double)blockeventdata.func_180328_a().func_177952_p(), 64.0D, this.field_73011_w.func_186058_p().func_186068_a(), new SPacketBlockAction(blockeventdata.func_180328_a(), blockeventdata.func_151337_f(), blockeventdata.func_151339_d(), blockeventdata.func_151338_e()));
+-                    this.field_73061_a.func_184103_al().func_148543_a((EntityPlayer)null, (double)blockeventdata.func_180328_a().func_177958_n(), (double)blockeventdata.func_180328_a().func_177956_o(), (double)blockeventdata.func_180328_a().func_177952_p(), 64.0D, this.field_73011_w.func_186058_p().func_186068_a(), new SPacketBlockAction(blockeventdata.func_180328_a(), blockeventdata.func_151337_f(), blockeventdata.func_151339_d(), blockeventdata.func_151338_e()));
++                    // TISCM blockEventPacketRange
++                    this.field_73061_a.func_184103_al().func_148543_a(
++                            (EntityPlayer)null,
++                            (double)blockeventdata.func_180328_a().func_177958_n(), (double)blockeventdata.func_180328_a().func_177956_o(), (double)blockeventdata.func_180328_a().func_177952_p(),
++                            CarpetSettings.blockEventPacketRange /* 64.0D */,
++                            this.field_73011_w.func_186058_p().func_186068_a(),
++                            new SPacketBlockAction(blockeventdata.func_180328_a(), blockeventdata.func_151337_f(), blockeventdata.func_151339_d(), blockeventdata.func_151338_e())
++                    );
                  }
              }
 +            carpet.carpetclient.CarpetClientChunkLogger.resetReason();
@@ -658,7 +678,7 @@
          return iblockstate.func_177230_c() == p_147485_1_.func_151337_f() ? iblockstate.func_189547_a(this, p_147485_1_.func_180328_a(), p_147485_1_.func_151339_d(), p_147485_1_.func_151338_e()) : false;
      }
  
-@@ -1173,6 +1450,8 @@
+@@ -1173,6 +1460,8 @@
  
      protected void func_72979_l()
      {
@@ -667,7 +687,7 @@
          boolean flag = this.func_72896_J();
          super.func_72979_l();
  
-@@ -1200,6 +1479,8 @@
+@@ -1200,6 +1489,8 @@
              this.field_73061_a.func_184103_al().func_148540_a(new SPacketChangeGameState(7, this.field_73004_o));
              this.field_73061_a.func_184103_al().func_148540_a(new SPacketChangeGameState(8, this.field_73017_q));
          }
@@ -676,7 +696,7 @@
      }
  
      @Nullable
-@@ -1299,4 +1580,19 @@
+@@ -1299,4 +1590,19 @@
              {
              }
          }
