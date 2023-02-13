@@ -25,7 +25,7 @@ public class CommandEndermelon extends CommandCarpetBase {
     @Nonnull
     @ParametersAreNonnullByDefault
     public String getUsage(ICommandSender sender) {
-        return "Usage: \"/endermelon <instant|once>\"";
+        return "Usage: \"/endermelon <instant|once> [verbose|brief]\"";
     }
 
     @Override
@@ -35,16 +35,23 @@ public class CommandEndermelon extends CommandCarpetBase {
             return;
         }
         WorldServer world = (WorldServer) sender.getEntityWorld();
-        if (args.length == 1) {
-            if ("instant".equalsIgnoreCase(args[0])) {
-                world.endermelonMonitor.captureInstant();
-                return;
-            } else if ("once".equalsIgnoreCase(args[0])) {
-                world.endermelonMonitor.captureOneMob();
-                return;
+        if (args.length >= 1) {
+            boolean verbose = false;
+            if (args.length >= 2) {
+                if ("verbose".equalsIgnoreCase(args[1])) {
+                    verbose = true;
+                }
             }
+            if ("instant".equalsIgnoreCase(args[0])) {
+                world.endermelonMonitor.captureInstant(verbose);
+            } else if ("once".equalsIgnoreCase(args[0])) {
+                world.endermelonMonitor.captureOneMob(verbose);
+            } else {
+                throw new CommandException(getUsage(sender));
+            }
+        } else {
+            throw new CommandException(getUsage(sender));
         }
-        throw new CommandException(getUsage(sender));
     }
 
     @Override
@@ -56,6 +63,9 @@ public class CommandEndermelon extends CommandCarpetBase {
         }
         if (args.length == 1) {
             return getListOfStringsMatchingLastWord(args, "instant", "once");
+        }
+        if (args.length == 2) {
+            return getListOfStringsMatchingLastWord(args, "verbose", "brief");
         }
         return Collections.emptyList();
     }

@@ -13,12 +13,12 @@ public class EndermelonMonitor {
         this.world = world;
     }
 
-    public void captureOneMob() {
+    public void captureOneMob(boolean verbose) {
         enabled = true;
         ++queueSizeForOnce;
     }
 
-    public void captureInstant() {
+    public void captureInstant(boolean verbose) {
         EntityEnderman aimMob = null;
         {
             Entity tempMob;
@@ -31,7 +31,7 @@ public class EndermelonMonitor {
         }
         if (aimMob != null) {
             EndermelonTracker tracker = new EndermelonTracker(aimMob);
-            tracker.reportInstantSurroundings();
+            tracker.reportInstantSurroundings(verbose);
         }
     }
 
