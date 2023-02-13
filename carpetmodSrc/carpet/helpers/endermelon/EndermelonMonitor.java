@@ -1,9 +1,7 @@
 package carpet.helpers.endermelon;
 
-import carpet.utils.Messenger;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.monster.EntityEnderman;
-import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.WorldServer;
 
 public class EndermelonMonitor {
@@ -15,16 +13,6 @@ public class EndermelonMonitor {
         this.world = world;
     }
 
-    public static void report_surrounding_melons(EntityEnderman mob) {
-        if (mob == null) {
-            return;
-        }
-        MinecraftServer server = mob.getServer();
-        Messenger.print_server_message(server, Messenger.s(null, "c Hello, Endermelon!"));
-        Messenger.print_server_message(server, Messenger.s(null, String.format("w Coordinate: %f, %f, %f", mob.posX, mob.posY, mob.posZ)));
-        Messenger.print_server_message(server, Messenger.s(null, String.format("c Age: %d gt", mob.ticksExisted)));
-    }
-
     public void captureOneMob() {
         enabled = true;
         ++queueSizeForOnce;
@@ -34,8 +22,7 @@ public class EndermelonMonitor {
         EntityEnderman aimMob = null;
         {
             Entity tempMob;
-            int size = world.loadedEntityList.size();
-            for (int i = 0; aimMob == null && i < size; ++i) {
+            for (int i = world.loadedEntityList.size() - 1; aimMob == null && i >= 0; --i) {
                 tempMob = world.loadedEntityList.get(i);
                 if (tempMob instanceof EntityEnderman) {
                     aimMob = (EntityEnderman) tempMob;
@@ -43,7 +30,8 @@ public class EndermelonMonitor {
             }
         }
         if (aimMob != null) {
-            report_surrounding_melons(aimMob);
+            EndermelonTracker tracker = new EndermelonTracker(aimMob);
+            tracker.reportInstantSurroundings();
         }
     }
 
