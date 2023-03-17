@@ -56,5 +56,8 @@ public class CarpetCommands {
         // ----- RSMM End ----- //
 
         handler.registerCommand(new MeterGroupCommand(CarpetServer.rsmmServer));
+
+        // ----- Naftalluvia ----- //
+        handler.registerCommand(new CommandEndermelon());
     }
 }

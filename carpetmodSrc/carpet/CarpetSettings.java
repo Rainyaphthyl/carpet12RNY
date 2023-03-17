@@ -1029,6 +1029,9 @@ public class CarpetSettings
             extra = "Otherwise, you may accidentally blow it up.")
     public static boolean creativeInvulnerableCrystal = false;
 
+    @Rule(desc = "Enables \"/endermelon\" to track endermelon farms running.", category = {COMMANDS, NAFTALLUVIA})
+    public static boolean commandEndermelon = true;
+
     // ===== Ported ===== //
     // options ported from other forks
 
