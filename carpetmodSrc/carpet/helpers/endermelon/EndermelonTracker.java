@@ -48,34 +48,35 @@ public class EndermelonTracker {
         Vec3d boxCornerMax = new Vec3d(boxCornerMin.x + 4.0, boxCornerMin.y + 3.0, boxCornerMin.z + 4.0);
         BlockPos gridMin = new BlockPos(boxCornerMin);
         BlockPos gridMax = new BlockPos(boxCornerMax);
-        if (world.isAreaLoaded(gridMin, gridMax, false)) {
-            melonVolume = 0.0;
-            for (int y = gridMin.getY(); y <= gridMax.getY(); ++y) {
-                Vec3d pointCenter = new Vec3d((float) MathHelper.floor(mob.posX) + 0.5F, (float) y + 0.5F, (float) MathHelper.floor(mob.posZ) + 0.5F);
-                for (int z = gridMin.getZ(); z <= gridMax.getZ(); ++z) {
-                    for (int x = gridMin.getX(); x <= gridMax.getX(); ++x) {
-                        BlockPos gridAim = new BlockPos(x, y, z);
-                        IBlockState iblockstate = world.getBlockState(gridAim, "carpet12RNY endermelon tracker");
-                        if (iblockstate.getBlock() == Blocks.MELON_BLOCK) {
-                            Vec3d pointAim = new Vec3d((float) x + 0.5F, (float) y + 0.5F, (float) z + 0.5F);
-                            RayTraceResult raytraceresult = world.rayTraceBlocks(pointCenter, pointAim, false, true, false);
-                            if (raytraceresult != null && raytraceresult.getBlockPos().equals(gridAim)) {
-                                // calculates the effective volume
-                                double x_min = MathHelper.clamp(gridAim.getX(), boxCornerMin.x, boxCornerMax.x);
-                                double x_max = MathHelper.clamp(gridAim.getX() + 1.0, boxCornerMin.x, boxCornerMax.x);
-                                double z_min = MathHelper.clamp(gridAim.getZ(), boxCornerMin.z, boxCornerMax.z);
-                                double z_max = MathHelper.clamp(gridAim.getZ() + 1.0, boxCornerMin.z, boxCornerMax.z);
-                                double y_min = MathHelper.clamp(gridAim.getY(), boxCornerMin.y, boxCornerMax.y);
-                                double y_max = MathHelper.clamp(gridAim.getY() + 1.0, boxCornerMin.y, boxCornerMax.y);
-                                double unitVolume = (x_max - x_min) * (z_max - z_min) * (y_max - y_min);
-                                melonVolume += unitVolume;
-                                if (verbose) {
-                                    Messenger.print_server_message(server, String.format("Effective Melon at %s", gridAim));
-                                    Messenger.print_server_message(server, String.format("Volume += %f", unitVolume));
-                                }
-                            } else if (verbose) {
-                                Messenger.print_server_message(server, String.format("BLOCKED Melon at %s", gridAim));
+        if (!world.isAreaLoaded(gridMin, gridMax, false)) {
+            return;
+        }
+        melonVolume = 0.0;
+        for (int y = gridMin.getY(); y <= gridMax.getY(); ++y) {
+            Vec3d pointCenter = new Vec3d((float) MathHelper.floor(mob.posX) + 0.5F, (float) y + 0.5F, (float) MathHelper.floor(mob.posZ) + 0.5F);
+            for (int z = gridMin.getZ(); z <= gridMax.getZ(); ++z) {
+                for (int x = gridMin.getX(); x <= gridMax.getX(); ++x) {
+                    BlockPos gridAim = new BlockPos(x, y, z);
+                    IBlockState iblockstate = world.getBlockState(gridAim, "carpet12RNY endermelon tracker");
+                    if (iblockstate.getBlock() == Blocks.MELON_BLOCK) {
+                        Vec3d pointAim = new Vec3d((float) x + 0.5F, (float) y + 0.5F, (float) z + 0.5F);
+                        RayTraceResult raytraceresult = world.rayTraceBlocks(pointCenter, pointAim, false, true, false);
+                        if (raytraceresult != null && raytraceresult.getBlockPos().equals(gridAim)) {
+                            // calculates the effective volume
+                            double x_min = MathHelper.clamp(gridAim.getX(), boxCornerMin.x, boxCornerMax.x);
+                            double x_max = MathHelper.clamp(gridAim.getX() + 1.0, boxCornerMin.x, boxCornerMax.x);
+                            double z_min = MathHelper.clamp(gridAim.getZ(), boxCornerMin.z, boxCornerMax.z);
+                            double z_max = MathHelper.clamp(gridAim.getZ() + 1.0, boxCornerMin.z, boxCornerMax.z);
+                            double y_min = MathHelper.clamp(gridAim.getY(), boxCornerMin.y, boxCornerMax.y);
+                            double y_max = MathHelper.clamp(gridAim.getY() + 1.0, boxCornerMin.y, boxCornerMax.y);
+                            double unitVolume = (x_max - x_min) * (z_max - z_min) * (y_max - y_min);
+                            melonVolume += unitVolume;
+                            if (verbose) {
+                                Messenger.print_server_message(server, String.format("Effective Melon at %s", gridAim));
+                                Messenger.print_server_message(server, String.format("Volume += %f", unitVolume));
                             }
+                        } else if (verbose) {
+                            Messenger.print_server_message(server, String.format("BLOCKED Melon at %s", gridAim));
                         }
                     }
                 }
@@ -99,6 +100,10 @@ public class EndermelonTracker {
             blockTakingChanceList.clear();
             running = true;
         }
+    }
+
+    public void update() {
+
     }
 
 }
