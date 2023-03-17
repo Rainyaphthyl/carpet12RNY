@@ -67,7 +67,7 @@ public class CarpetSettings
      *     version name starts with "RNY"
      * </p>
      */
-    public static final String carpetVersion = "RNY-dev-20221226-1527";
+    public static final String carpetVersion = "RNY-dev-20230317-1948";
     public static final String minecraftVersion = "1.12.2";
     public static final String mcpMappings = "39-1.12";
 
@@ -1031,6 +1031,9 @@ public class CarpetSettings
 
     @Rule(desc = "Enables \"/endermelon\" to track endermelon farms running.", category = {COMMANDS, NAFTALLUVIA})
     public static boolean commandEndermelon = true;
+
+    @Rule(desc = "Enables \"/genCheck\" to predict structure positions in \"structure-regions\".", category = {COMMANDS, NAFTALLUVIA})
+    public static boolean commandGenCheck = true;
 
     // ===== Ported ===== //
     // options ported from other forks
