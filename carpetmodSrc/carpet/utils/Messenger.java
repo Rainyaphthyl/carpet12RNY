@@ -238,11 +238,6 @@ public class Messenger
         return message;
     }
 
-    public static ITextComponent c(Object ... fields)
-    {
-        return m(null, fields);
-    }
-
     public static ITextComponent s(ICommandSender receiver,String text)
     {
         return s(receiver,text,"");
