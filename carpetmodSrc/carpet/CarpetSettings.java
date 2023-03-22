@@ -183,6 +183,11 @@ public class CarpetSettings
     @Rule(desc = "Reduces the permition level to kick players for everyone.", category = COMMANDS)
     public static boolean publicKick;
 
+    @Rule(desc = "Enables /lifetime for tracking entities lifetime etc.", category = COMMANDS, extra = {
+            "rule optimizedDespawnRange is suggested to be enabled to avoid 0gt immediately despawn spamming"
+    })
+    public static boolean commandLifeTime = true;
+
     // ===== CREATIVE TOOLS ===== //
 
     @Rule(desc = "Emerald ore receiving a block update will throw a StackOverflowError, simulating an update suppressor.", category = CREATIVE)
