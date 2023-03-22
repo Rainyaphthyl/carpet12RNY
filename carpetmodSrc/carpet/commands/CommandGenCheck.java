@@ -1,6 +1,7 @@
 package carpet.commands;
 
 import carpet.CarpetSettings;
+import carpet.utils.Messenger;
 import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.server.MinecraftServer;
@@ -23,7 +24,7 @@ public class CommandGenCheck extends CommandCarpetBase {
     @Nonnull
     public static ChunkPos getPosInCurrRegion(@Nonnull World world, @Nonnull StructureType structureType, int chunkX, int chunkZ) {
         int aimX = 0, aimZ = 0;
-        int spacing = 0, separation = 0;
+        int spacing, separation;
         switch (structureType) {
             case MONUMENT:
                 spacing = 32;
@@ -34,13 +35,15 @@ public class CommandGenCheck extends CommandCarpetBase {
                 if (chunkZ < 0) {
                     chunkZ -= spacing - 1;
                 }
-                int k = chunkX / spacing;
-                int l = chunkZ / spacing;
-                Random random = getTempRandom(world.getSeed(), k, l, 10387313);
-                k *= spacing;
-                l *= separation;
-                k += (random.nextInt(spacing - separation) + random.nextInt(spacing - separation)) / 2;
-                l += (random.nextInt(spacing - separation) + random.nextInt(spacing - separation)) / 2;
+                int tempX = chunkX / spacing;
+                int tempZ = chunkZ / spacing;
+                Random random = getTempRandom(world.getSeed(), tempX, tempZ, 10387313);
+                tempX *= spacing;
+                tempZ *= separation;
+                tempX += (random.nextInt(spacing - separation) + random.nextInt(spacing - separation)) / 2;
+                tempZ += (random.nextInt(spacing - separation) + random.nextInt(spacing - separation)) / 2;
+                aimX = tempX;
+                aimZ = tempZ;
                 break;
             case TEMPLE:
             case MANSION:
@@ -95,6 +98,7 @@ public class CommandGenCheck extends CommandCarpetBase {
                         chunkZ = sender.getPosition().getZ() >> 4;
                     }
                     ChunkPos chunkPos = getPosInCurrRegion(sender.getEntityWorld(), aimedType, chunkX, chunkZ);
+                    Messenger.print_server_message(server, String.format("The possible chunk of structure %s in this \"region\": [%d, %d]", aimedType.name(), chunkPos.x, chunkPos.z));
                 }
             } else {
                 throw new CommandException(getUsage(sender));
