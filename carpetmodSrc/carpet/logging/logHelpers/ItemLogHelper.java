@@ -1,5 +1,7 @@
 package carpet.logging.logHelpers;
 
+import carpet.CarpetSettings;
+import carpet.logging.LogHandler;
 import carpet.logging.Logger;
 import carpet.logging.LoggerRegistry;
 import carpet.utils.Messenger;
@@ -40,10 +42,14 @@ public class ItemLogHelper {
     }
 
     private void sendUpdateLogs(boolean finished, String type) {
-        logger.logNoCommand( (option) -> {
+        logger.logNoCommand( (option, player) -> {
             List<ITextComponent> comp = new ArrayList<>();
             switch (option)
             {
+                case "minimal":
+                    if (CarpetSettings.cactusCounter && "cactus".equalsIgnoreCase(type)) {
+                        return null;
+                    }
                 case "brief":
                     Vec3d p = new Vec3d(0,0,0);
                     if(positions.size() > 0) {
