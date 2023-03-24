@@ -1,14 +1,6 @@
 --- ../src-base/minecraft/net/minecraft/world/WorldEntitySpawner.java
 +++ ../src-work/minecraft/net/minecraft/world/WorldEntitySpawner.java
-@@ -1,5 +1,7 @@
- package net.minecraft.world;
- 
-+import carpet.logging.LoggerRegistry;
-+import carpet.logging.logHelpers.RNGMonitor;
- import com.google.common.collect.Sets;
- import java.util.List;
- import java.util.Random;
-@@ -22,6 +24,12 @@
+@@ -22,6 +22,12 @@
  import net.minecraft.world.biome.Biome;
  import net.minecraft.world.chunk.Chunk;
  
@@ -21,7 +13,7 @@
  public final class WorldEntitySpawner
  {
      private static final int field_180268_a = (int)Math.pow(17.0D, 2.0D);
-@@ -72,19 +80,60 @@
+@@ -72,19 +78,54 @@
                  }
              }
  
@@ -39,12 +31,6 @@
 +            String level_suffix = (did==0)?"":((did<0?" (N)":" (E)"));
 +            //CM end
  
-+            // CM start
-+            if (LoggerRegistry.__rngManip) {
-+                p_77192_1_.rngMonitor.tryUpdateSeeds(RNGMonitor.RNGAppType.mobSpawn);
-+            }
-+            // CM end
-+
              for (EnumCreatureType enumcreaturetype : EnumCreatureType.values())
              {
 +                //CM start
@@ -59,6 +45,7 @@
                  {
                      int k4 = p_77192_1_.func_72907_a(enumcreaturetype.func_75598_a());
 -                    int l4 = enumcreaturetype.func_75601_b() * i / field_180268_a;
+-
 +                    //CM replaced: //int l4 = enumcreaturetype.getMaxNumberOfCreature() * i / MOB_COUNT_DIV;
 +                    int l4 = (int)(Math.pow(2.0,(SpawnReporter.mobcap_exponent/4)) * enumcreaturetype.func_75601_b() * i / field_180268_a);
 +                    SpawnReporter.mobcaps.get(did).put(enumcreaturetype, new Tuple<>(k4, l4));
@@ -70,7 +57,7 @@
 +                    }
 +                    if (SpawnReporter.mock_spawns) { k4 = 0; } // no mobcaps
 +                    //CM end
- 
++                    
                      if (k4 <= l4)
                      {
                          BlockPos.MutableBlockPos blockpos$mutableblockpos = new BlockPos.MutableBlockPos();
@@ -79,11 +66,11 @@
 +                      {
 +                        long local_spawns = 0;
 +                        /* end */
-+
++                        
                          label134:
  
                          for (ChunkPos chunkpos1 : this.field_77193_b)
-@@ -108,6 +157,8 @@
+@@ -108,6 +149,8 @@
                                      Biome.SpawnListEntry biome$spawnlistentry = null;
                                      IEntityLivingData ientitylivingdata = null;
                                      int l3 = MathHelper.func_76143_f(Math.random() * 4.0D);
@@ -92,7 +79,7 @@
  
                                      for (int i4 = 0; i4 < l3; ++i4)
                                      {
-@@ -153,7 +204,29 @@
+@@ -153,7 +196,29 @@
                                                      if (entityliving.func_70058_J())
                                                      {
                                                          ++j2;
@@ -123,12 +110,12 @@
                                                      }
                                                      else
                                                      {
-@@ -173,7 +246,30 @@
+@@ -173,7 +238,30 @@
                                  }
                              }
                          }
 +                        /* carpet mod */
-+
++                        
 +                        if (SpawnReporter.track_spawns > 0L)
 +                        {
 +                            if (local_spawns > 0)

@@ -1,7 +1,6 @@
 package carpet.utils;
 
 import carpet.CarpetSettings;
-import carpet.logging.logHelpers.RNGMonitor;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.EnumCreatureType;
 import net.minecraft.entity.player.EntityPlayer;
@@ -98,18 +97,6 @@ public class Messenger
                 return "v";
         }
         return "w";
-    }
-
-    public static String rng_app_type_color(RNGMonitor.RNGAppType rngAppType) {
-        switch (rngAppType) {
-            case raw:
-                return "g";
-            case fortune:
-            case mobSpawn:
-                return "q";
-            default:
-                return "w";
-        }
     }
 
     private static ITextComponent _getChatComponentFromDesc(String message, ITextComponent previous_message)

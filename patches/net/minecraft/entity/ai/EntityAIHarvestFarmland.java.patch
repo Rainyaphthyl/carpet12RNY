@@ -1,34 +1,6 @@
 --- ../src-base/minecraft/net/minecraft/entity/ai/EntityAIHarvestFarmland.java
 +++ ../src-work/minecraft/net/minecraft/entity/ai/EntityAIHarvestFarmland.java
-@@ -1,5 +1,7 @@
- package net.minecraft.entity.ai;
- 
-+import carpet.logging.LoggerRegistry;
-+import carpet.logging.logHelpers.RNGMonitor;
- import net.minecraft.block.Block;
- import net.minecraft.block.BlockCrops;
- import net.minecraft.block.material.Material;
-@@ -11,6 +13,7 @@
- import net.minecraft.item.ItemStack;
- import net.minecraft.util.math.BlockPos;
- import net.minecraft.world.World;
-+import net.minecraft.world.WorldServer;
- 
- public class EntityAIHarvestFarmland extends EntityAIMoveToBlock
- {
-@@ -61,6 +64,11 @@
- 
-             if (this.field_179501_f == 0 && block instanceof BlockCrops && ((BlockCrops)block).func_185525_y(iblockstate))
-             {
-+                // CM start
-+                if (LoggerRegistry.__rngManip && world instanceof WorldServer) {
-+                    ((WorldServer) world).rngMonitor.tryUpdateSeeds(RNGMonitor.RNGAppType.farmer);
-+                }
-+                // CM end
-                 world.func_175655_b(blockpos, true);
-             }
-             else if (this.field_179501_f == 1 && iblockstate.func_185904_a() == Material.field_151579_a)
-@@ -140,4 +148,9 @@
+@@ -140,4 +140,9 @@
  
          return false;
      }

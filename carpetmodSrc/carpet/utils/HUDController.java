@@ -1,6 +1,5 @@
 package carpet.utils;
 
-import carpet.CarpetSettings;
 import carpet.helpers.HopperCounter;
 import carpet.helpers.TickSpeed;
 import carpet.logging.LoggerRegistry;
@@ -49,7 +48,7 @@ public class HUDController
 
     public static void update_hud(MinecraftServer server)
     {
-        if(server.getTickCounter() % CarpetSettings.HUDUpdateInterval != 0)
+        if(server.getTickCounter() % 20 != 0)
             return;
 
         player_huds.clear();
@@ -70,10 +69,6 @@ public class HUDController
             LoggerRegistry.getLogger("packets").log(()-> packetCounter(),
                     "TOTAL_IN", PacketCounter.totalIn,
                     "TOTAL_OUT", PacketCounter.totalOut);
-
-        if (LoggerRegistry.__rngManip){
-            server.worlds[0].rngMonitor.updateLogHUD();
-        }
 
         for (EntityPlayer player: player_huds.keySet())
         {
