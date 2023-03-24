@@ -1,14 +1,10 @@
 package carpet.commands;
 
-import java.util.*;
-
-import javax.annotation.Nullable;
-
+import carpet.CarpetSettings;
+import carpet.logging.logHelpers.RNGMonitor;
 import carpet.utils.Messenger;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-
-import carpet.CarpetSettings;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockRailBase;
 import net.minecraft.block.material.Material;
@@ -21,6 +17,8 @@ import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.EnumCreatureType;
 import net.minecraft.entity.IEntityLivingData;
 import net.minecraft.entity.monster.EntityZombieVillager;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.init.Blocks;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.management.PlayerChunkMapEntry;
 import net.minecraft.util.WeightedRandom;
@@ -38,10 +36,70 @@ import net.minecraft.world.gen.ChunkGeneratorEnd;
 import net.minecraft.world.gen.ChunkGeneratorOverworld;
 import net.minecraft.world.gen.ChunkProviderServer;
 import net.minecraft.world.gen.IChunkGenerator;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.init.Blocks;
+
+import javax.annotation.Nullable;
+import java.util.*;
 
 public class CommandRNG extends CommandCarpetBase {
+    public static List<String> getTabComplet(String[] inputArgs, int index, @Nullable BlockPos lookedPos) {
+        if (lookedPos == null) {
+            return Lists.newArrayList("~");
+        } else {
+            int i = inputArgs.length - 1;
+            String s;
+
+            if (i == index) {
+                s = Integer.toString(lookedPos.getX() / 16);
+            } else {
+                if (i != index + 1) {
+                    return Collections.<String>emptyList();
+                }
+
+                s = Integer.toString(lookedPos.getZ() / 16);
+            }
+
+            return Lists.newArrayList(s);
+        }
+    }
+
+    public static boolean canCreatureTypeSpawnAtLocation(EntityLiving.SpawnPlacementType spawnPlacementTypeIn,
+                                                         World worldIn, BlockPos pos) {
+        if (!worldIn.getWorldBorder().contains(pos)) {
+            return false;
+        }
+        IBlockState iblockstate = worldIn.getBlockState(pos);
+
+        if (spawnPlacementTypeIn == EntityLiving.SpawnPlacementType.IN_WATER) {
+            return iblockstate.getMaterial() == Material.WATER
+                    && worldIn.getBlockState(pos.down()).getMaterial() == Material.WATER
+                    && !worldIn.getBlockState(pos.up()).isNormalCube();
+        } else {
+            BlockPos blockpos = pos.down();
+
+            if (!worldIn.getBlockState(blockpos).isOpaqueCube()) {
+                return false;
+            } else {
+                Block block = worldIn.getBlockState(blockpos).getBlock();
+                boolean flag = block != Blocks.BEDROCK && block != Blocks.BARRIER;
+                return flag && isValidEmptySpawnBlock(iblockstate)
+                        && isValidEmptySpawnBlock(worldIn.getBlockState(pos.up()));
+            }
+        }
+    }
+
+    public static boolean isValidEmptySpawnBlock(IBlockState state) {
+        return !state.isBlockNormalCube() && !state.canProvidePower() && !state.getMaterial().isLiquid() && !BlockRailBase.isRailBlock(state);
+    }
+
+    private static BlockPos getRandomChunkPosition(World worldIn, Random rand, int x, int z) {
+        Chunk chunk = worldIn.getChunk(x, z);
+        int i = x * 16 + rand.nextInt(16);
+        int j = z * 16 + rand.nextInt(16);
+        int k = MathHelper.roundUp(chunk.getHeight(new BlockPos(i, 0, j)) + 1, 16);
+        int l = rand.nextInt(k > 0 ? k : chunk.getTopFilledSegment() + 16 - 1);
+        return new BlockPos(i, l, j);
+    }
+
     /**
      * Gets the name of the command
      */
@@ -67,7 +125,7 @@ public class CommandRNG extends CommandCarpetBase {
      */
     public void execute(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
         if (!command_enabled("commandRNG", sender)) return;
-        if (args.length <=0) throw new WrongUsageException(getUsage(sender));
+        if (args.length <= 0) throw new WrongUsageException(getUsage(sender));
         if ("seed".equalsIgnoreCase(args[0])) {
             try {
                 World world = sender.getEntityWorld();
@@ -292,6 +350,34 @@ public class CommandRNG extends CommandCarpetBase {
             } else {
                 throw new WrongUsageException("/rng setEndChunkSeed <seed> [once]");
             }
+        } else if ("register".equalsIgnoreCase(args[0])) {
+            try {
+                if (args.length >= 2) {
+                    RNGMonitor rngMonitor = server.worlds[0].rngMonitor;
+                    int index = 1;
+                    if ("clear".equalsIgnoreCase(args[1])) {
+                        ++index;
+                        if (args.length == 2) {
+                            for (RNGMonitor.RNGAppType rngAppType : RNGMonitor.RNGAppType.values()) {
+                                rngMonitor.clearSeedRegister(rngAppType);
+                            }
+                            return;
+                        }
+                    }
+                    if (index == args.length - 1) {
+                        RNGMonitor.RNGAppType rngAppType = RNGMonitor.RNGAppType.valueOf(args[index]);
+                        if (index == 1) {
+                            rngMonitor.registerRandSeed(rngAppType);
+                        } else {
+                            rngMonitor.clearSeedRegister(rngAppType);
+                        }
+                    }
+                    return;
+                }
+                throw new IllegalArgumentException();
+            } catch (IllegalArgumentException e) {
+                throw new WrongUsageException("/rng register [clear] <RNG-App-Name>");
+            }
         }
     }
 
@@ -302,7 +388,7 @@ public class CommandRNG extends CommandCarpetBase {
         }
         if (args.length == 1) {
             return getListOfStringsMatchingLastWord(args, "seed", "setSeed", "getMobspawningChunk",
-                    "randomtickedChunksCount", "randomtickedBlocksInRange", "logWeather", "getLCG", "setLCG", "getEndChunkSeed", "setEndChunkSeed");
+                    "randomtickedChunksCount", "randomtickedBlocksInRange", "logWeather", "getLCG", "setLCG", "getEndChunkSeed", "setEndChunkSeed", "register");
         }
         if (args.length >= 2) {
             if ("seed".equalsIgnoreCase(args[0])) {
@@ -328,30 +414,20 @@ public class CommandRNG extends CommandCarpetBase {
             if ("setEndChunkSeed".equalsIgnoreCase(args[0]) && args.length == 3) {
                 return getListOfStringsMatchingLastWord(args, "once");
             }
+            if ("register".equalsIgnoreCase(args[0])) {
+                TreeSet<String> completions = new TreeSet<>();
+                if (args.length == 2) {
+                    completions.add("clear");
+                }
+                for (RNGMonitor.RNGAppType rngAppType : RNGMonitor.RNGAppType.values()) {
+                    completions.add(rngAppType.name());
+                }
+                completions.remove(RNGMonitor.RNGAppType.raw.name());
+                return getListOfStringsMatchingLastWord(args, completions);
+            }
         }
 
         return Collections.<String>emptyList();
-    }
-
-    public static List<String> getTabComplet(String[] inputArgs, int index, @Nullable BlockPos lookedPos) {
-        if (lookedPos == null) {
-            return Lists.newArrayList("~");
-        } else {
-            int i = inputArgs.length - 1;
-            String s;
-
-            if (i == index) {
-                s = Integer.toString(lookedPos.getX() / 16);
-            } else {
-                if (i != index + 1) {
-                    return Collections.<String>emptyList();
-                }
-
-                s = Integer.toString(lookedPos.getZ() / 16);
-            }
-
-            return Lists.newArrayList(s);
-        }
     }
 
     private boolean rndInfluencingBlock(Block block) {
@@ -500,43 +576,5 @@ public class CommandRNG extends CommandCarpetBase {
                                                            EnumCreatureType creatureType, BlockPos pos) {
         List<Biome.SpawnListEntry> list = worldServerIn.getChunkProvider().getPossibleCreatures(creatureType, pos);
         return list != null && !list.isEmpty() ? (Biome.SpawnListEntry) WeightedRandom.getRandomItem(rand, list) : null;
-    }
-
-    public static boolean canCreatureTypeSpawnAtLocation(EntityLiving.SpawnPlacementType spawnPlacementTypeIn,
-                                                         World worldIn, BlockPos pos) {
-        if (!worldIn.getWorldBorder().contains(pos)) {
-            return false;
-        }
-        IBlockState iblockstate = worldIn.getBlockState(pos);
-
-        if (spawnPlacementTypeIn == EntityLiving.SpawnPlacementType.IN_WATER) {
-            return iblockstate.getMaterial() == Material.WATER
-                    && worldIn.getBlockState(pos.down()).getMaterial() == Material.WATER
-                    && !worldIn.getBlockState(pos.up()).isNormalCube();
-        } else {
-            BlockPos blockpos = pos.down();
-
-            if (!worldIn.getBlockState(blockpos).isOpaqueCube()) {
-                return false;
-            } else {
-                Block block = worldIn.getBlockState(blockpos).getBlock();
-                boolean flag = block != Blocks.BEDROCK && block != Blocks.BARRIER;
-                return flag && isValidEmptySpawnBlock(iblockstate)
-                        && isValidEmptySpawnBlock(worldIn.getBlockState(pos.up()));
-            }
-        }
-    }
-
-    public static boolean isValidEmptySpawnBlock(IBlockState state) {
-        return !state.isBlockNormalCube() && !state.canProvidePower() && !state.getMaterial().isLiquid() && !BlockRailBase.isRailBlock(state);
-    }
-
-    private static BlockPos getRandomChunkPosition(World worldIn, Random rand, int x, int z) {
-        Chunk chunk = worldIn.getChunk(x, z);
-        int i = x * 16 + rand.nextInt(16);
-        int j = z * 16 + rand.nextInt(16);
-        int k = MathHelper.roundUp(chunk.getHeight(new BlockPos(i, 0, j)) + 1, 16);
-        int l = rand.nextInt(k > 0 ? k : chunk.getTopFilledSegment() + 16 - 1);
-        return new BlockPos(i, l, j);
     }
 }

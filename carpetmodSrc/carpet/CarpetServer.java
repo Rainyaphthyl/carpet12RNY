@@ -24,6 +24,8 @@ import carpet.logging.LoggerRegistry;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.Tuple;
 import net.minecraft.world.WorldServer;
+import org.apache.logging.log4j.LogManager;
+import redstone.multimeter.server.MultimeterServer;
 
 public class CarpetServer // static for now - easier to handle all around the code, its one anyways
 {
@@ -33,15 +35,24 @@ public class CarpetServer // static for now - easier to handle all around the co
 
     public static MinecraftServer minecraft_server;
     public static PluginChannelManager pluginChannels;
-    public static RSMMServer rsmmServer;
-    public static ToggleableChannelHandler rsmmChannel;
+    public static RSMMServer legacyRsmmServer;
+    public static MultimeterServer rsmmServer;
+    public static ToggleableChannelHandler legacyRsmmChannel;
     public static ToggleableChannelHandler wecuiChannel;
     public static boolean playerInventoryStacking = false;
+    public static int limitITTCounter;
 
     private static CarpetClientServer CCServer;
 
     public static void init(MinecraftServer server) //aka constructor of this static singleton class
     {
+        if (JavaVersionUtil.JAVA_VERSION != 8)
+        {
+            LogManager.getLogger().warn("!!!!!!!!!!");
+            LogManager.getLogger().warn("1.12 TECH SERVERS SHOULD BE RUN USING JAVA 8, DETECTED JAVA " + JavaVersionUtil.JAVA_VERSION);
+            LogManager.getLogger().warn("!!!!!!!!!!");
+        }
+
         minecraft_server = server;
         pluginChannels = new PluginChannelManager(server);
         pluginChannels.register(PUBSUB_MESSENGER);
@@ -49,8 +60,9 @@ public class CarpetServer // static for now - easier to handle all around the co
         CCServer = new CarpetClientServer(server);
         pluginChannels.register(CCServer);
 
-        rsmmServer = new RSMMServer(server);
-        rsmmChannel = new ToggleableChannelHandler(pluginChannels, rsmmServer.createChannelHandler(), false);
+        rsmmServer = new MultimeterServer(server);
+        legacyRsmmServer = new RSMMServer(server);
+        legacyRsmmChannel = new ToggleableChannelHandler(pluginChannels, legacyRsmmServer.createChannelHandler(), false);
         wecuiChannel = new ToggleableChannelHandler(pluginChannels, WorldEditBridge.createChannelHandler(), false);
     }
     public static void onServerLoaded(MinecraftServer server)
@@ -112,7 +124,7 @@ public class CarpetServer // static for now - easier to handle all around the co
     public static void tick(MinecraftServer server)
     {
         TickSpeed.tick(server);
-        if (CarpetSettings.redstoneMultimeter)
+        if (CarpetSettings.redstoneMultimeterLegacy)
         {
             TickStartEventDispatcher.dispatchEvent(server.getTickCounter());
         }

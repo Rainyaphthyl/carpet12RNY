@@ -21,10 +21,12 @@ import carpet.carpetclient.CarpetClientChunkLogger;
 import carpet.carpetclient.CarpetClientRuleChanger;
 import carpet.helpers.RandomTickOptimization;
 import carpet.helpers.ScoreboardDelta;
+import carpet.logging.logHelpers.RNGMonitor;
 import carpet.patches.BlockWool;
 import carpet.utils.TickingArea;
 import carpet.worldedit.WorldEditBridge;
 import net.minecraft.block.BlockFalling;
+import net.minecraft.command.NumberInvalidException;
 import net.minecraft.init.Blocks;
 import net.minecraft.server.dedicated.DedicatedServer;
 import net.minecraft.util.math.AxisAlignedBB;
@@ -44,7 +46,29 @@ public class CarpetSettings
     public static boolean locked = false;
 
     // TODO: replace these constants at build time
-    public static final String carpetVersion = "v21_05_29";
+    /**
+     * format of version in Carpet-Addition-Naftalluvia(RNY):
+     * <p>
+     *     (release) "RNY-v{@code <Vx>.<Vy>.<Vz>}-{@code <description | title>}"<br>
+     *     (example) "RNY-v1.0.0-initial"
+     * </p>
+     * <p>
+     *     (build) "RNY-build-{@code <count>}"<br>
+     *     (example) "RNY-build-1437"
+     * </p>
+     * <p>
+     *     (dev) "RNY-dev-{@code <date>}-{@code <time>}"<br>
+     *     (example) "RNY-dev-20221223-0329"
+     * </p>
+     * <p>
+     *     (undefined) "RNY-current-undefined"
+     * </p>
+     * <p>
+     *     File Name: "carpet12{@code <carpetVersion>}.zip"<br>
+     *     version name starts with "RNY"
+     * </p>
+     */
+    public static final String carpetVersion = "RNY-dev-20230324-1812";
     public static final String minecraftVersion = "1.12.2";
     public static final String mcpMappings = "39-1.12";
 
@@ -87,10 +111,15 @@ public class CarpetSettings
     })
     public static boolean commandBlockInfo = true;
 
-    @Rule(desc = "Enables /loadchunk command", category = COMMANDS, extra = {
-            "Loads a chunk remotely"
+    @Rule(desc = "Enables /chunk command", category = COMMANDS, extra = {
+            "chunk info command"
     })
-    public static boolean commandLoadChunk = true;
+    public static boolean commandChunk = true;
+
+    @Rule(desc = "Enables /loadedChunks command", category = COMMANDS, extra = {
+            "Get information of the loaded chunks hashmap"
+    })
+    public static boolean commandLoadedChunks = true;
 
     @Rule(desc = "Enables /entityinfo command", category = COMMANDS, extra = {
             "Also enables yellow carpet placement action if 'carpets' rule is turned on as well"
@@ -230,6 +259,9 @@ public class CarpetSettings
     @Rule(desc = "Enables controlable TNT jump angle RNG for debuging.", category = TNT)
     public static boolean TNTAdjustableRandomAngle;
 
+    @Rule(desc = "/tp will teleport the players across dimensions", category = CREATIVE)
+    public static boolean tpAcrossDimensions = true;
+
     @Rule(desc = "Allows to place blocks in different orientations. Requires Carpet Client", category = CREATIVE, extra = {
             "Also prevents rotations upon placement of dispensers and furnaces",
             "when placed into a world by commands"
@@ -295,13 +327,18 @@ public class CarpetSettings
     @SurvivalDefault
     public static boolean cactusCounter = false;
 
-    @Rule(desc = "Enables integration with redstone multimeter mod", category = {CREATIVE, SURVIVAL}, validator = "validateRedstoneMultimeter", extra = {
+    @Rule(desc = "Enables integration with NarcolepticFrog's Redstone Multimeter mod", category = {CREATIVE, SURVIVAL}, validator = "validateRedstoneMultimeterLegacy", extra = {
             "Required clients with RSMM Mod by Narcoleptic Frog. Enables multiplayer experience with RSMM Mod"
+    })
+    public static boolean redstoneMultimeterLegacy = false;
+
+    @Rule(desc = "Enables integration with the new Redstone Multimeter mod", category = {CREATIVE, SURVIVAL, COMMANDS}, extra = {
+    		"To use, the new Redstone Multimeter mod must be installed client-side as well"
     })
     public static boolean redstoneMultimeter = false;
 
-    private static boolean validateRedstoneMultimeter(boolean value) {
-        CarpetServer.rsmmChannel.setEnabled(value);
+    private static boolean validateRedstoneMultimeterLegacy(boolean value) {
+        CarpetServer.legacyRsmmChannel.setEnabled(value);
         return true;
     }
 
@@ -478,10 +515,32 @@ public class CarpetSettings
     @Rule(desc = "When true, the game acts as if a permaloader is running", category = CREATIVE)
     public static boolean simulatePermaloader = false;
 
+    @Rule(desc = "The range of previous gameticks to track the world RNG seeds, applied for \"/log rngManip\"", options = {"0", "4", "8", "20", "40", "80"}, category = {CREATIVE, SURVIVAL}, validator = "validateRNGTrackingRange", extra = "Set to 0 to use the value of HUDUpdateInterval")
+    public static int rngTrackingRange = 0;
+
+    public static boolean validateRNGTrackingRange(int value) {
+        return value >= 0 && value <= 1800;
+    }
+
+    // ported from git@github.com:CrazyHPi/carpetmod112.git
+    @Rule(desc = "HUD update interval", category = {CREATIVE, SURVIVAL}, options = {"1", "5", "20", "100"}, validator = "validateHUDUpdateInterval")
+    public static int HUDUpdateInterval = 20;
+
+    // ported from git@github.com:CrazyHPi/carpetmod112.git
+    public static boolean validateHUDUpdateInterval(int value) {
+        return value >= 1 && value <= 2000;
+    }
+
     // ===== FIXES ===== //
     /*
      * Rules in this category should end with the "Fix" suffix
      */
+
+    @Rule(desc = "A limiter for updates happening on the main thread to prevent crashes on instant tile tick.", category = FIX, options = {"0", "1000000", "10000000"})
+    public static int limitITTupdates = 0;
+
+    @Rule(desc = "Fixes the async packet bugs related to asynch observer updates.", category = FIX)
+    public static boolean asyncPacketUpdatesFix;
 
     @Rule(desc = "Fixes the pearl bugs removing them when players relog, similar fix to mc1.15.", category = FIX)
     public static boolean fixedPearlBugs;
@@ -632,9 +691,6 @@ public class CarpetSettings
     })
     public static boolean boundingBoxFix = false;
 
-    @Rule(desc = "Blocks inherit the original light opacity and light values while being pushed with a piston", category = OPTIMIZATIONS)
-    public static boolean movingBlockLightOptimization = false;
-
     @Rule(desc = "Chunk saving issues that causes entites and blocks to duplicate or disappear", category = FIX, extra = "By Theosib")
     @BugFixDefault
     public static boolean entityDuplicationFix = false;
@@ -779,6 +835,9 @@ public class CarpetSettings
 
     @Rule(desc = "Sends invisible duplicate UUID entities to clients", category = FIX)
     public static boolean sendDuplicateEntitiesToClients = false;
+
+    @Rule(desc = "Enables best-effort saving of savestated chunks", category = FIX)
+    public static boolean saveSavestates = false;
 
     // ===== FEATURES ===== //
 
@@ -978,6 +1037,26 @@ public class CarpetSettings
     @Rule(desc = "Disables placement of the bedrock item", category = FEATURE)
     public static boolean disableBedrockPlacement = false;
 
+    @Rule(desc = "Changes default tnt fuse.", category = CREATIVE, validator = "validatePositive", options = {"70", "80", "100"})
+    public static int tntFuseLength = 80;
+
+    @Rule(desc = "Removes tnt applying velocity to other entities.", category = CREATIVE)
+    public static boolean removeTNTVelocity = false;
+
+    // ===== Naftalluvia ===== //
+    // carpet-RNY-addition options
+
+    @Rule(desc = "Makes invulnerable crystals really invulnerable in creative mode, as if in survival.",
+            category = {CREATIVE, NAFTALLUVIA},
+            extra = "Otherwise, you may accidentally blow it up.")
+    public static boolean creativeInvulnerableCrystal = false;
+
+    @Rule(desc = "Enables \"/endermelon\" to track endermelon farms running.", category = {COMMANDS, NAFTALLUVIA})
+    public static boolean commandEndermelon = true;
+
+    // ===== Ported ===== //
+    // options ported from other forks
+
     // ===== API ===== //
 
     /**
@@ -1050,7 +1129,7 @@ public class CarpetSettings
     }
 
     public static enum RuleCategory {
-        TNT, FIX, SURVIVAL, CREATIVE, EXPERIMENTAL, OPTIMIZATIONS, FEATURE, COMMANDS
+        TNT, FIX, SURVIVAL, CREATIVE, EXPERIMENTAL, OPTIMIZATIONS, FEATURE, COMMANDS, NAFTALLUVIA
     }
 
     private static boolean validatePositive(int value) {
