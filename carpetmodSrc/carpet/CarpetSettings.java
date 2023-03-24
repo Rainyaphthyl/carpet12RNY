@@ -68,7 +68,7 @@ public class CarpetSettings
      *     version name starts with "RNY"
      * </p>
      */
-    public static final String carpetVersion = "RNY-current-undefined";
+    public static final String carpetVersion = "RNY-dev-20230322-2237";
     public static final String minecraftVersion = "1.12.2";
     public static final String mcpMappings = "39-1.12";
 
@@ -1045,6 +1045,9 @@ public class CarpetSettings
             category = {CREATIVE, NAFTALLUVIA},
             extra = "Otherwise, you may accidentally blow it up.")
     public static boolean creativeInvulnerableCrystal = false;
+
+    @Rule(desc = "Enables \"/endermelon\" to track endermelon farms running.", category = {COMMANDS, NAFTALLUVIA})
+    public static boolean commandEndermelon = true;
 
     // ===== Ported ===== //
     // options ported from other forks
