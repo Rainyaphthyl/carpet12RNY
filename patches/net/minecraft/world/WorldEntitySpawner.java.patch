@@ -1,14 +1,15 @@
 --- ../src-base/minecraft/net/minecraft/world/WorldEntitySpawner.java
 +++ ../src-work/minecraft/net/minecraft/world/WorldEntitySpawner.java
-@@ -1,5 +1,7 @@
+@@ -1,5 +1,8 @@
  package net.minecraft.world;
  
++import carpet.helpers.lifetime.spawning.LiteralSpawningReason;
 +import carpet.logging.LoggerRegistry;
 +import carpet.logging.logHelpers.RNGMonitor;
  import com.google.common.collect.Sets;
  import java.util.List;
  import java.util.Random;
-@@ -22,6 +24,12 @@
+@@ -22,6 +25,12 @@
  import net.minecraft.world.biome.Biome;
  import net.minecraft.world.chunk.Chunk;
  
@@ -21,7 +22,16 @@
  public final class WorldEntitySpawner
  {
      private static final int field_180268_a = (int)Math.pow(17.0D, 2.0D);
-@@ -72,19 +80,60 @@
+@@ -29,6 +38,8 @@
+ 
+     public int func_77192_a(WorldServer p_77192_1_, boolean p_77192_2_, boolean p_77192_3_, boolean p_77192_4_)
+     {
++        p_77192_1_.getLifeTimeWorldTracker().increaseSpawnStageCounter();  // CM lifetime tracker
++
+         if (!p_77192_2_ && !p_77192_3_)
+         {
+             return 0;
+@@ -72,19 +83,60 @@
                  }
              }
  
@@ -84,7 +94,7 @@
                          label134:
  
                          for (ChunkPos chunkpos1 : this.field_77193_b)
-@@ -108,6 +157,8 @@
+@@ -108,6 +160,8 @@
                                      Biome.SpawnListEntry biome$spawnlistentry = null;
                                      IEntityLivingData ientitylivingdata = null;
                                      int l3 = MathHelper.func_76143_f(Math.random() * 4.0D);
@@ -93,7 +103,7 @@
  
                                      for (int i4 = 0; i4 < l3; ++i4)
                                      {
-@@ -153,7 +204,29 @@
+@@ -153,7 +207,30 @@
                                                      if (entityliving.func_70058_J())
                                                      {
                                                          ++j2;
@@ -117,6 +127,7 @@
 +                                                            }
 +                                                            else
 +                                                            {
++                                                                entityliving.recordSpawning(LiteralSpawningReason.NATURAL);  // CM lifetime tracker
 +                                                                p_77192_1_.func_72838_d(entityliving);
 +                                                            }
 +                                                            //CM end
@@ -124,7 +135,7 @@
                                                      }
                                                      else
                                                      {
-@@ -173,7 +246,30 @@
+@@ -173,7 +250,30 @@
                                  }
                              }
                          }

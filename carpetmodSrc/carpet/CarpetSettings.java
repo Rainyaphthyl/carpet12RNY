@@ -68,7 +68,7 @@ public class CarpetSettings
      *     version name starts with "RNY"
      * </p>
      */
-    public static final String carpetVersion = "RNY-dev-20230324-1812";
+    public static final String carpetVersion = "RNY-current-undefined";
     public static final String minecraftVersion = "1.12.2";
     public static final String mcpMappings = "39-1.12";
 
@@ -183,6 +183,11 @@ public class CarpetSettings
 
     @Rule(desc = "Reduces the permition level to kick players for everyone.", category = COMMANDS)
     public static boolean publicKick;
+
+    @Rule(desc = "Enables /lifetime for tracking entities lifetime etc.", category = COMMANDS, extra = {
+            "rule optimizedDespawnRange is suggested to be enabled to avoid 0gt immediately despawn spamming"
+    })
+    public static boolean commandLifeTime = true;
 
     // ===== CREATIVE TOOLS ===== //
 
