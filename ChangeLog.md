@@ -1,6 +1,6 @@
 Carpet 1.12 with [RNY](https://github.com/Rainyaphthyl)'s Addition
 
-RNY-current-undefined
+[version](src/carpet/CarpetSettings.java): `RNY-current-undefined`
 
 ## Rules
 

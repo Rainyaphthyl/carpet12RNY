@@ -41,6 +41,7 @@ ops.json
 server.properties
 usercache.json
 whitelist.json
+sessions
 /logs/
 /world/
 /crash-reports/

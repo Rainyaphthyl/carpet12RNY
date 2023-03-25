@@ -184,11 +184,6 @@ public class CarpetSettings
     @Rule(desc = "Reduces the permition level to kick players for everyone.", category = COMMANDS)
     public static boolean publicKick;
 
-    @Rule(desc = "Enables /lifetime for tracking entities lifetime etc.", category = COMMANDS, extra = {
-            "rule optimizedDespawnRange is suggested to be enabled to avoid 0gt immediately despawn spamming"
-    })
-    public static boolean commandLifeTime = true;
-
     // ===== CREATIVE TOOLS ===== //
 
     @Rule(desc = "Emerald ore receiving a block update will throw a StackOverflowError, simulating an update suppressor.", category = CREATIVE)
@@ -514,22 +509,6 @@ public class CarpetSettings
 
     @Rule(desc = "When true, the game acts as if a permaloader is running", category = CREATIVE)
     public static boolean simulatePermaloader = false;
-
-    @Rule(desc = "The range of previous gameticks to track the world RNG seeds, applied for \"/log rngManip\"", options = {"0", "4", "8", "20", "40", "80"}, category = {CREATIVE, SURVIVAL}, validator = "validateRNGTrackingRange", extra = "Set to 0 to use the value of HUDUpdateInterval")
-    public static int rngTrackingRange = 0;
-
-    public static boolean validateRNGTrackingRange(int value) {
-        return value >= 0 && value <= 1800;
-    }
-
-    // ported from git@github.com:CrazyHPi/carpetmod112.git
-    @Rule(desc = "HUD update interval", category = {CREATIVE, SURVIVAL}, options = {"1", "5", "20", "100"}, validator = "validateHUDUpdateInterval")
-    public static int HUDUpdateInterval = 20;
-
-    // ported from git@github.com:CrazyHPi/carpetmod112.git
-    public static boolean validateHUDUpdateInterval(int value) {
-        return value >= 1 && value <= 2000;
-    }
 
     // ===== FIXES ===== //
     /*
@@ -1044,7 +1023,7 @@ public class CarpetSettings
     public static boolean removeTNTVelocity = false;
 
     // ===== Naftalluvia ===== //
-    // carpet-RNY-addition options
+    // carpet-RNY-addition options and options ported from other forks
 
     @Rule(desc = "Makes invulnerable crystals really invulnerable in creative mode, as if in survival.",
             category = {CREATIVE, NAFTALLUVIA},
@@ -1054,8 +1033,28 @@ public class CarpetSettings
     @Rule(desc = "Enables \"/endermelon\" to track endermelon farms running.", category = {COMMANDS, NAFTALLUVIA})
     public static boolean commandEndermelon = true;
 
-    // ===== Ported ===== //
-    // options ported from other forks
+    @Rule(desc = "The range of previous gameticks to track the world RNG seeds, applied for \"/log rngManip\"", options = {"0", "4", "8", "20", "40", "80"}, category = {CREATIVE, SURVIVAL, NAFTALLUVIA}, validator = "validateRNGTrackingRange", extra = "Set to 0 to use the value of HUDUpdateInterval")
+    public static int rngTrackingRange = 0;
+
+    public static boolean validateRNGTrackingRange(int value) {
+        return value >= 0 && value <= 1800;
+    }
+
+    // ported from https://github.com/CrazyHPi/carpetmod112
+    @Rule(desc = "HUD update interval", category = {CREATIVE, SURVIVAL, NAFTALLUVIA}, options = {"1", "5", "20", "100"}, validator = "validateHUDUpdateInterval")
+    public static int HUDUpdateInterval = 20;
+
+    // ported from https://github.com/CrazyHPi/carpetmod112
+    public static boolean validateHUDUpdateInterval(int value) {
+        return value >= 1 && value <= 2000;
+    }
+
+    // ported from https://github.com/Fallen-Breath/carpetmod112
+    // or https://github.com/gnembon/carpetmod112/pull/156
+    @Rule(desc = "Enables /lifetime for tracking entities lifetime etc.", category = {COMMANDS, NAFTALLUVIA}, extra = {
+            "rule optimizedDespawnRange is suggested to be enabled to avoid 0gt immediately despawn spamming"
+    })
+    public static boolean commandLifeTime = true;
 
     // ===== API ===== //
 

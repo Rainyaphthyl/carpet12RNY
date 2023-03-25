@@ -60,7 +60,7 @@ public class CommandSpawn extends CommandCarpetBase
                 return;
             }
         }
-        
+
         else if ("tracking".equalsIgnoreCase(args[0]))
         {
             if (args.length == 1)
@@ -123,7 +123,7 @@ public class CommandSpawn extends CommandCarpetBase
             long warp = 72000;
             if (args.length >= 2)
             {
-                
+
                 warp = parseInt(args[1], 20, 720000);
                 if (args.length >= 3)
                 {
@@ -141,7 +141,7 @@ public class CommandSpawn extends CommandCarpetBase
                 HopperCounter hopperCounter = HopperCounter.getCounter(counter);
                 if (hopperCounter != null) hopperCounter.reset(server);
             }
-            
+
             // tick warp 0
             TickSpeed.tickrate_advance(null, 0, null, null);
             // tick warp given player
@@ -153,7 +153,7 @@ public class CommandSpawn extends CommandCarpetBase
             TickSpeed.tickrate_advance(player, warp, null, sender);
             notifyCommandListener(sender, this, String.format("Started spawn test for %d ticks", warp));
             return;
-            
+
         }
         else if ("mocking".equalsIgnoreCase(args[0]))
         {
@@ -285,7 +285,7 @@ public class CommandSpawn extends CommandCarpetBase
             if ("test".equalsIgnoreCase(args[0]))
             {
                 return getListOfStringsMatchingLastWord(args, "24000", "72000");
-                
+
             }
         }
         if ("test".equalsIgnoreCase(args[0]) && (args.length == 3))
