@@ -24,7 +24,8 @@ import java.util.Objects;
 /**
  * Runs portal searching and matching without making chunks loaded.
  */
-public class PortalSilentSearcher implements Runnable {
+public class PortalSilentSearcher implements Runnable
+{
     private static final double INTER_DIM_RATE = 8.0;
     private static final double BORDER_WIDTH = 16.0;
     private static final int BORDER_POS = 29999872;
@@ -56,7 +57,8 @@ public class PortalSilentSearcher implements Runnable {
     private boolean successful = false;
     private double distSqCache = 0.0;
 
-    public PortalSilentSearcher(MinecraftServer server, Vec3d posTarget, DimensionType dimension, EnumTargetDirection direction, EnumTargetArea area) {
+    public PortalSilentSearcher(MinecraftServer server, Vec3d posTarget, DimensionType dimension, EnumTargetDirection direction, EnumTargetArea area)
+    {
         this.server = server;
         this.posTarget = posTarget;
         this.direction = direction;
@@ -64,67 +66,89 @@ public class PortalSilentSearcher implements Runnable {
         this.dimension = dimension;
     }
 
-    public boolean isSuccessful() {
+    public boolean isSuccessful()
+    {
         return successful;
     }
 
     @Nullable
-    private PortalPattern getParentPattern(BlockPos blockPos) {
+    private PortalPattern getParentPattern(BlockPos blockPos)
+    {
         IBlockState blockState = getBlockStateSilent(blockPos);
-        if (blockState == null) {
+        if (blockState == null)
+        {
             return null;
         }
         return null;
     }
 
     @Nullable
-    private IBlockState getBlockStateSilent(BlockPos pos) {
-        try {
+    private IBlockState getBlockStateSilent(BlockPos pos)
+    {
+        try
+        {
             return getBlockStateSilent(pos.getX(), pos.getY(), pos.getZ());
-        } catch (NullPointerException e) {
+        }
+        catch (NullPointerException e)
+        {
             return null;
         }
     }
 
     @Nonnull
-    private IBlockState getBlockStateSilent(int x, int y, int z) throws NullPointerException {
-        if (y < 0 || y >= 256) {
+    private IBlockState getBlockStateSilent(int x, int y, int z) throws NullPointerException
+    {
+        if (y < 0 || y >= 256)
+        {
             return Objects.requireNonNull(Blocks.AIR).getDefaultState();
-        } else {
+        }
+        else
+        {
             Chunk chunk = getChunkSilent(x >> 4, z >> 4);
             return Objects.requireNonNull(chunk).getBlockState(x, y, z);
         }
     }
 
     @Nullable
-    private Chunk getChunkSilent(int x, int z) {
+    private Chunk getChunkSilent(int x, int z)
+    {
         long index = ChunkPos.asLong(x, z);
-        if (chunkCache.containsKey(index)) {
+        if (chunkCache.containsKey(index))
+        {
             return chunkCache.get(index);
         }
         Chunk chunk = null;
         ChunkProviderServer provider = world.getChunkProvider();
-        if (provider.chunkExists(x, z)) {
+        if (provider.chunkExists(x, z))
+        {
             chunk = provider.loadedChunks.get(ChunkPos.asLong(x, z));
-        } else if (provider.chunkLoader.isChunkGeneratedAt(x, z)) {
-            try {
+        }
+        else if (provider.chunkLoader.isChunkGeneratedAt(x, z))
+        {
+            try
+            {
                 chunk = provider.chunkLoader.loadChunk(world, x, z, true);
-            } catch (IOException ignored) {
+            }
+            catch (IOException ignored)
+            {
             }
         }
-        if (chunk != null) {
+        if (chunk != null)
+        {
             chunkCache.put(index, chunk);
         }
         return chunk;
     }
 
     @Nonnull
-    private BlockPos clampTeleportDestination(@Nonnull Vec3d posTeleported) throws NullPointerException {
+    private BlockPos clampTeleportDestination(@Nonnull Vec3d posTeleported) throws NullPointerException
+    {
         return clampTeleportDestination(posTeleported.x, posTeleported.y, posTeleported.z);
     }
 
     @Nonnull
-    private BlockPos clampTeleportDestination(double x, double y, double z) throws NullPointerException {
+    private BlockPos clampTeleportDestination(double x, double y, double z) throws NullPointerException
+    {
         // copied from vanilla codes
         WorldBorder borderObj = Objects.requireNonNull(world).getWorldBorder();
         x = MathHelper.clamp(x, borderObj.minX() + BORDER_WIDTH, borderObj.maxX() - BORDER_WIDTH);
@@ -134,13 +158,16 @@ public class PortalSilentSearcher implements Runnable {
         return new BlockPos(x, y, z);
     }
 
-    private void initFields() throws NullPointerException {
+    private void initFields() throws NullPointerException
+    {
         double x = posTarget.x;
         double y = posTarget.y;
         double z = posTarget.z;
-        switch (direction) {
+        switch (direction)
+        {
             case FROM:
-                switch (dimension) {
+                switch (dimension)
+                {
                     case NETHER:
                         x *= INTER_DIM_RATE;
                         z *= INTER_DIM_RATE;
@@ -165,23 +192,29 @@ public class PortalSilentSearcher implements Runnable {
      * Simulates vanilla searching
      */
     @Nonnull
-    private BlockPos findPointDestination(BlockPos posOrigin) {
+    private BlockPos findPointDestination(BlockPos posOrigin)
+    {
         final int actualLimit = world.getActualHeight() - 1;
         BlockPos.PooledMutableBlockPos posResult = BlockPos.PooledMutableBlockPos.retain();
         BlockPos.PooledMutableBlockPos posPortal = BlockPos.PooledMutableBlockPos.retain();
         double distSqMin = -1.0;
-        for (int bx = -128; bx <= 128; ++bx) {
+        for (int bx = -128; bx <= 128; ++bx)
+        {
             int xDetect = posOrigin.getX() + bx;
-            for (int bz = -128; bz <= 128; ++bz) {
+            for (int bz = -128; bz <= 128; ++bz)
+            {
                 int zDetect = posOrigin.getZ() + bz;
                 posPortal.setPos(xDetect, 0, zDetect);
-                for (int yDetect = actualLimit; yDetect >= 0; --yDetect) {
+                for (int yDetect = actualLimit; yDetect >= 0; --yDetect)
+                {
                     IBlockState stateToDetect = getBlockStateSilent(xDetect, yDetect, zDetect);
-                    if (stateToDetect.getBlock() == Blocks.PORTAL) {
+                    if (stateToDetect.getBlock() == Blocks.PORTAL)
+                    {
                         Messenger.print_server_message(server, String.format("Detected PORTAL block at %s", new BlockPos(xDetect, yDetect, zDetect)));
                         // find the lowest portal block in current portal pattern to detect
                         int yBottom = yDetect - 1;
-                        while (getBlockStateSilent(xDetect, yBottom, zDetect).getBlock() == Blocks.PORTAL) {
+                        while (getBlockStateSilent(xDetect, yBottom, zDetect).getBlock() == Blocks.PORTAL)
+                        {
                             Messenger.print_server_message(server, String.format("Detected PORTAL block at %s", new BlockPos(xDetect, yBottom, zDetect)));
                             --yBottom;
                         }
@@ -189,7 +222,8 @@ public class PortalSilentSearcher implements Runnable {
                         posPortal.setY(yBottom + 1);
                         double distSqTemp = posPortal.distanceSq(posOrigin);
                         Messenger.print_server_message(server, String.format("portal at %s, dist = %.1f", posPortal, Math.sqrt(distSqTemp)));
-                        if (distSqMin < 0.0 || distSqTemp < distSqMin) {
+                        if (distSqMin < 0.0 || distSqTemp < distSqMin)
+                        {
                             Messenger.print_server_message(server, String.format("closer portal! %.1f -> %.1f", Math.sqrt(distSqMin), Math.sqrt(distSqTemp)));
                             distSqMin = distSqTemp;
                             posResult.setPos(posPortal);
@@ -203,23 +237,31 @@ public class PortalSilentSearcher implements Runnable {
     }
 
     @Override
-    public void run() {
-        try {
+    public void run()
+    {
+        try
+        {
             successful = false;
             initFields();
-            if (area == EnumTargetArea.RANGE) {
+            if (area == EnumTargetArea.RANGE)
+            {
                 patternCenter = getParentPattern(posCenter);
-            } else {
+            }
+            else
+            {
                 patternCenter = new PortalPattern(posCenter, posCenter);
             }
-            if (direction == EnumTargetDirection.FROM && area == EnumTargetArea.POINT) {
+            if (direction == EnumTargetDirection.FROM && area == EnumTargetArea.POINT)
+            {
                 BlockPos posDest = findPointDestination(posCenter);
                 PortalPattern patternDest = getParentPattern(posDest);
                 Messenger.print_server_message(server, String.format("Destination Block: %s, dist: %.1f", posDest, Math.sqrt(distSqCache)));
                 Messenger.print_server_message(server, String.format("Destination Frame: %s", patternDest));
             }
             successful = true;
-        } catch (Exception e) {
+        }
+        catch (Exception e)
+        {
             Messenger.print_server_message(server, "Exceptions in \"/portal\"");
             e.printStackTrace();
         }

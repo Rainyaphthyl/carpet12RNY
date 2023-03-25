@@ -1,6 +1,7 @@
 package carpet.utils.portalcalculator;
 
-public enum EnumTargetDirection {
+public enum EnumTargetDirection
+{
     /**
      * find the portal pattern toward which the target goes
      */

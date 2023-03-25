@@ -1,5 +1,6 @@
 package carpet.utils.portalcalculator;
 
-public enum EnumTargetArea {
+public enum EnumTargetArea
+{
     POINT, RANGE
 }

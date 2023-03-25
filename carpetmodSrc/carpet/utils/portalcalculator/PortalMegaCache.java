@@ -15,24 +15,39 @@ import java.util.*;
  * <p>
  * order: x+, z+, y-
  */
-public class PortalMegaCache implements Set<BlockPos> {
+public class PortalMegaCache implements Set<BlockPos>
+{
     /**
      * Provides the vanilla searching order
      */
-    public static final Comparator<BlockPos> BLOCK_POS_COMPARATOR = (pos1, pos2) -> {
-        if (pos1 == pos2) {
+    public static final Comparator<BlockPos> BLOCK_POS_COMPARATOR = (pos1, pos2) ->
+    {
+        if (pos1 == pos2)
+        {
             return 0;
-        } else if (pos1 == null) {
+        }
+        else if (pos1 == null)
+        {
             return -1;
-        } else if (pos2 == null) {
+        }
+        else if (pos2 == null)
+        {
             return 1;
-        } else if (pos1.getX() != pos2.getX()) {
+        }
+        else if (pos1.getX() != pos2.getX())
+        {
             return pos1.getX() < pos2.getX() ? -1 : 1;
-        } else if (pos1.getZ() != pos2.getZ()) {
+        }
+        else if (pos1.getZ() != pos2.getZ())
+        {
             return pos1.getZ() < pos2.getZ() ? -1 : 1;
-        } else if (pos1.getY() != pos2.getY()) {
+        }
+        else if (pos1.getY() != pos2.getY())
+        {
             return pos1.getY() > pos2.getY() ? -1 : 1;
-        } else {
+        }
+        else
+        {
             return 0;
         }
     };
@@ -47,7 +62,8 @@ public class PortalMegaCache implements Set<BlockPos> {
     private int xFront, yFront, zFront, xBack, yBack, zBack;
     private BlockPos first, last;
 
-    public PortalMegaCache() {
+    public PortalMegaCache()
+    {
         cache = new Int2ObjectAVLTreeMap<>();
         cache.defaultReturnValue(null);
         marks = new Int2BooleanOpenHashMap(257);
@@ -58,23 +74,33 @@ public class PortalMegaCache implements Set<BlockPos> {
     /**
      * Provides the vanilla searching order
      */
-    public static int compare(int x1, int y1, int z1, int x2, int y2, int z2) {
-        if (x1 != x2) {
+    public static int compare(int x1, int y1, int z1, int x2, int y2, int z2)
+    {
+        if (x1 != x2)
+        {
             return x1 < x2 ? -1 : 1;
-        } else if (z1 != z2) {
+        }
+        else if (z1 != z2)
+        {
             return z1 < z2 ? -1 : 1;
-        } else if (y1 != y2) {
+        }
+        else if (y1 != y2)
+        {
             return y1 > y2 ? -1 : 1;
-        } else {
+        }
+        else
+        {
             return 0;
         }
     }
 
-    public static boolean posEquals(BlockPos pos, int x, int y, int z) {
+    public static boolean posEquals(BlockPos pos, int x, int y, int z)
+    {
         return pos != null && x == pos.getX() && z == pos.getZ() && y == pos.getY();
     }
 
-    private void reset() {
+    private void reset()
+    {
         xFront = POS_EXTREME_END.getX();
         yFront = POS_EXTREME_END.getY();
         zFront = POS_EXTREME_END.getZ();
@@ -86,73 +112,89 @@ public class PortalMegaCache implements Set<BlockPos> {
         count = 0;
     }
 
-    public BlockPos getReference(int x, int y, int z) {
+    public BlockPos getReference(int x, int y, int z)
+    {
         Int2ObjectSortedMap<Int2ObjectSortedMap<BlockPos>> face = cache.get(x);
-        if (face == null) {
+        if (face == null)
+        {
             return null;
         }
         Int2ObjectSortedMap<BlockPos> column = face.get(z);
-        if (column == null) {
+        if (column == null)
+        {
             return null;
         }
         return column.get(y);
     }
 
-    public boolean isSliceMarked(int x) {
+    public boolean isSliceMarked(int x)
+    {
         return marks.get(x);
     }
 
-    public void markSlice(int x, boolean flag) {
+    public void markSlice(int x, boolean flag)
+    {
         marks.put(x, flag);
     }
 
     @Override
-    public int size() {
+    public int size()
+    {
         return count;
     }
 
     @Override
-    public boolean isEmpty() {
+    public boolean isEmpty()
+    {
         return count == 0;
     }
 
     @Override
-    public boolean contains(Object o) {
+    public boolean contains(Object o)
+    {
         return (o instanceof BlockPos) && contains(((BlockPos) o).getX(), ((BlockPos) o).getY(), ((BlockPos) o).getZ());
     }
 
     @Override
-    public Iterator<BlockPos> iterator() {
+    public Iterator<BlockPos> iterator()
+    {
         return new PortalIterator(this);
     }
 
     @Override
-    public Object[] toArray() {
+    public Object[] toArray()
+    {
         return new Object[0];
     }
 
     @Override
     @SuppressWarnings("unchecked")
-    public <T> T[] toArray(@Nonnull T[] a) {
+    public <T> T[] toArray(@Nonnull T[] a)
+    {
         int size = size();
         T[] result = a;
-        if (a.length < size) {
+        if (a.length < size)
+        {
             result = (T[]) new Object[size];
         }
         int i = 0;
-        for (Iterator<BlockPos> iterator = iterator(); iterator.hasNext(); ++i) {
+        for (Iterator<BlockPos> iterator = iterator(); iterator.hasNext(); ++i)
+        {
             BlockPos blockPos = iterator.next();
             result[i] = (T) blockPos;
         }
-        for (; i < size; ++i) {
+        for (; i < size; ++i)
+        {
             result[i] = null;
         }
         return result;
     }
 
     @Override
-    public boolean add(BlockPos pos) {
-        if (pos == null) {
+    public boolean add(BlockPos pos)
+    {
+        if (pos == null)
+        {
             return false;
         }
         int x = pos.getX();
@@ -161,30 +203,36 @@ public class PortalMegaCache implements Set<BlockPos> {
         boolean flag = false;
         Int2ObjectSortedMap<Int2ObjectSortedMap<BlockPos>> face = cache.get(x);
         // default return value is set to null
-        if (face == null) {
+        if (face == null)
+        {
             face = new Int2ObjectAVLTreeMap<>();
             face.defaultReturnValue(null);
             cache.put(x, face);
         }
         Int2ObjectSortedMap<BlockPos> column = face.get(z);
-        if (column == null) {
+        if (column == null)
+        {
             column = new Int2ObjectAVLTreeMap<>();
             column.defaultReturnValue(null);
             face.put(z, column);
         }
-        if (!column.containsKey(y)) {
+        if (!column.containsKey(y))
+        {
             flag = column.put(y, pos) != pos;
         }
-        if (flag) {
+        if (flag)
+        {
             ++count;
-            if (compare(x, y, z, xFront, yFront, zFront) < 0) {
+            if (compare(x, y, z, xFront, yFront, zFront) < 0)
+            {
                 first = null;
                 first = first();
                 xFront = x;
                 yFront = y;
                 zFront = z;
             }
-            if (compare(x, y, z, xBack, yBack, zBack) > 0) {
+            if (compare(x, y, z, xBack, yBack, zBack) > 0)
+            {
                 last = null;
                 last = last();
                 xBack = x;
@@ -196,14 +244,18 @@ public class PortalMegaCache implements Set<BlockPos> {
     }
 
     @Override
-    public boolean remove(Object o) {
+    public boolean remove(Object o)
+    {
         return (o instanceof BlockPos) && remove(((BlockPos) o).getX(), ((BlockPos) o).getY(), ((BlockPos) o).getZ());
     }
 
     @Override
-    public boolean containsAll(@Nonnull Collection<?> c) {
-        for (Object item : c) {
-            if (!contains(item)) {
+    public boolean containsAll(@Nonnull Collection<?> c)
+    {
+        for (Object item : c)
+        {
+            if (!contains(item))
+            {
                 return false;
             }
         }
@@ -211,20 +263,25 @@ public class PortalMegaCache implements Set<BlockPos> {
     }
 
     @Override
-    public boolean addAll(@Nonnull Collection<? extends BlockPos> c) {
+    public boolean addAll(@Nonnull Collection<? extends BlockPos> c)
+    {
         boolean modified = false;
-        for (BlockPos item : c) {
+        for (BlockPos item : c)
+        {
             modified |= (item != null) && add(item);
         }
         return modified;
     }
 
     @Override
-    public boolean retainAll(@Nonnull Collection<?> c) {
+    public boolean retainAll(@Nonnull Collection<?> c)
+    {
         boolean modified = false;
-        for (Iterator<BlockPos> iterator = iterator(); iterator.hasNext(); ) {
+        for (Iterator<BlockPos> iterator = iterator(); iterator.hasNext(); )
+        {
             BlockPos pos = iterator.next();
-            if (!c.contains(pos)) {
+            if (!c.contains(pos))
+            {
                 iterator.remove();
                 modified = true;
             }
@@ -233,11 +290,14 @@ public class PortalMegaCache implements Set<BlockPos> {
     }
 
     @Override
-    public boolean removeAll(@Nonnull Collection<?> c) {
+    public boolean removeAll(@Nonnull Collection<?> c)
+    {
         boolean modified = false;
-        for (Iterator<BlockPos> iterator = iterator(); iterator.hasNext(); ) {
+        for (Iterator<BlockPos> iterator = iterator(); iterator.hasNext(); )
+        {
             BlockPos pos = iterator.next();
-            if (c.contains(pos)) {
+            if (c.contains(pos))
+            {
                 iterator.remove();
                 modified = true;
             }
@@ -246,12 +306,15 @@ public class PortalMegaCache implements Set<BlockPos> {
     }
 
     @Override
-    public void clear() {
+    public void clear()
+    {
         int x, z;
-        for (IntIterator xIter = cache.keySet().iterator(); xIter.hasNext(); ) {
+        for (IntIterator xIter = cache.keySet().iterator(); xIter.hasNext(); )
+        {
             x = xIter.nextInt();
             Int2ObjectSortedMap<Int2ObjectSortedMap<BlockPos>> face = cache.get(x);
-            for (IntIterator zIter = face.keySet().iterator(); zIter.hasNext(); ) {
+            for (IntIterator zIter = face.keySet().iterator(); zIter.hasNext(); )
+            {
                 z = zIter.nextInt();
                 Int2ObjectSortedMap<BlockPos> column = face.get(z);
                 column.clear();
@@ -262,58 +325,72 @@ public class PortalMegaCache implements Set<BlockPos> {
         reset();
     }
 
-    public boolean add(int x, int y, int z) {
+    public boolean add(int x, int y, int z)
+    {
         return add(new BlockPos(x, y, z));
     }
 
-    public boolean contains(BlockPos pos) {
+    public boolean contains(BlockPos pos)
+    {
         return pos != null && contains(pos.getX(), pos.getY(), pos.getZ());
     }
 
-    public boolean contains(int x, int y, int z) {
+    public boolean contains(int x, int y, int z)
+    {
         Int2ObjectSortedMap<Int2ObjectSortedMap<BlockPos>> face = cache.get(x);
-        if (face == null) {
+        if (face == null)
+        {
             return false;
         }
         Int2ObjectSortedMap<BlockPos> column = face.get(z);
-        if (column == null) {
+        if (column == null)
+        {
             return false;
         }
         BlockPos point = column.get(y);
         return posEquals(point, x, y, z);
     }
 
-    public boolean remove(BlockPos pos) {
+    public boolean remove(BlockPos pos)
+    {
         return pos != null && remove(pos.getX(), pos.getY(), pos.getZ());
     }
 
-    public boolean remove(int x, int y, int z) {
+    public boolean remove(int x, int y, int z)
+    {
         Int2ObjectSortedMap<Int2ObjectSortedMap<BlockPos>> face = cache.get(x);
-        if (face == null) {
+        if (face == null)
+        {
             return false;
         }
         Int2ObjectSortedMap<BlockPos> column = face.get(z);
-        if (column == null) {
+        if (column == null)
+        {
             return false;
         }
         BlockPos point = column.remove(y);
         boolean modified = posEquals(point, x, y, z);
-        if (modified) {
-            if (column.isEmpty()) {
+        if (modified)
+        {
+            if (column.isEmpty())
+            {
                 face.remove(z);
             }
-            if (face.isEmpty()) {
+            if (face.isEmpty())
+            {
                 cache.remove(x);
             }
             --count;
-            if (compare(x, y, z, xFront, yFront, zFront) == 0) {
+            if (compare(x, y, z, xFront, yFront, zFront) == 0)
+            {
                 first = null;
                 first = first();
                 xFront = first.getX();
                 yFront = first.getY();
                 zFront = first.getZ();
             }
-            if (compare(x, y, z, xBack, yBack, zBack) == 0) {
+            if (compare(x, y, z, xBack, yBack, zBack) == 0)
+            {
                 last = null;
                 last = last();
                 xBack = last.getX();
@@ -324,37 +401,49 @@ public class PortalMegaCache implements Set<BlockPos> {
         return modified;
     }
 
-    public Comparator<? super BlockPos> comparator() {
+    public Comparator<? super BlockPos> comparator()
+    {
         return BLOCK_POS_COMPARATOR;
     }
 
-    public BlockPos first() {
-        if (first != null) {
+    public BlockPos first()
+    {
+        if (first != null)
+        {
             return first;
         }
-        if (isEmpty()) {
+        if (isEmpty())
+        {
             return POS_EXTREME_END;
-        } else {
+        }
+        else
+        {
             Int2ObjectSortedMap<Int2ObjectSortedMap<BlockPos>> face = cache.get(cache.firstIntKey());
             Int2ObjectSortedMap<BlockPos> column = face.get(face.firstIntKey());
             return column.get(column.lastIntKey());
         }
     }
 
-    public BlockPos last() {
-        if (last != null) {
+    public BlockPos last()
+    {
+        if (last != null)
+        {
             return last;
         }
-        if (isEmpty()) {
+        if (isEmpty())
+        {
             return POS_EXTREME_START;
-        } else {
+        }
+        else
+        {
             Int2ObjectSortedMap<Int2ObjectSortedMap<BlockPos>> face = cache.get(cache.lastIntKey());
             Int2ObjectSortedMap<BlockPos> column = face.get(face.lastIntKey());
             return column.get(column.firstIntKey());
         }
     }
 
-    private static class PortalIterator implements Iterator<BlockPos> {
+    private static class PortalIterator implements Iterator<BlockPos>
+    {
         private final PortalMegaCache parent;
         private final IntBidirectionalIterator iterVolume;
         private Int2ObjectSortedMap<Int2ObjectSortedMap<BlockPos>> face;
@@ -366,7 +455,8 @@ public class PortalMegaCache implements Set<BlockPos> {
         private int z;
         private int y;
 
-        private PortalIterator(@Nonnull PortalMegaCache parent) throws NullPointerException {
+        private PortalIterator(@Nonnull PortalMegaCache parent) throws NullPointerException
+        {
             this.parent = Objects.requireNonNull(parent);
             iterVolume = Objects.requireNonNull(parent.cache).keySet().iterator();
             Objects.requireNonNull(iterVolume);
@@ -379,39 +469,50 @@ public class PortalMegaCache implements Set<BlockPos> {
         }
 
         @Override
-        public boolean hasNext() {
+        public boolean hasNext()
+        {
             return compare(x, y, z, parent.xBack, parent.yBack, parent.zBack) < 0;
         }
 
         @Override
-        public BlockPos next() {
-            if (!hasNext()) {
+        public BlockPos next()
+        {
+            if (!hasNext())
+            {
                 throw new NoSuchElementException();
             }
             // 0 for y--, 1 for z++, 2 for x++, 3 for error
-            if (iterColumn != null && iterColumn.hasPrevious()) {
+            if (iterColumn != null && iterColumn.hasPrevious())
+            {
                 y = iterColumn.previousInt();
                 pos = column.get(y);
-            } else if (iterFace != null && iterFace.hasNext()) {
+            }
+            else if (iterFace != null && iterFace.hasNext())
+            {
                 z = iterFace.nextInt();
                 column = face.get(z);
                 iterColumn = column.keySet().iterator();
-                if (!iterColumn.hasPrevious()) {
+                if (!iterColumn.hasPrevious())
+                {
                     throw new NoSuchElementException("wrong structure");
                 }
                 y = iterColumn.previousInt();
                 pos = column.get(y);
-            } else if (iterVolume != null && iterVolume.hasNext()) {
+            }
+            else if (iterVolume != null && iterVolume.hasNext())
+            {
                 x = iterVolume.nextInt();
                 face = parent.cache.get(x);
                 iterFace = face.keySet().iterator();
-                if (!iterFace.hasNext()) {
+                if (!iterFace.hasNext())
+                {
                     throw new NoSuchElementException("wrong structure");
                 }
                 z = iterFace.nextInt();
                 column = face.get(z);
                 iterColumn = column.keySet().iterator();
-                if (!iterColumn.hasPrevious()) {
+                if (!iterColumn.hasPrevious())
+                {
                     throw new NoSuchElementException("wrong structure");
                 }
                 y = iterColumn.previousInt();
@@ -421,7 +522,8 @@ public class PortalMegaCache implements Set<BlockPos> {
         }
 
         @Override
-        public void remove() {
+        public void remove()
+        {
             parent.remove(x, y, z);
         }
     }

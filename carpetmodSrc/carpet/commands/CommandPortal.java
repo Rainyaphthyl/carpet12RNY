@@ -21,45 +21,58 @@ import javax.annotation.ParametersAreNonnullByDefault;
 import java.util.Collections;
 import java.util.List;
 
-public class CommandPortal extends CommandCarpetBase {
+public class CommandPortal extends CommandCarpetBase
+{
     private static final String USAGE = "Usage: /portal <from|to> <point|range> <x> <y> <z> [dimension]";
 
     @Nonnull
     @Override
-    public String getName() {
+    public String getName()
+    {
         return "portal";
     }
 
     @Nonnull
     @Override
     @ParametersAreNonnullByDefault
-    public String getUsage(ICommandSender sender) {
+    public String getUsage(ICommandSender sender)
+    {
         return USAGE;
     }
 
     @Override
     @ParametersAreNonnullByDefault
-    public void execute(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
-        if (!command_enabled("commandPortal", sender) || !checkPermission(server, sender)) {
+    public void execute(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException
+    {
+        if (!command_enabled("commandPortal", sender) || !checkPermission(server, sender))
+        {
             return;
         }
         World world = sender.getEntityWorld();
-        if (!(world instanceof WorldServer)) {
+        if (!(world instanceof WorldServer))
+        {
             return;
         }
         EnumTargetDirection direction = null;
         EnumTargetArea area = null;
         DimensionType dimension = null;
         Vec3d posTarget = null;
-        if (args.length > 4) {
-            if ("from".equalsIgnoreCase(args[0])) {
+        if (args.length > 4)
+        {
+            if ("from".equalsIgnoreCase(args[0]))
+            {
                 direction = EnumTargetDirection.FROM;
-            } else if ("to".equalsIgnoreCase(args[0])) {
+            }
+            else if ("to".equalsIgnoreCase(args[0]))
+            {
                 direction = EnumTargetDirection.TO;
             }
-            if ("point".equalsIgnoreCase(args[1])) {
+            if ("point".equalsIgnoreCase(args[1]))
+            {
                 area = EnumTargetArea.POINT;
-            } else if ("range".equalsIgnoreCase(args[1])) {
+            }
+            else if ("range".equalsIgnoreCase(args[1]))
+            {
                 area = EnumTargetArea.RANGE;
             }
             Vec3d posBase = sender.getPositionVector();
@@ -67,26 +80,40 @@ public class CommandPortal extends CommandCarpetBase {
             double posAimY = parseDouble(posBase.y, args[3], false);
             double posAimZ = parseDouble(posBase.z, args[4], true);
             posTarget = new Vec3d(posAimX, posAimY, posAimZ);
-            if (args.length > 5) {
-                if ("overworld".equalsIgnoreCase(args[5])) {
+            if (args.length > 5)
+            {
+                if ("overworld".equalsIgnoreCase(args[5]))
+                {
                     dimension = DimensionType.OVERWORLD;
-                } else if ("nether".equalsIgnoreCase(args[5])) {
+                }
+                else if ("nether".equalsIgnoreCase(args[5]))
+                {
                     dimension = DimensionType.NETHER;
-                } else {
+                }
+                else
+                {
                     dimension = DimensionType.getById(parseInt(args[5], -1, 0));
                 }
-            } else {
+            }
+            else
+            {
                 dimension = sender.getEntityWorld().provider.getDimensionType();
             }
         }
-        if (direction != null && area != null) {
-            try {
+        if (direction != null && area != null)
+        {
+            try
+            {
                 PortalSilentSearcher searcher = new PortalSilentSearcher(server, posTarget, dimension, direction, area);
                 Messenger.print_server_message(server, "Hello!");
                 (new Thread(searcher)).start();
-            } catch (NullPointerException ignored) {
             }
-        } else {
+            catch (NullPointerException ignored)
+            {
+            }
+        }
+        else
+        {
             throw new WrongUsageException(USAGE);
         }
     }
@@ -94,17 +121,26 @@ public class CommandPortal extends CommandCarpetBase {
     @Nonnull
     @Override
     @ParametersAreNonnullByDefault
-    public List<String> getTabCompletions(MinecraftServer server, ICommandSender sender, String[] args, @Nullable BlockPos targetPos) {
-        if (!CarpetSettings.commandPortal) {
+    public List<String> getTabCompletions(MinecraftServer server, ICommandSender sender, String[] args, @Nullable BlockPos targetPos)
+    {
+        if (!CarpetSettings.commandPortal)
+        {
             return Collections.emptyList();
         }
-        if (args.length == 1) {
+        if (args.length == 1)
+        {
             return getListOfStringsMatchingLastWord(args, "from", "to");
-        } else if (args.length == 2) {
+        }
+        else if (args.length == 2)
+        {
             return getListOfStringsMatchingLastWord(args, "point", "range");
-        } else if (args.length > 2 && args.length <= 5) {
+        }
+        else if (args.length > 2 && args.length <= 5)
+        {
             return getTabCompletionCoordinate(args, 2, targetPos);
-        } else if (args.length == 6) {
+        }
+        else if (args.length == 6)
+        {
             return getListOfStringsMatchingLastWord(args, "nether", "overworld");
         }
         return Collections.emptyList();
