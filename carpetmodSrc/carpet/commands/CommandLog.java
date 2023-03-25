@@ -284,7 +284,7 @@ public class CommandLog extends CommandCarpetBase
             }
             if (subscribed)
             {
-                Messenger.m(player, "gi Subscribed to " + logger.getLogName() + ".");
+                Messenger.m(player, String.format("gi Subscribed to %s%s.", logger.getLogName(), option == null ? "" : String.format(" (%s)", option)));
             }
             else
             {

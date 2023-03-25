@@ -25,3 +25,7 @@ Original links:
 ### Smarter Logger Switch
 
 If the player is subscribed to another option of the log, it switches to the intended option **directly** by command `/log <logName> <new-option>`. No need to `/log <logName> clear`.
+
+### Default Logger Crash Fix
+
+Fixed the `/log` crash after `/log <logName>` with default options (e.g. `/log items` with `brief` by default).

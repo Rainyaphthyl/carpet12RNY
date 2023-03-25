@@ -307,7 +307,7 @@ public class LoggerRegistry
     }
 
     /**
-     * If the player is not subscribed to the log, then subscribe them. Otherwise, unsubscribe them.
+     * If the player is not subscribed to the log, then subscribe them with the default option. Otherwise, unsubscribe them.
      */
     public static boolean togglePlayerSubscription(MinecraftServer server, String playerName, String logName, LogHandler handler)
     {
@@ -318,7 +318,7 @@ public class LoggerRegistry
         }
         else
         {
-            subscribePlayer(server, playerName, logName, null, handler);
+            subscribePlayer(server, playerName, logName, getLogger(logName).getDefault(), handler);
             return true;
         }
     }
