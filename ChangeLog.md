@@ -8,13 +8,9 @@ Carpet 1.12 with [RNY](https://github.com/Rainyaphthyl)'s Addition
 
 ### Spawn Tracker Restarting
 
-Stops (if the tracker is running) and restart the spawn tracker.
+Stops (if the tracker is running) and restart the spawn tracker, combining the commands `/spawn tracking stop` and `/spawn tracking start`.
 
 - Command: `/spawn tracking restart [<X1 Y1 Z1 X2 Y2 Z2>]`
-
-Combining the commands `/spawn tracking stop` and `/spawn tracking start`.
-
-## Features and Details
 
 ### Lifetime Tracker
 
@@ -23,3 +19,9 @@ Ported from [Fallen-Breath/carpetmod112](https://github.com/Fallen-Breath/carpet
 Original links:
 - [Pull Request](https://github.com/gnembon/carpetmod112/pull/156)
 - [Document](https://github.com/TISUnion/Carpet-TIS-Addition/blob/master/docs/commands.md#lifetime)
+
+## Features and Details
+
+### Smarter Logger Switch
+
+If the player is subscribed to another option of the log, it switches to the intended option **directly** by command `/log <logName> <new-option>`. No need to `/log <logName> clear`.
