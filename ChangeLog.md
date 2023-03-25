@@ -6,6 +6,14 @@ Carpet 1.12 with [RNY](https://github.com/Rainyaphthyl)'s Addition
 
 ## Tools and Commands
 
+### Spawn Tracker Restarting
+
+Stops (if the tracker is running) and restart the spawn tracker.
+
+- Command: `/spawn tracking restart [<X1 Y1 Z1 X2 Y2 Z2>]`
+
+Combining the commands `/spawn tracking stop` and `/spawn tracking start`.
+
 ## Features and Details
 
 ### Lifetime Tracker
