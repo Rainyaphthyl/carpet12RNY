@@ -251,12 +251,15 @@ public class PortalSilentSearcher implements Runnable
             {
                 patternCenter = new PortalPattern(posCenter, posCenter);
             }
-            if (direction == EnumTargetDirection.FROM && area == EnumTargetArea.POINT)
+            if (direction == EnumTargetDirection.FROM)
             {
-                BlockPos posDest = findPointDestination(posCenter);
-                PortalPattern patternDest = getParentPattern(posDest);
-                Messenger.print_server_message(server, String.format("Destination Block: %s, dist: %.1f", posDest, Math.sqrt(distSqCache)));
-                Messenger.print_server_message(server, String.format("Destination Frame: %s", patternDest));
+                if (area == EnumTargetArea.POINT)
+                {
+                    BlockPos posDest = findPointDestination(posCenter);
+                    PortalPattern patternDest = getParentPattern(posDest);
+                    Messenger.print_server_message(server, String.format("Destination Block: %s, dist: %.1f", posDest, Math.sqrt(distSqCache)));
+                    Messenger.print_server_message(server, String.format("Destination Frame: %s", patternDest));
+                }
             }
             successful = true;
         }
