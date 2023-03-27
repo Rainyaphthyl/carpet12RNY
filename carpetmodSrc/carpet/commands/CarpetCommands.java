@@ -27,6 +27,7 @@ public class CarpetCommands {
         handler.registerCommand(new CommandGrow());
         handler.registerCommand(new CommandLagSpike());
         handler.registerCommand(new CommandLazyChunkBehavior());
+        handler.registerCommand(new CommandLifeTime());
         handler.registerCommand(new CommandLight());
         handler.registerCommand(new CommandLoadedChunks());
         handler.registerCommand(new CommandLog());
@@ -51,13 +52,14 @@ public class CarpetCommands {
         handler.registerCommand(new CommandWaypoint());
         handler.registerCommand(new CommandZetBlock());
 
-        // New Commands in carpet12RNY
-        handler.registerCommand(new CommandPortal());
-
         // ----- RSMM Start ----- //
         handler.registerCommand(new MeterCommand(CarpetServer.legacyRsmmServer));
         // ----- RSMM End ----- //
 
         handler.registerCommand(new MeterGroupCommand(CarpetServer.rsmmServer));
+
+        // ----- Naftalluvia ----- //
+        handler.registerCommand(new CommandEndermelon());
+        handler.registerCommand(new CommandPortal());
     }
 }

@@ -1,5 +1,6 @@
 package carpet;
 
+import carpet.helpers.lifetime.LifeTimeTracker;
 import carpet.helpers.StackTraceDeobfuscator;
 import carpet.network.PluginChannelManager;
 import carpet.network.ToggleableChannelHandler;
@@ -81,6 +82,7 @@ public class CarpetServer // static for now - easier to handle all around the co
     public static void onLoadAllWorlds(MinecraftServer server)
     {
         TickingArea.loadConfig(server);
+        LifeTimeTracker.attachServer(server);
         for (WorldServer world : server.worlds) {
             int dim = world.provider.getDimensionType().getId();
             try {

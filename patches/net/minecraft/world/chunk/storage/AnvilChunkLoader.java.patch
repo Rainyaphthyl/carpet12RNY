@@ -1,21 +1,25 @@
 --- ../src-base/minecraft/net/minecraft/world/chunk/storage/AnvilChunkLoader.java
 +++ ../src-work/minecraft/net/minecraft/world/chunk/storage/AnvilChunkLoader.java
-@@ -1,14 +1,11 @@
+@@ -1,14 +1,15 @@
  package net.minecraft.world.chunk.storage;
  
 -import com.google.common.collect.Maps;
++import carpet.helpers.lifetime.spawning.LiteralSpawningReason;
++import com.google.common.collect.Maps; //CM unused import
  import java.io.DataInputStream;
  import java.io.DataOutputStream;
  import java.io.File;
  import java.io.IOException;
 -import java.util.Collections;
++import java.util.Collections; //CM unused import
  import java.util.List;
  import java.util.Map;
 -import java.util.Set;
++import java.util.Set; //CM unused import
  import javax.annotation.Nullable;
  import net.minecraft.block.Block;
  import net.minecraft.entity.Entity;
-@@ -34,12 +31,62 @@
+@@ -34,12 +35,62 @@
  import org.apache.logging.log4j.LogManager;
  import org.apache.logging.log4j.Logger;
  
@@ -81,7 +85,7 @@
      private final DataFixer field_193416_e;
      private boolean field_183014_e;
  
-@@ -50,14 +97,15 @@
+@@ -50,14 +101,15 @@
      }
  
      @Nullable
@@ -101,7 +105,7 @@
  
              if (datainputstream == null)
              {
-@@ -67,43 +115,46 @@
+@@ -67,43 +119,46 @@
              nbttagcompound = this.field_193416_e.func_188257_a(FixTypes.CHUNK, CompressedStreamTools.func_74794_a(datainputstream));
          }
  
@@ -161,7 +165,7 @@
                  }
  
                  return chunk;
-@@ -132,37 +183,63 @@
+@@ -132,37 +187,63 @@
  
      protected void func_75824_a(ChunkPos p_75824_1_, NBTTagCompound p_75824_2_)
      {
@@ -237,7 +241,7 @@
                      try
                      {
                          this.func_183013_b(chunkpos, nbttagcompound);
-@@ -171,17 +248,19 @@
+@@ -171,17 +252,19 @@
                      {
                          field_151505_a.error("Failed to save chunk", (Throwable)exception);
                      }
@@ -266,7 +270,7 @@
      }
  
      private void func_183013_b(ChunkPos p_183013_1_, NBTTagCompound p_183013_2_) throws IOException
-@@ -249,7 +328,8 @@
+@@ -249,7 +332,8 @@
          });
      }
  
@@ -276,7 +280,7 @@
      {
          p_75820_3_.func_74768_a("xPos", p_75820_1_.field_76635_g);
          p_75820_3_.func_74768_a("zPos", p_75820_1_.field_76647_h);
-@@ -295,6 +375,10 @@
+@@ -295,6 +379,10 @@
          }
  
          p_75820_3_.func_74782_a("Sections", nbttaglist);
@@ -287,7 +291,7 @@
          p_75820_3_.func_74773_a("Biomes", p_75820_1_.func_76605_m());
          p_75820_1_.func_177409_g(false);
          NBTTagList nbttaglist1 = new NBTTagList();
-@@ -347,19 +431,19 @@
+@@ -347,19 +435,19 @@
          }
      }
  
@@ -317,7 +321,7 @@
  
          for (int l = 0; l < nbttaglist.func_74745_c(); ++l)
          {
-@@ -383,26 +467,38 @@
+@@ -383,26 +471,39 @@
  
          chunk.func_76602_a(aextendedblockstorage);
  
@@ -336,7 +340,8 @@
 -        NBTTagList nbttaglist1 = p_75823_2_.func_150295_c("Entities", 10);
 +        // CM start
 +        // carpet12RNY silent loading
-+        if (silent) {
++        if (silent)
++        {
 +            return chunk;
 +        }
 +        // CM end
@@ -362,7 +367,7 @@
  
              if (tileentity != null)
              {
-@@ -410,9 +506,9 @@
+@@ -410,9 +511,9 @@
              }
          }
  
@@ -374,7 +379,7 @@
  
              for (int l1 = 0; l1 < nbttaglist3.func_74745_c(); ++l1)
              {
-@@ -428,7 +524,7 @@
+@@ -428,7 +529,7 @@
                      block = Block.func_149729_e(nbttagcompound3.func_74762_e("i"));
                  }
  
@@ -383,3 +388,14 @@
              }
          }
  
+@@ -521,6 +622,10 @@
+ 
+     public static void func_186052_a(Entity p_186052_0_, World p_186052_1_)
+     {
++        // CM lifetime tracker
++        // this method is only used in MobSpawnerBaseLogic
++        p_186052_0_.recordSpawning(LiteralSpawningReason.SPAWNER);
++
+         if (p_186052_1_.func_72838_d(p_186052_0_) && p_186052_0_.func_184207_aI())
+         {
+             for (Entity entity : p_186052_0_.func_184188_bt())

@@ -1,26 +1,26 @@
 package carpet.commands;
 
-import java.util.Collections;
-import java.util.List;
-import javax.annotation.Nullable;
-
 import carpet.CarpetSettings;
 import carpet.helpers.HopperCounter;
+import carpet.helpers.TickSpeed;
+import carpet.utils.SpawnReporter;
 import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommandSender;
+import net.minecraft.command.NumberInvalidException;
 import net.minecraft.command.WrongUsageException;
+import net.minecraft.entity.EnumCreatureType;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.item.EnumDyeColor;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
-import carpet.utils.SpawnReporter;
-import net.minecraft.entity.EnumCreatureType;
-import net.minecraft.entity.player.EntityPlayerMP;
-import carpet.helpers.TickSpeed;
-
-import net.minecraft.item.EnumDyeColor;
+import javax.annotation.Nullable;
+import javax.annotation.ParametersAreNonnullByDefault;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 public class CommandSpawn extends CommandCarpetBase
 {
@@ -31,6 +31,7 @@ public class CommandSpawn extends CommandCarpetBase
     {
         return "Usage:\nspawn list <X> <Y> <Z>\nspawn entities/rates <... | passive | hostile | ambient | water>\nspawn mobcaps <set <num>, nether, overworld, end>\nspawn tracking <.../stop/start/hostile/passive/water/ambient>\nspawn mocking <true/false>";
     }
+
     public String getName()
     {
         return "spawn";
@@ -56,45 +57,22 @@ public class CommandSpawn extends CommandCarpetBase
             }
             else
             {
-                msg(sender,SpawnReporter.report(blockpos, world));
+                msg(sender, SpawnReporter.report(blockpos, world));
                 return;
             }
         }
-        
         else if ("tracking".equalsIgnoreCase(args[0]))
         {
             if (args.length == 1)
             {
-                msg(sender,  SpawnReporter.tracking_report(world));
+                msg(sender, SpawnReporter.tracking_report(world));
                 return;
             }
             else if ("start".equalsIgnoreCase(args[1]))
             {
                 if (SpawnReporter.track_spawns == 0L)
                 {
-                    BlockPos lsl = null;
-                    BlockPos usl = null;
-                    if (args.length == 8)
-                    {
-                        BlockPos a = parseBlockPos(sender, args, 2, false);
-                        BlockPos b = parseBlockPos(sender, args, 5, false);
-                        lsl = new BlockPos(
-                                Math.min(a.getX(), b.getX()),
-                                Math.min(a.getY(), b.getY()),
-                                Math.min(a.getZ(), b.getZ()) );
-                        usl = new BlockPos(
-                                Math.max(a.getX(), b.getX()),
-                                Math.max(a.getY(), b.getY()),
-                                Math.max(a.getZ(), b.getZ()) );
-                    } else if (args.length != 2)
-                    {
-                        notifyCommandListener(sender, this, "Wrong syntax: /spawn tracking start <X1 Y1 Z1 X2 Y2 Z2>");
-                        return;
-                    }
-                    SpawnReporter.reset_spawn_stats(false);
-                    SpawnReporter.track_spawns = (long) world.getMinecraftServer().getTickCounter();
-                    SpawnReporter.lower_spawning_limit = lsl;
-                    SpawnReporter.upper_spawning_limit = usl;
+                    trackStart(server, sender, args);
                     notifyCommandListener(sender, this, "Spawning tracking started.");
                 }
                 else
@@ -102,18 +80,28 @@ public class CommandSpawn extends CommandCarpetBase
                     notifyCommandListener(sender, this, "You are already tracking spawning.");
                 }
             }
+            else if ("restart".equalsIgnoreCase(args[1]))
+            {
+                if (SpawnReporter.track_spawns == 0L)
+                {
+                    trackStart(server, sender, args);
+                    notifyCommandListener(sender, this, "Spawning tracking started.");
+                }
+                else
+                {
+                    trackStop(world, sender);
+                    trackStart(server, sender, args);
+                    notifyCommandListener(sender, this, "Spawning tracking stopped and restarted.");
+                }
+            }
             else if ("stop".equalsIgnoreCase(args[1]))
             {
-                msg(sender, SpawnReporter.tracking_report(world));
-                SpawnReporter.reset_spawn_stats(false);
-                SpawnReporter.track_spawns = 0L;
-                SpawnReporter.lower_spawning_limit = null;
-                SpawnReporter.upper_spawning_limit = null;
+                trackStop(world, sender);
                 notifyCommandListener(sender, this, "Spawning tracking stopped.");
             }
             else
             {
-                msg(sender,SpawnReporter.recent_spawns(world, args[1]));
+                msg(sender, SpawnReporter.recent_spawns(world, args[1]));
             }
             return;
         }
@@ -123,7 +111,7 @@ public class CommandSpawn extends CommandCarpetBase
             long warp = 72000;
             if (args.length >= 2)
             {
-                
+
                 warp = parseInt(args[1], 20, 720000);
                 if (args.length >= 3)
                 {
@@ -135,25 +123,28 @@ public class CommandSpawn extends CommandCarpetBase
             //start tracking
             SpawnReporter.track_spawns = (long) server.getTickCounter();
             //counter reset
-            if (counter == null) {
+            if (counter == null)
+            {
                 HopperCounter.resetAll(server);
-            } else {
+            }
+            else
+            {
                 HopperCounter hopperCounter = HopperCounter.getCounter(counter);
                 if (hopperCounter != null) hopperCounter.reset(server);
             }
-            
+
             // tick warp 0
             TickSpeed.tickrate_advance(null, 0, null, null);
             // tick warp given player
             EntityPlayer player = null;
             if (sender instanceof EntityPlayer)
             {
-                player = (EntityPlayer)sender;
+                player = (EntityPlayer) sender;
             }
             TickSpeed.tickrate_advance(player, warp, null, sender);
             notifyCommandListener(sender, this, String.format("Started spawn test for %d ticks", warp));
             return;
-            
+
         }
         else if ("mocking".equalsIgnoreCase(args[0]))
         {
@@ -174,9 +165,9 @@ public class CommandSpawn extends CommandCarpetBase
         {
             if (args.length >= 2 && "reset".equalsIgnoreCase(args[1]))
             {
-                for (String s: SpawnReporter.spawn_tries.keySet())
+                for (String s : SpawnReporter.spawn_tries.keySet())
                 {
-                    SpawnReporter.spawn_tries.put(s,1);
+                    SpawnReporter.spawn_tries.put(s, 1);
                 }
             }
             else if (args.length >= 3)
@@ -207,21 +198,21 @@ public class CommandSpawn extends CommandCarpetBase
                         if (args.length > 2)
                         {
                             int desired_mobcap = parseInt(args[2], 0);
-                            double desired_ratio = (double)desired_mobcap/EnumCreatureType.MONSTER.getMaxNumberOfCreature();
-                            SpawnReporter.mobcap_exponent = 4.0*Math.log(desired_ratio)/Math.log(2.0);
+                            double desired_ratio = (double) desired_mobcap / EnumCreatureType.MONSTER.getMaxNumberOfCreature();
+                            SpawnReporter.mobcap_exponent = 4.0 * Math.log(desired_ratio) / Math.log(2.0);
                             notifyCommandListener(sender, this, String.format("Mobcaps for hostile mobs changed to %d, other groups will follow", desired_mobcap));
                             return;
                         }
                         msg(sender, SpawnReporter.print_general_mobcaps(world));
                         return;
                     case "overworld":
-                        msg(sender, SpawnReporter.printMobcapsForDimension(world,0,"overworld"));
+                        msg(sender, SpawnReporter.printMobcapsForDimension(world, 0, "overworld"));
                         return;
                     case "nether":
-                        msg(sender, SpawnReporter.printMobcapsForDimension(world,-1,"nether"));
+                        msg(sender, SpawnReporter.printMobcapsForDimension(world, -1, "nether"));
                         return;
                     case "end":
-                        msg(sender, SpawnReporter.printMobcapsForDimension(world,1,"the end"));
+                        msg(sender, SpawnReporter.printMobcapsForDimension(world, 1, "the end"));
                         return;
 
                 }
@@ -254,7 +245,7 @@ public class CommandSpawn extends CommandCarpetBase
         }
         if (args.length == 1)
         {
-            return getListOfStringsMatchingLastWord(args, "list","mocking","tracking","mobcaps","rates", "entities", "test");
+            return getListOfStringsMatchingLastWord(args, "list", "mocking", "tracking", "mobcaps", "rates", "entities", "test");
         }
         if ("list".equalsIgnoreCase(args[0]) && args.length <= 4)
         {
@@ -264,7 +255,7 @@ public class CommandSpawn extends CommandCarpetBase
         {
             if ("tracking".equalsIgnoreCase(args[0]))
             {
-                return getListOfStringsMatchingLastWord(args, "start", "stop", "hostile", "passive","ambient","water");
+                return getListOfStringsMatchingLastWord(args, "start", "stop", "restart", "hostile", "passive", "ambient", "water");
             }
             if ("mocking".equalsIgnoreCase(args[0]))
             {
@@ -272,20 +263,20 @@ public class CommandSpawn extends CommandCarpetBase
             }
             if ("entities".equalsIgnoreCase(args[0]))
             {
-                return getListOfStringsMatchingLastWord(args, "hostile", "passive","ambient","water");
+                return getListOfStringsMatchingLastWord(args, "hostile", "passive", "ambient", "water");
             }
             if ("rates".equalsIgnoreCase(args[0]))
             {
-                return getListOfStringsMatchingLastWord(args, "reset", "hostile", "passive","ambient","water");
+                return getListOfStringsMatchingLastWord(args, "reset", "hostile", "passive", "ambient", "water");
             }
             if ("mobcaps".equalsIgnoreCase(args[0]))
             {
-                return getListOfStringsMatchingLastWord(args, "set","nether","overworld","end");
+                return getListOfStringsMatchingLastWord(args, "set", "nether", "overworld", "end");
             }
             if ("test".equalsIgnoreCase(args[0]))
             {
                 return getListOfStringsMatchingLastWord(args, "24000", "72000");
-                
+
             }
         }
         if ("test".equalsIgnoreCase(args[0]) && (args.length == 3))
@@ -303,14 +294,52 @@ public class CommandSpawn extends CommandCarpetBase
         {
             return getListOfStringsMatchingLastWord(args, "70");
         }
-        if ("tracking".equalsIgnoreCase(args[0]) && "start".equalsIgnoreCase(args[1]) && args.length > 2 && args.length <= 5)
+        if ("tracking".equalsIgnoreCase(args[0]) && ("start".equalsIgnoreCase(args[1]) || "restart".equalsIgnoreCase(args[1])) && args.length > 2 && args.length <= 5)
         {
             return getTabCompletionCoordinate(args, 2, pos);
         }
-        if ("tracking".equalsIgnoreCase(args[0]) && "start".equalsIgnoreCase(args[1]) && args.length > 5 && args.length <= 8)
+        if ("tracking".equalsIgnoreCase(args[0]) && ("start".equalsIgnoreCase(args[1]) || "restart".equalsIgnoreCase(args[1])) && args.length > 5 && args.length <= 8)
         {
             return getTabCompletionCoordinate(args, 5, pos);
         }
         return Collections.<String>emptyList();
+    }
+
+    @ParametersAreNonnullByDefault
+    private void trackStart(MinecraftServer server, ICommandSender sender, String[] args) throws NumberInvalidException
+    {
+        BlockPos lsl = null;
+        BlockPos usl = null;
+        if (args.length == 8)
+        {
+            BlockPos a = parseBlockPos(sender, args, 2, false);
+            BlockPos b = parseBlockPos(sender, args, 5, false);
+            lsl = new BlockPos(
+                    Math.min(a.getX(), b.getX()),
+                    Math.min(a.getY(), b.getY()),
+                    Math.min(a.getZ(), b.getZ()));
+            usl = new BlockPos(
+                    Math.max(a.getX(), b.getX()),
+                    Math.max(a.getY(), b.getY()),
+                    Math.max(a.getZ(), b.getZ()));
+        }
+        else if (args.length != 2)
+        {
+            notifyCommandListener(sender, this, "Wrong syntax: /spawn tracking (start|restart) <X1 Y1 Z1 X2 Y2 Z2>");
+            return;
+        }
+        SpawnReporter.reset_spawn_stats(false);
+        SpawnReporter.track_spawns = (long) server.getTickCounter();
+        SpawnReporter.lower_spawning_limit = lsl;
+        SpawnReporter.upper_spawning_limit = usl;
+    }
+
+    private void trackStop(World world, ICommandSender sender)
+    {
+        msg(sender, SpawnReporter.tracking_report(world));
+        SpawnReporter.reset_spawn_stats(false);
+        SpawnReporter.track_spawns = 0L;
+        SpawnReporter.lower_spawning_limit = null;
+        SpawnReporter.upper_spawning_limit = null;
     }
 }
