@@ -1030,6 +1030,10 @@ public class CarpetSettings
             extra = "Otherwise, you may accidentally blow it up.")
     public static boolean creativeInvulnerableCrystal = false;
 
+    @Rule(desc = "Enables command \"/portal\" to query and search portal maps.",
+            category = {COMMANDS, NAFTALLUVIA})
+    public static boolean commandPortal;
+
     @Rule(desc = "Enables \"/endermelon\" to track endermelon farms running.", category = {COMMANDS, NAFTALLUVIA})
     public static boolean commandEndermelon = true;
 
