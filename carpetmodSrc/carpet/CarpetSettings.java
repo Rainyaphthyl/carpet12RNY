@@ -1032,7 +1032,7 @@ public class CarpetSettings
 
     @Rule(desc = "Enables command \"/portal\" to query and search portal maps.",
             category = {COMMANDS, NAFTALLUVIA})
-    public static boolean commandPortal;
+    public static boolean commandPortal = true;
 
     @Rule(desc = "Enables \"/endermelon\" to track endermelon farms running.", category = {COMMANDS, NAFTALLUVIA})
     public static boolean commandEndermelon = true;

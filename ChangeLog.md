@@ -4,6 +4,11 @@ Carpet 1.12 with [RNY](https://github.com/Rainyaphthyl)'s Addition
 
 ## Rules
 
+### Command Switches
+
+- `commandPortal`, default: `true`
+- `commandLifeTime`, default: `true`
+
 ## Tools and Commands
 
 ### Spawn Tracker Restarting
@@ -20,6 +25,13 @@ Original links:
 - [Pull Request](https://github.com/gnembon/carpetmod112/pull/156)
 - [Document](https://github.com/TISUnion/Carpet-TIS-Addition/blob/master/docs/commands.md#lifetime)
 
+### Portal Calculator
+
+Searches and calculates the Nether Portal (pattern) position mapped from the given `<x> <y> <z>` coordinates.
+
+- Partial Command currently available: `/portal from point <x> <y> <z> [dimension]`
+- *Full Command (WIP): "/portal (from|to) (point|range) <x> <y> <z> [dimension]"*
+
 ## Features and Details
 
 ### Smarter Logger Switch
@@ -29,3 +41,9 @@ If the player is subscribed to another option of the log, it switches to the int
 ### Default Logger Crash Fix
 
 Fixed the `/log` crash after `/log <logName>` with default options (e.g. `/log items` with `brief` by default).
+
+### Silent Chunk Loader
+
+The command `/portal` only reads data from the chunks currently generated, without making other chunks generated. The generated chunks will be loads silently, without being made active.
+
+It helps to keep the game VANILLA and can be used for other carpet commands.
