@@ -40,7 +40,7 @@ If the player is subscribed to another option of the log, it switches to the int
 
 ### Default Logger Crash Fix
 
-Fixed the `/log` crash after `/log <logName>` with default options (e.g. `/log items` with `brief` by default).
+Fixed the crash of `/log` after `/log <logName>` with default options (e.g. `/log items` with `brief` by default).
 
 ### Silent Chunk Loader
 
