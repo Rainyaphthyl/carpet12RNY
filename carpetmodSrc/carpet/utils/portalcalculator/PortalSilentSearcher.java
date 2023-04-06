@@ -6,6 +6,7 @@ import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.init.Blocks;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.math.MathHelper;
@@ -71,7 +72,9 @@ public class PortalSilentSearcher implements Runnable
         return successful;
     }
 
-    // TODO: 2023/3/28,0028 Finish it before next release
+    /**
+     * {@link net.minecraft.block.BlockPortal#createPatternHelper}
+     */
     @Nullable
     private PortalPattern getParentPattern(BlockPos blockPos)
     {
@@ -80,11 +83,16 @@ public class PortalSilentSearcher implements Runnable
         {
             return null;
         }
-        return null;
+        MutablePortalPattern pattern = new MutablePortalPattern(this, blockPos, EnumFacing.Axis.X);
+        if (!pattern.isValid())
+        {
+            pattern = new MutablePortalPattern(this, blockPos, EnumFacing.Axis.Z);
+        }
+        return pattern.isValid() ? pattern.toImmutable() : new PortalPattern(blockPos, blockPos);
     }
 
     @Nullable
-    private IBlockState getBlockStateSilent(BlockPos pos)
+    public IBlockState getBlockStateSilent(BlockPos pos)
     {
         try
         {
@@ -97,7 +105,7 @@ public class PortalSilentSearcher implements Runnable
     }
 
     @Nonnull
-    private IBlockState getBlockStateSilent(int x, int y, int z) throws NullPointerException
+    public IBlockState getBlockStateSilent(int x, int y, int z) throws NullPointerException
     {
         if (y < 0 || y >= 256)
         {

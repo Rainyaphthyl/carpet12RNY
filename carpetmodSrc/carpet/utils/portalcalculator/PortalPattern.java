@@ -12,8 +12,10 @@ public class PortalPattern
     public final int xMax;
     public final int yMax;
     public final int zMax;
+    private final int height;
+    private final int width;
 
-    public PortalPattern(int x1, int y1, int z1, int x2, int y2, int z2)
+    private PortalPattern(int x1, int y1, int z1, int x2, int y2, int z2)
     {
         if (x1 < x2)
         {
@@ -45,12 +47,29 @@ public class PortalPattern
             zMin = z2;
             zMax = z1;
         }
+        height = yMax - yMin + 1;
+        int widthTemp = xMax - xMin + 1;
+        if (widthTemp < 2 || widthTemp > 21 || height < 3 || height > 21)
+        {
+            widthTemp = zMax - zMin + 1;
+        }
+        width = widthTemp;
     }
 
     @ParametersAreNonnullByDefault
     public PortalPattern(BlockPos corner1, BlockPos corner2)
     {
-        this(corner1.getX(), corner1.getY(), corner1.getZ(), corner2.getX(), corner1.getY(), corner2.getZ());
+        this(corner1.getX(), corner1.getY(), corner1.getZ(), corner2.getX(), corner2.getY(), corner2.getZ());
+    }
+
+    public int getHeight()
+    {
+        return height;
+    }
+
+    public int getWidth()
+    {
+        return width;
     }
 
     @Override
