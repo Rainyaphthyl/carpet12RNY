@@ -8,7 +8,9 @@ public class GameUtil
 {
     public static long getGameTime()
     {
-        return CarpetServer.minecraft_server.getWorld(0).getWorldTime();
+        //return CarpetServer.minecraft_server.getWorld(0).getWorldTime();
+        // carpet12RNY modification
+        return CarpetServer.minecraft_server.getTickCounter();
     }
 
     public static boolean isOnServerThread()
@@ -20,7 +22,7 @@ public class GameUtil
     {
         if (entity instanceof EntityLiving)
         {
-            EntityLiving entityLiving = (EntityLiving)entity;
+            EntityLiving entityLiving = (EntityLiving) entity;
             return !entityLiving.isNoDespawnRequired();
         }
         return false;
