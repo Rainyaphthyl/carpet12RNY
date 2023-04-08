@@ -1,5 +1,23 @@
 package carpet;
 
+import carpet.carpetclient.CarpetClientChunkLogger;
+import carpet.carpetclient.CarpetClientRuleChanger;
+import carpet.helpers.RandomTickOptimization;
+import carpet.helpers.ScoreboardDelta;
+import carpet.patches.BlockWool;
+import carpet.utils.TickingArea;
+import carpet.worldedit.WorldEditBridge;
+import net.minecraft.block.BlockFalling;
+import net.minecraft.init.Blocks;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.dedicated.DedicatedServer;
+import net.minecraft.util.math.ChunkPos;
+import net.minecraft.world.World;
+import net.minecraft.world.WorldServer;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import java.io.*;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -8,36 +26,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.*;
-
-import java.io.File;
-import java.io.FileWriter;
-import java.io.FileReader;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.FileNotFoundException;
 import java.util.stream.Collectors;
-
-import carpet.carpetclient.CarpetClientChunkLogger;
-import carpet.carpetclient.CarpetClientRuleChanger;
-import carpet.helpers.RandomTickOptimization;
-import carpet.helpers.ScoreboardDelta;
-import carpet.logging.logHelpers.RNGMonitor;
-import carpet.patches.BlockWool;
-import carpet.utils.TickingArea;
-import carpet.worldedit.WorldEditBridge;
-import net.minecraft.block.BlockFalling;
-import net.minecraft.command.NumberInvalidException;
-import net.minecraft.init.Blocks;
-import net.minecraft.server.dedicated.DedicatedServer;
-import net.minecraft.util.math.AxisAlignedBB;
-import net.minecraft.util.math.ChunkPos;
-import net.minecraft.world.NextTickListEntry;
-import net.minecraft.world.World;
-import net.minecraft.world.WorldServer;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
-import net.minecraft.server.MinecraftServer;
 
 import static carpet.CarpetSettings.RuleCategory.*;
 
