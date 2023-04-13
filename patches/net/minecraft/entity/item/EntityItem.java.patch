@@ -75,7 +75,7 @@
              {
 +                // ----- Carpet Start ----- //
 +                if (LoggerRegistry.__items && logHelper != null) {
-+                    logHelper.onFinish("Despawn Timer");
++                    logHelper.onFinish("Despawn Timer", this);
 +                }
 +                this.recordRemoval(LiteralRemovalReason.DESPAWN_TIMEOUT);  // CM lifetime tracker
 +                // ----- Carpet End ----- //
@@ -157,7 +157,7 @@
 +                }
 +                // ----- Carpet Start ----- //
 +                if (LoggerRegistry.__items && logHelper != null) {
-+                    logHelper.onFinish(p_70097_1_.func_76355_l());
++                    logHelper.onFinish(p_70097_1_.func_76355_l(), this);
 +                }
 +                this.setDeathDamageSource(p_70097_1_);  // CM lifetime tracker
 +                // ----- Carpet End ----- //
