@@ -1049,8 +1049,39 @@ public class CarpetSettings
     })
     public static boolean commandLifeTime = true;
 
-    @Rule(desc = "Item Logger will not report the items killed by cactus when the Cactus Counter is on, etc.", category = {CREATIVE, NAFTALLUVIA})
+    @Rule(desc = "Item Logger will not report the items killed by cactus when the Cactus Counter is on, etc.",
+            category = {CREATIVE, NAFTALLUVIA})
     public static boolean itemLoggerIgnoringCounters = true;
+
+    // TISCM ported from https://github.com/Fallen-Breath/carpetmod112
+    public static final double VANILLA_BLOCK_EVENT_PACKET_RANGE = 64.0D;
+    @Rule(
+            desc = "Set the range where player will receive a block event packet after a block event fires successfully",
+            validator = "validateNonNegative",
+            options = {"0", "16", "64", "128"},
+            category = {CREATIVE, NAFTALLUVIA}
+    )
+    public static double blockEventPacketRange = VANILLA_BLOCK_EVENT_PACKET_RANGE;
+
+    // TISCM ported from https://github.com/Fallen-Breath/carpetmod112
+    @Rule(
+            desc = "The maximum horizontal chebyshev distance (in chunks) for the server to sync entities information to the client",
+            options = {"-1", "16", "64"},
+            category = {CREATIVE, NAFTALLUVIA}
+    )
+    public static int entityTrackerDistance = -1;
+
+    // TISCM ported from https://github.com/Fallen-Breath/carpetmod112
+    public static final double VANILLA_EXPLOSION_PACKET_RANGE = 64.0D;  // sqrt(4096)
+
+    // TISCM ported from https://github.com/Fallen-Breath/carpetmod112
+    @Rule(
+            desc = "Set the range where player will receive an explosion packet when an explosion happens",
+            validator = "validateNonNegative",
+            options = {"0", "16", "64", "128", "2048"},
+            category = {CREATIVE, NAFTALLUVIA}
+    )
+    public static double explosionPacketRange = VANILLA_EXPLOSION_PACKET_RANGE;
 
     // ===== API ===== //
 
@@ -1132,6 +1163,10 @@ public class CarpetSettings
     }
 
     private static boolean validateNonNegative(int value) {
+        return value >= 0;
+    }
+
+    private static boolean validateNonNegative(double value) {
         return value >= 0;
     }
 
