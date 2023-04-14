@@ -317,7 +317,7 @@ public class CarpetSettings
     public static boolean redstoneMultimeterLegacy = false;
 
     @Rule(desc = "Enables integration with the new Redstone Multimeter mod", category = {CREATIVE, SURVIVAL, COMMANDS}, extra = {
-    		"To use, the new Redstone Multimeter mod must be installed client-side as well"
+            "To use, the new Redstone Multimeter mod must be installed client-side as well"
     })
     public static boolean redstoneMultimeter = false;
 
@@ -1048,6 +1048,9 @@ public class CarpetSettings
             "rule optimizedDespawnRange is suggested to be enabled to avoid 0gt immediately despawn spamming"
     })
     public static boolean commandLifeTime = true;
+
+    @Rule(desc = "Item Logger will not report the items killed by cactus when the Cactus Counter is on, etc.", category = {CREATIVE, NAFTALLUVIA})
+    public static boolean itemLoggerIgnoringCounters = true;
 
     // ===== API ===== //
 

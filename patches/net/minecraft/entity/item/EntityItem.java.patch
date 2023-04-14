@@ -147,16 +147,18 @@
          return this.field_70171_ac;
      }
  
-@@ -295,6 +361,16 @@
+@@ -295,6 +361,18 @@
  
              if (this.field_70291_e <= 0)
              {
++                // carpet12RNY not logging items in counters
++                boolean cactusCounting = CarpetSettings.cactusCounter && p_70097_1_ == DamageSource.field_76367_g;
 +                // Add cactus counter CARPET-XCOM
-+                if(CarpetSettings.cactusCounter && p_70097_1_ == DamageSource.field_76367_g){
++                if(cactusCounting){
 +                    HopperCounter.cactus.add(field_70170_p.func_73046_m(), func_92059_d());
 +                }
 +                // ----- Carpet Start ----- //
-+                if (LoggerRegistry.__items && logHelper != null) {
++                if (LoggerRegistry.__items && logHelper != null && !(cactusCounting && CarpetSettings.itemLoggerIgnoringCounters)) {
 +                    logHelper.onFinish(p_70097_1_.func_76355_l(), this);
 +                }
 +                this.setDeathDamageSource(p_70097_1_);  // CM lifetime tracker
@@ -164,7 +166,7 @@
                  this.func_70106_y();
              }
  
-@@ -366,18 +442,33 @@
+@@ -366,18 +444,33 @@
              Item item = itemstack.func_77973_b();
              int i = itemstack.func_190916_E();
  
@@ -199,7 +201,7 @@
          }
      }
  
-@@ -470,4 +561,9 @@
+@@ -470,4 +563,9 @@
          this.func_174871_r();
          this.field_70292_b = 5999;
      }

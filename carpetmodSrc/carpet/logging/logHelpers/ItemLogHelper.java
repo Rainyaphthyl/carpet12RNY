@@ -1,6 +1,5 @@
 package carpet.logging.logHelpers;
 
-import carpet.CarpetSettings;
 import carpet.helpers.lifetime.utils.TextUtil;
 import carpet.logging.Logger;
 import carpet.logging.LoggerRegistry;
@@ -44,9 +43,6 @@ public class ItemLogHelper {
     private void sendUpdateLogs(boolean finished, String type, EntityItem entityIn) {
         logger.logNoCommand((option) -> {
             List<ITextComponent> comp = new ArrayList<>();
-            if (option == null || "minimal".equals(option) && CarpetSettings.cactusCounter && "cactus".equalsIgnoreCase(type)) {
-                return null;
-            }
             int age = entityIn.getAge();
             ItemStack stack = entityIn.getItem();
             String name = stack.getDisplayName();
@@ -60,7 +56,6 @@ public class ItemLogHelper {
                 idMetaText = String.format("#%04d", id);
             }
             switch (option) {
-                case "minimal":
                 case "brief":
                     Vec3d p = new Vec3d(0, 0, 0);
                     if (positions.size() > 0) {
@@ -68,14 +63,9 @@ public class ItemLogHelper {
                     } else {
                         p = entityIn.getPositionVector();
                     }
-                    //comp.add(Messenger.m(null,
-                    //        String.format("w --%s-- t: %d  pos: ", type, age),
-                    //        Messenger.dblt("w", p.x, p.y, p.z),
-                    //        String.format("%s  %s (#%04d)", "q", name, id),
-                    //        String.format("w  * %d", count)));
                     comp.add(Messenger.m(null,
                             String.format("w --%s-- t: %d  pos: ", type, age),
-                            Messenger.dblt("w", p.x, p.y, p.z), " ",
+                            Messenger.dblt("w", p.x, p.y, p.z), "w  ",
                             TextUtil.getFancyText("q",
                                     Messenger.s(null, idMetaText),
                                     Messenger.s(null, String.format("%s (%s)", name, idMetaText)),
@@ -85,10 +75,7 @@ public class ItemLogHelper {
                 case "full":
                     comp.add(Messenger.m(null,
                             String.format("w ----%s---- t: %d ", type, age),
-                            TextUtil.getFancyText("q",
-                                    Messenger.s(null, idMetaText),
-                                    Messenger.s(null, String.format("%s (%s)", name, idMetaText)),
-                                    null),
+                            String.format("q %s (%s)", name, idMetaText),
                             String.format("w  *%d", count)));
                     for (int i = sentLogs; i < positions.size(); i++) {
                         sentLogs++;

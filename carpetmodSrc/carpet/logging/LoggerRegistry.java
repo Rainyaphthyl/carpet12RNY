@@ -57,7 +57,7 @@ public class LoggerRegistry {
         registerLogger("tileTickLimit", new Logger(server, "tileTickLimit", null, null, LogHandler.CHAT));
         registerLogger("portalCaching", new Logger(server, "portalCaching", "brief", new String[]{"brief", "full"}, LogHandler.CHAT));
         registerLogger("instantComparators", new Logger(server, "instantComparators", "all", new String[]{"all", "tileTick", "buggy"}, LogHandler.CHAT));
-        registerLogger("items", new Logger(server, "items", "brief", new String[]{"minimal", "brief", "full"}, LogHandler.CHAT));
+        registerLogger("items", new Logger(server, "items", "brief", new String[]{"brief", "full"}, LogHandler.CHAT));
         registerLogger("rng", new Logger(server, "rng", null, null, LogHandler.CHAT));
         registerLogger("explosions", new Logger(server, "explosions", "compact", new String[]{"brief", "full", "compact"}, LogHandler.CHAT));
 
