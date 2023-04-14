@@ -6,11 +6,6 @@ import net.minecraft.util.text.ITextComponent;
 import java.util.HashMap;
 import java.util.Map;
 
-import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.util.text.ITextComponent;
-import java.util.HashMap;
-import java.util.Map;
-
 public class CommandLogHandler extends LogHandler
 {
 
