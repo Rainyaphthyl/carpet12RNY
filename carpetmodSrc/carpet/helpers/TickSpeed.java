@@ -1,6 +1,7 @@
 package carpet.helpers;
 
 import carpet.CarpetServer;
+import carpet.CarpetSettings;
 import carpet.pubsub.PubSubInfoProvider;
 import carpet.utils.Messenger;
 import net.minecraft.command.ICommandManager;
@@ -29,8 +30,8 @@ public class TickSpeed
     private static PubSubInfoProvider<Float> PUBSUB_TICKRATE = new PubSubInfoProvider<>(CarpetServer.PUBSUB, "carpet.tick.rate", 0, () -> tickrate);
 
     static {
-        new PubSubInfoProvider<>(CarpetServer.PUBSUB, "minecraft.performance.mspt", 20, TickSpeed::getMSPT);
-        new PubSubInfoProvider<>(CarpetServer.PUBSUB, "minecraft.performance.tps", 20, TickSpeed::getTPS);
+        new PubSubInfoProvider<>(CarpetServer.PUBSUB, "minecraft.performance.mspt", CarpetSettings.HUDUpdateInterval, TickSpeed::getMSPT);
+        new PubSubInfoProvider<>(CarpetServer.PUBSUB, "minecraft.performance.tps", CarpetSettings.HUDUpdateInterval, TickSpeed::getTPS);
     }
 
     public static void reset_player_active_timeout()

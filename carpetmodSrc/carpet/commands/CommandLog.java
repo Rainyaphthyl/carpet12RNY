@@ -1,20 +1,9 @@
 package carpet.commands;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import carpet.logging.LoggerOptions;
-import org.apache.commons.lang3.ArrayUtils;
-
 import carpet.CarpetSettings;
 import carpet.logging.LogHandler;
 import carpet.logging.Logger;
+import carpet.logging.LoggerOptions;
 import carpet.logging.LoggerRegistry;
 import carpet.utils.Messenger;
 import net.minecraft.command.CommandException;
@@ -23,8 +12,12 @@ import net.minecraft.command.WrongUsageException;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.math.BlockPos;
+import org.apache.commons.lang3.ArrayUtils;
 
-public class CommandLog extends CommandCarpetBase {
+import java.util.*;
+
+public class CommandLog extends CommandCarpetBase
+{
 
     private final String USAGE = "/log (interactive menu) OR /log <logName> [?option] [player] [handler ...] OR /log <logName> clear [player] OR /log defaults (interactive menu) OR /log setDefault <logName> [?option] [handler ...] OR /log removeDefault <logName>";
 
@@ -45,7 +38,7 @@ public class CommandLog extends CommandCarpetBase {
         EntityPlayer player = null;
         if (sender instanceof EntityPlayer)
         {
-            player = (EntityPlayer)sender;
+            player = (EntityPlayer) sender;
         }
 
         if (args.length == 0)
@@ -63,13 +56,13 @@ public class CommandLog extends CommandCarpetBase {
             Collections.sort(all_logs);
             Messenger.m(player, "w _____________________");
             Messenger.m(player, "w Available logging options:");
-            for (String lname: all_logs)
+            for (String lname : all_logs)
             {
                 List<Object> comp = new ArrayList<>();
-                String color = subs.containsKey(lname)?"w":"g";
-                comp.add("w  - "+lname+": ");
+                String color = subs.containsKey(lname) ? "w" : "g";
+                comp.add("w  - " + lname + ": ");
                 Logger logger = LoggerRegistry.getLogger(lname);
-                String [] options = logger.getOptions();
+                String[] options = logger.getOptions();
                 if (options == null)
                 {
                     if (subs.containsKey(lname))
@@ -103,9 +96,9 @@ public class CommandLog extends CommandCarpetBase {
                 {
                     comp.add("nb [X]");
                     comp.add("^w Click to toggle subscription");
-                    comp.add("!/log "+lname);
+                    comp.add("!/log " + lname);
                 }
-                Messenger.m(player,comp.toArray(new Object[0]));
+                Messenger.m(player, comp.toArray(new Object[0]));
             }
             return;
         }
@@ -138,13 +131,13 @@ public class CommandLog extends CommandCarpetBase {
 
             Messenger.m(player, "w _____________________");
             Messenger.m(player, "w Available logging options:");
-            for (String lname: all_logs)
+            for (String lname : all_logs)
             {
                 List<Object> comp = new ArrayList<>();
-                String color = subs.containsKey(lname)?"w":"g";
-                comp.add("w  - "+lname+": ");
+                String color = subs.containsKey(lname) ? "w" : "g";
+                comp.add("w  - " + lname + ": ");
                 Logger logger = LoggerRegistry.getLogger(lname);
-                String [] options = logger.getOptions();
+                String[] options = logger.getOptions();
                 if (options == null)
                 {
                     if (subs.containsKey(lname))
@@ -253,7 +246,7 @@ public class CommandLog extends CommandCarpetBase {
                     throw new CommandException("Invalid handler");
                 }
             }
-            boolean subscribed = true;
+            boolean subscribed;
             if (args.length >= 2 && "clear".equalsIgnoreCase(args[1]))
             {
                 LoggerRegistry.unsubscribePlayer(server, player.getName(), logger.getLogName());
@@ -265,11 +258,11 @@ public class CommandLog extends CommandCarpetBase {
             }
             else
             {
-                LoggerRegistry.subscribePlayer(server, player.getName(), logger.getLogName(), option, handler);
+                subscribed = LoggerRegistry.switchPlayerSubscription(server, player.getName(), logger.getLogName(), option, handler);
             }
             if (subscribed)
             {
-                Messenger.m(player, "gi Subscribed to " + logger.getLogName() + ".");
+                Messenger.m(player, String.format("gi Subscribed to %s%s.", logger.getLogName(), option == null ? "" : String.format(" (%s)", option)));
             }
             else
             {

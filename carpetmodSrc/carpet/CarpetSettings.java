@@ -25,6 +25,10 @@ import carpet.patches.BlockWool;
 import carpet.utils.TickingArea;
 import carpet.worldedit.WorldEditBridge;
 import net.minecraft.block.BlockFalling;
+import net.minecraft.init.Blocks;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.dedicated.DedicatedServer;
+import net.minecraft.util.math.ChunkPos;
 import net.minecraft.command.NumberInvalidException;
 import net.minecraft.init.Blocks;
 import net.minecraft.server.dedicated.DedicatedServer;
@@ -36,6 +40,16 @@ import net.minecraft.world.WorldServer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.*;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.util.*;
+import java.util.stream.Collectors;
 import net.minecraft.server.MinecraftServer;
 
 import static carpet.CarpetSettings.RuleCategory.*;
@@ -45,7 +59,29 @@ public class CarpetSettings
     public static boolean locked = false;
 
     // TODO: replace these constants at build time
-    public static final String carpetVersion = "v22_03_22";
+    /**
+     * format of version in Carpet-Addition-Naftalluvia(RNY):
+     * <p>
+     *     (release) "RNY-v{@code <Vx>.<Vy>.<Vz>}-{@code <description | title>}"<br>
+     *     (example) "RNY-v1.0.0-initial"
+     * </p>
+     * <p>
+     *     (build) "RNY-build-{@code <count>}"<br>
+     *     (example) "RNY-build-1437"
+     * </p>
+     * <p>
+     *     (dev) "RNY-dev-{@code <date>}-{@code <time>}"<br>
+     *     (example) "RNY-dev-20221223-0329"
+     * </p>
+     * <p>
+     *     (undefined) "RNY-current-undefined"
+     * </p>
+     * <p>
+     *     File Name: "carpet12{@code <carpetVersion>}.zip"<br>
+     *     version name starts with "RNY"
+     * </p>
+     */
+    public static final String carpetVersion = "RNY-dev-20230407-0119";
     public static final String minecraftVersion = "1.12.2";
     public static final String mcpMappings = "39-1.12";
 
@@ -305,7 +341,7 @@ public class CarpetSettings
     public static boolean redstoneMultimeterLegacy = false;
 
     @Rule(desc = "Enables integration with the new Redstone Multimeter mod", category = {CREATIVE, SURVIVAL, COMMANDS}, extra = {
-    		"To use, the new Redstone Multimeter mod must be installed client-side as well"
+            "To use, the new Redstone Multimeter mod must be installed client-side as well"
     })
     public static boolean redstoneMultimeter = false;
 
@@ -1027,6 +1063,46 @@ public class CarpetSettings
     public static double explosionPacketRange = VANILLA_EXPLOSION_PACKET_RANGE;
 
     /////////////////////// TISCM ///////////////////////
+    // ===== Naftalluvia ===== //
+    // carpet-RNY-addition options and options ported from other forks
+
+    @Rule(desc = "Makes invulnerable crystals really invulnerable in creative mode, as if in survival.",
+            category = {CREATIVE, NAFTALLUVIA},
+            extra = "Otherwise, you may accidentally blow it up.")
+    public static boolean creativeInvulnerableCrystal = false;
+
+    @Rule(desc = "Enables command \"/portal\" to query and search portal maps.",
+            category = {COMMANDS, NAFTALLUVIA})
+    public static boolean commandPortal = true;
+
+    @Rule(desc = "Enables \"/endermelon\" to track endermelon farms running.", category = {COMMANDS, NAFTALLUVIA})
+    public static boolean commandEndermelon = true;
+
+    @Rule(desc = "The range of previous gameticks to track the world RNG seeds, applied for \"/log rngManip\"", options = {"0", "4", "8", "20", "40", "80"}, category = {CREATIVE, SURVIVAL, NAFTALLUVIA}, validator = "validateRNGTrackingRange", extra = "Set to 0 to use the value of HUDUpdateInterval")
+    public static int rngTrackingRange = 0;
+
+    public static boolean validateRNGTrackingRange(int value) {
+        return value >= 0 && value <= 1800;
+    }
+
+    // ported from https://github.com/CrazyHPi/carpetmod112
+    @Rule(desc = "HUD update interval", category = {CREATIVE, SURVIVAL, NAFTALLUVIA}, options = {"1", "5", "20", "100"}, validator = "validateHUDUpdateInterval")
+    public static int HUDUpdateInterval = 20;
+
+    // ported from https://github.com/CrazyHPi/carpetmod112
+    public static boolean validateHUDUpdateInterval(int value) {
+        return value >= 1 && value <= 2000;
+    }
+
+    // ported from https://github.com/Fallen-Breath/carpetmod112
+    // or https://github.com/gnembon/carpetmod112/pull/156
+    @Rule(desc = "Enables /lifetime for tracking entities lifetime etc.", category = {COMMANDS, NAFTALLUVIA}, extra = {
+            "rule optimizedDespawnRange is suggested to be enabled to avoid 0gt immediately despawn spamming"
+    })
+    public static boolean commandLifeTime = true;
+
+    @Rule(desc = "Item Logger will not report the items killed by cactus when the Cactus Counter is on, etc.", category = {CREATIVE, NAFTALLUVIA})
+    public static boolean itemLoggerIgnoringCounters = true;
 
     // ===== API ===== //
 
@@ -1100,7 +1176,7 @@ public class CarpetSettings
     }
 
     public static enum RuleCategory {
-        TNT, FIX, SURVIVAL, CREATIVE, EXPERIMENTAL, OPTIMIZATIONS, FEATURE, COMMANDS
+        TNT, FIX, SURVIVAL, CREATIVE, EXPERIMENTAL, OPTIMIZATIONS, FEATURE, COMMANDS, NAFTALLUVIA
     }
 
     private static boolean validatePositive(int value) {

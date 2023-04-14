@@ -1,0 +1,10 @@
+--- ../src-base/minecraft/net/minecraft/world/chunk/storage/IChunkLoader.java
++++ ../src-work/minecraft/net/minecraft/world/chunk/storage/IChunkLoader.java
+@@ -20,4 +20,7 @@
+     void func_75818_b();
+ 
+     boolean func_191063_a(int p_191063_1_, int p_191063_2_);
++
++    @Nullable
++    Chunk loadChunk_silent(World worldIn, int x, int z) throws IOException;
+ }

@@ -1,24 +1,23 @@
 --- ../src-base/minecraft/net/minecraft/world/chunk/storage/AnvilChunkLoader.java
 +++ ../src-work/minecraft/net/minecraft/world/chunk/storage/AnvilChunkLoader.java
-@@ -1,14 +1,14 @@
+@@ -1,14 +1,13 @@
  package net.minecraft.world.chunk.storage;
  
 -import com.google.common.collect.Maps;
-+import com.google.common.collect.Maps; //CM unused import
++import carpet.helpers.lifetime.spawning.LiteralSpawningReason;
++
  import java.io.DataInputStream;
  import java.io.DataOutputStream;
  import java.io.File;
  import java.io.IOException;
 -import java.util.Collections;
-+import java.util.Collections; //CM unused import
  import java.util.List;
  import java.util.Map;
 -import java.util.Set;
-+import java.util.Set; //CM unused import
  import javax.annotation.Nullable;
  import net.minecraft.block.Block;
  import net.minecraft.entity.Entity;
-@@ -34,12 +34,62 @@
+@@ -34,12 +33,62 @@
  import org.apache.logging.log4j.LogManager;
  import org.apache.logging.log4j.Logger;
  
@@ -84,7 +83,7 @@
      private final DataFixer field_193416_e;
      private boolean field_183014_e;
  
-@@ -53,7 +103,8 @@
+@@ -53,7 +102,8 @@
      public Chunk func_75815_a(World p_75815_1_, int p_75815_2_, int p_75815_3_) throws IOException
      {
          ChunkPos chunkpos = new ChunkPos(p_75815_2_, p_75815_3_);
@@ -94,7 +93,7 @@
  
          if (nbttagcompound == null)
          {
-@@ -73,7 +124,10 @@
+@@ -73,7 +123,10 @@
      public boolean func_191063_a(int p_191063_1_, int p_191063_2_)
      {
          ChunkPos chunkpos = new ChunkPos(p_191063_1_, p_191063_2_);
@@ -106,7 +105,7 @@
          return nbttagcompound != null ? true : RegionFileCache.func_191064_f(this.field_75825_d, p_191063_1_, p_191063_2_);
      }
  
-@@ -132,37 +186,63 @@
+@@ -132,37 +185,63 @@
  
      protected void func_75824_a(ChunkPos p_75824_1_, NBTTagCompound p_75824_2_)
      {
@@ -182,7 +181,7 @@
                      try
                      {
                          this.func_183013_b(chunkpos, nbttagcompound);
-@@ -171,17 +251,19 @@
+@@ -171,17 +250,19 @@
                      {
                          field_151505_a.error("Failed to save chunk", (Throwable)exception);
                      }
@@ -211,7 +210,7 @@
      }
  
      private void func_183013_b(ChunkPos p_183013_1_, NBTTagCompound p_183013_2_) throws IOException
-@@ -249,7 +331,8 @@
+@@ -249,7 +330,8 @@
          });
      }
  
@@ -221,7 +220,7 @@
      {
          p_75820_3_.func_74768_a("xPos", p_75820_1_.field_76635_g);
          p_75820_3_.func_74768_a("zPos", p_75820_1_.field_76647_h);
-@@ -295,6 +378,10 @@
+@@ -295,6 +377,10 @@
          }
  
          p_75820_3_.func_74782_a("Sections", nbttaglist);
@@ -232,7 +231,7 @@
          p_75820_3_.func_74773_a("Biomes", p_75820_1_.func_76605_m());
          p_75820_1_.func_177409_g(false);
          NBTTagList nbttaglist1 = new NBTTagList();
-@@ -383,6 +470,11 @@
+@@ -383,6 +469,11 @@
  
          chunk.func_76602_a(aextendedblockstorage);
  
@@ -244,3 +243,95 @@
          if (p_75823_2_.func_150297_b("Biomes", 7))
          {
              chunk.func_76616_a(p_75823_2_.func_74770_j("Biomes"));
+@@ -521,6 +612,10 @@
+ 
+     public static void func_186052_a(Entity p_186052_0_, World p_186052_1_)
+     {
++        // CM lifetime tracker
++        // this method is only used in MobSpawnerBaseLogic
++        p_186052_0_.recordSpawning(LiteralSpawningReason.SPAWNER);
++
+         if (p_186052_1_.func_72838_d(p_186052_0_) && p_186052_0_.func_184207_aI())
+         {
+             for (Entity entity : p_186052_0_.func_184188_bt())
+@@ -563,4 +658,80 @@
+             return entity;
+         }
+     }
++
++    // carpet12RNY Silent Chunk Reader
++    public Chunk loadChunk_silent(World worldIn, int x, int z) {
++        ChunkPos chunkpos = new ChunkPos(x, z);
++        //NBTTagCompound nbttagcompound = this.chunksToRemove.get(chunkpos);
++        NBTTagCompound nbttagcompound = reloadChunkFromRemoveQueues(chunkpos);  // new for MC-119971
++
++        return this.checkedReadChunkFromNBT_silent(worldIn, x, z, nbttagcompound);
++    }
++
++    // carpet12RNY Silent Chunk Reader
++    @Nullable
++    protected Chunk checkedReadChunkFromNBT_silent(World worldIn, int x, int z, NBTTagCompound compound) {
++        if (!compound.func_150297_b("Level", 10)) {
++            field_151505_a.error("Chunk file at {},{} is missing level data, skipping", Integer.valueOf(x), Integer.valueOf(z));
++            return null;
++        } else {
++            NBTTagCompound nbttagcompound = compound.func_74775_l("Level");
++
++            if (!nbttagcompound.func_150297_b("Sections", 9)) {
++                field_151505_a.error("Chunk file at {},{} is missing block data, skipping", Integer.valueOf(x), Integer.valueOf(z));
++                return null;
++            } else {
++                Chunk chunk = this.readChunkFromNBT_silent(worldIn, nbttagcompound);
++
++                if (!chunk.func_76600_a(x, z)) {
++                    field_151505_a.error("Chunk file at {},{} is in the wrong location; relocating. (Expected {}, {}, got {}, {})", x, z, x, z, chunk.field_76635_g, chunk.field_76647_h);
++                    nbttagcompound.func_74768_a("xPos", x);
++                    nbttagcompound.func_74768_a("zPos", z);
++                    chunk = this.readChunkFromNBT_silent(worldIn, nbttagcompound);
++                }
++
++                return chunk;
++            }
++        }
++    }
++
++    // carpet12RNY Silent Chunk Reader
++    private Chunk readChunkFromNBT_silent(World worldIn, NBTTagCompound compound) {
++        int i = compound.func_74762_e("xPos");
++        int j = compound.func_74762_e("zPos");
++        Chunk chunk = new Chunk(worldIn, i, j);
++        chunk.func_177420_a(compound.func_74759_k("HeightMap"));
++        chunk.func_177446_d(compound.func_74767_n("TerrainPopulated"));
++        chunk.func_177421_e(compound.func_74767_n("LightPopulated"));
++        chunk.func_177415_c(compound.func_74763_f("InhabitedTime"));
++        NBTTagList nbttaglist = compound.func_150295_c("Sections", 10);
++        ExtendedBlockStorage[] aextendedblockstorage = new ExtendedBlockStorage[16];
++        boolean flag = worldIn.field_73011_w.func_191066_m();
++
++        for (int l = 0; l < nbttaglist.func_74745_c(); ++l) {
++            NBTTagCompound nbttagcompound = nbttaglist.func_150305_b(l);
++            int i1 = nbttagcompound.func_74771_c("Y");
++            ExtendedBlockStorage extendedblockstorage = new ExtendedBlockStorage(i1 << 4, flag);
++            byte[] abyte = nbttagcompound.func_74770_j("Blocks");
++            NibbleArray nibblearray = new NibbleArray(nbttagcompound.func_74770_j("Data"));
++            NibbleArray nibblearray1 = nbttagcompound.func_150297_b("Add", 7) ? new NibbleArray(nbttagcompound.func_74770_j("Add")) : null;
++            extendedblockstorage.func_186049_g().func_186019_a(abyte, nibblearray, nibblearray1);
++            extendedblockstorage.func_76659_c(new NibbleArray(nbttagcompound.func_74770_j("BlockLight")));
++
++            if (flag) {
++                extendedblockstorage.func_76666_d(new NibbleArray(nbttagcompound.func_74770_j("SkyLight")));
++            }
++
++            extendedblockstorage.func_76672_e();
++            aextendedblockstorage[i1] = extendedblockstorage;
++        }
++
++        chunk.func_76602_a(aextendedblockstorage);
++
++        if (compound.func_150297_b("Biomes", 7)) {
++            chunk.func_76616_a(compound.func_74770_j("Biomes"));
++        }
++
++        return chunk;
++    }
+ }

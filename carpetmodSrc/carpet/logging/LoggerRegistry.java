@@ -12,24 +12,11 @@ import org.apache.logging.log4j.LogManager;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
 
-public class LoggerRegistry
-{
+public class LoggerRegistry {
     private static final org.apache.logging.log4j.Logger LOGGER = LogManager.getLogger();
-
-    // Map from logger names to loggers.
-    private static Map<String, Logger> loggerRegistry = new HashMap<>();
-
-    // List of default subscriptions
-    private static Map<String, LoggerOptions> defaultSubscriptions = new HashMap<>();
-    // Map from player names to the set of names of the logs that player is subscribed to.
-    private static Map<String, Map<String, LoggerOptions>> playerSubscriptions = new HashMap<>();
-
     //statics to quickly asses if its worth even to call each one
     public static boolean __tnt;
     public static boolean __projectiles;
@@ -53,27 +40,34 @@ public class LoggerRegistry
     public static boolean __invisDebug;
     public static boolean __carefulBreak;
     public static boolean __normalCameraVision;
+    public static boolean __rngManip;
+    // Map from logger names to loggers.
+    private static Map<String, Logger> loggerRegistry = new HashMap<>();
+    // List of default subscriptions
+    private static Map<String, LoggerOptions> defaultSubscriptions = new HashMap<>();
+    // Map from player names to the set of names of the logs that player is subscribed to.
+    private static Map<String, Map<String, LoggerOptions>> playerSubscriptions = new HashMap<>();
 
-    public static void initLoggers(MinecraftServer server)
-    {
+    public static void initLoggers(MinecraftServer server) {
         registerLogger("tnt", new Logger(server, "tnt", "brief", new String[]{"brief", "full"}, LogHandler.CHAT));
-        registerLogger("projectiles", new Logger(server, "projectiles", "full",  new String[]{"brief", "full"}, LogHandler.CHAT));
-        registerLogger("fallingBlocks",new Logger(server, "fallingBlocks", "brief", new String[]{"brief", "full"}, LogHandler.CHAT));
+        registerLogger("projectiles", new Logger(server, "projectiles", "full", new String[]{"brief", "full"}, LogHandler.CHAT));
+        registerLogger("fallingBlocks", new Logger(server, "fallingBlocks", "brief", new String[]{"brief", "full"}, LogHandler.CHAT));
         registerLogger("kills", new Logger(server, "kills", null, null, LogHandler.CHAT));
-        registerLogger("damage", new Logger(server, "damage", "all", new String[]{"all","players","me"}, LogHandler.CHAT));
+        registerLogger("damage", new Logger(server, "damage", "all", new String[]{"all", "players", "me"}, LogHandler.CHAT));
         registerLogger("weather", new Logger(server, "weather", null, null, LogHandler.CHAT));
         registerLogger("tileTickLimit", new Logger(server, "tileTickLimit", null, null, LogHandler.CHAT));
-        registerLogger("portalCaching",new Logger(server, "portalCaching", "brief", new String[]{"brief", "full"}, LogHandler.CHAT));
+        registerLogger("portalCaching", new Logger(server, "portalCaching", "brief", new String[]{"brief", "full"}, LogHandler.CHAT));
         registerLogger("instantComparators", new Logger(server, "instantComparators", "all", new String[]{"all", "tileTick", "buggy"}, LogHandler.CHAT));
-        registerLogger("items",new Logger(server, "items", "brief", new String[]{"brief", "full"}, LogHandler.CHAT));
+        registerLogger("items", new Logger(server, "items", "brief", new String[]{"brief", "full"}, LogHandler.CHAT));
         registerLogger("rng", new Logger(server, "rng", null, null, LogHandler.CHAT));
         registerLogger("explosions", new Logger(server, "explosions", "compact", new String[]{"brief", "full", "compact"}, LogHandler.CHAT));
 
         registerLogger("autosave", new Logger(server, "autosave", null, null, LogHandler.HUD));
         registerLogger("tps", new Logger(server, "tps", null, null, LogHandler.HUD));
         registerLogger("packets", new Logger(server, "packets", null, null, LogHandler.HUD));
-        registerLogger("counter",new Logger(server, "counter","white", new String[]{"all","cactus","white","orange","magenta","light_blue","yellow","lime","pink","gray","silver","cyan","purple","blue","brown","green","red","black"}, LogHandler.HUD));
-        registerLogger("mobcaps", new Logger(server, "mobcaps", "dynamic",new String[]{"dynamic", "overworld", "nether","end"}, LogHandler.HUD));
+        registerLogger("counter", new Logger(server, "counter", "white", new String[]{"all", "cactus", "white", "orange", "magenta", "light_blue", "yellow", "lime", "pink", "gray", "silver", "cyan", "purple", "blue", "brown", "green", "red", "black"}, LogHandler.HUD));
+        registerLogger("mobcaps", new Logger(server, "mobcaps", "dynamic", new String[]{"dynamic", "overworld", "nether", "end"}, LogHandler.HUD));
+        registerLogger("rngManip", new Logger(server, "rngManip", "raw", new String[]{"raw", "fortune", "mobSpawn", "ironFarm", "lightSuppress", "chunkTick", "farmer"}, LogHandler.HUD));
 
         registerDebugger("recipes", new Logger(server, "recipes", null, null, LogHandler.CHAT));
         registerDebugger("damageDebug", new Logger(server, "damageDebug", null, null, LogHandler.CHAT));
@@ -83,7 +77,9 @@ public class LoggerRegistry
         registerGeneric("normalCameraVision", new Logger(server, "normalCameraVision", null, null, LogHandler.CHAT));
     }
 
-    private static File getSaveFile(MinecraftServer server) { return server.getActiveAnvilConverter().getFile(server.getFolderName(), "loggerData.json"); }
+    private static File getSaveFile(MinecraftServer server) {
+        return server.getActiveAnvilConverter().getFile(server.getFolderName(), "loggerData.json");
+    }
 
     public static void readSaveFile(MinecraftServer server) {
         File logData = getSaveFile(server);
@@ -118,13 +114,9 @@ public class LoggerRegistry
 
                     playerSubscriptions.put(username, subs);
                 }
-            }
-            catch (IOException ioexception)
-            {
+            } catch (IOException ioexception) {
                 LOGGER.error("Couldn't read default logger file {}", logData, ioexception);
-            }
-            catch (JsonParseException jsonparseexception)
-            {
+            } catch (JsonParseException jsonparseexception) {
                 LOGGER.error("Couldn't parse default logger file {}", logData, jsonparseexception);
             }
         }
@@ -132,8 +124,7 @@ public class LoggerRegistry
 
     public static void writeConf(MinecraftServer server) {
         File logData = getSaveFile(server);
-        try
-        {
+        try {
             JsonObject root = new JsonObject();
 
             JsonArray defaultList = new JsonArray();
@@ -155,10 +146,8 @@ public class LoggerRegistry
             root.add("players", playerList);
 
             FileUtils.writeStringToFile(logData, root.toString(), Charsets.UTF_8);
-        }
-        catch (IOException ioexception)
-        {
-            LOGGER.error("Couldn't save stats", (Throwable)ioexception);
+        } catch (IOException ioexception) {
+            LOGGER.error("Couldn't save stats", (Throwable) ioexception);
         }
     }
 
@@ -166,17 +155,23 @@ public class LoggerRegistry
     /**
      * Gets the default subscriptions
      */
-    public static Map<String, LoggerOptions> getDefaultSubscriptions() { return defaultSubscriptions; }
+    public static Map<String, LoggerOptions> getDefaultSubscriptions() {
+        return defaultSubscriptions;
+    }
 
     /**
      * Gets the logger with the given name. Returns null if no such logger exists.
      */
-    public static Logger getLogger(String name) { return loggerRegistry.get(name); }
+    public static Logger getLogger(String name) {
+        return loggerRegistry.get(name);
+    }
 
     /**
      * Gets the set of logger names.
      */
-    public static String[] getLoggerNames(int filter) { return loggerRegistry.entrySet().stream().filter(s -> s.getValue().debuggerFilter(filter)).map(Map.Entry::getKey).toArray(String[]::new);}
+    public static String[] getLoggerNames(int filter) {
+        return loggerRegistry.entrySet().stream().filter(s -> s.getValue().debuggerFilter(filter)).map(Map.Entry::getKey).toArray(String[]::new);
+    }
 
     /**
      * Sets a log as a default log with the specified option and handler
@@ -218,7 +213,9 @@ public class LoggerRegistry
     /**
      * Checks if a player is actively subscribed to anything
      */
-    public static boolean hasSubscriptions(String playerName) { return playerSubscriptions.containsKey(playerName); }
+    public static boolean hasSubscriptions(String playerName) {
+        return playerSubscriptions.containsKey(playerName);
+    }
 
     /**
      * Get the set of logs the current player is subscribed to.
@@ -230,8 +227,7 @@ public class LoggerRegistry
     /**
      * Subscribes the player with name playerName to the log with name logName.
      */
-    public static boolean subscribePlayer(MinecraftServer server, String playerName, String logName, String option, LogHandler handler)
-    {
+    public static boolean subscribePlayer(MinecraftServer server, String playerName, String logName, String option, LogHandler handler) {
         if (!hasSubscriptions(playerName)) {
             playerSubscriptions.put(playerName, new HashMap<>(defaultSubscriptions));
         }
@@ -254,8 +250,7 @@ public class LoggerRegistry
     /**
      * Unsubscribes the player with name playerName from the log with name logName.
      */
-    public static boolean unsubscribePlayer(MinecraftServer server, String playerName, String logName)
-    {
+    public static boolean unsubscribePlayer(MinecraftServer server, String playerName, String logName) {
         if (!hasSubscriptions(playerName)) {
             playerSubscriptions.put(playerName, new HashMap<>(defaultSubscriptions));
         }
@@ -271,20 +266,28 @@ public class LoggerRegistry
     }
 
     /**
-     * If the player is not subscribed to the log, then subscribe them. Otherwise, unsubscribe them.
+     * If the player is not subscribed to the log, then subscribe them with the default option. Otherwise, unsubscribe them.
      */
-    public static boolean togglePlayerSubscription(MinecraftServer server, String playerName, String logName, LogHandler handler)
-    {
-        if (getPlayerSubscriptions(playerName).containsKey(logName))
-        {
+    public static boolean togglePlayerSubscription(MinecraftServer server, String playerName, String logName, LogHandler handler) {
+        if (getPlayerSubscriptions(playerName).containsKey(logName)) {
             unsubscribePlayer(server, playerName, logName);
             return false;
-        }
-        else
-        {
-            subscribePlayer(server, playerName, logName, null, handler);
+        } else {
+            subscribePlayer(server, playerName, logName, getLogger(logName).getDefault(), handler);
             return true;
         }
+    }
+
+    /**
+     * If the player is subscribed to another option, switch to the the new option.
+     *
+     * @param option the new option
+     */
+    public static boolean switchPlayerSubscription(MinecraftServer server, String playerName, String logName, String option, LogHandler handler) {
+        if (getPlayerSubscriptions(playerName).containsKey(logName)) {
+            unsubscribePlayer(server, playerName, logName);
+        }
+        return subscribePlayer(server, playerName, logName, option, handler);
     }
 
     /**
@@ -314,32 +317,27 @@ public class LoggerRegistry
         }
     }
 
-    protected static void setAccess(Logger logger)
-    {
+    protected static void setAccess(Logger logger) {
         String name = logger.getLogName();
         boolean value = logger.hasSubscribers();
-        try
-        {
-            Field f = LoggerRegistry.class.getDeclaredField("__"+name);
+        try {
+            Field f = LoggerRegistry.class.getDeclaredField("__" + name);
             f.setBoolean(null, value);
-        }
-        catch (IllegalAccessException e)
-        {
+        } catch (IllegalAccessException e) {
             CarpetSettings.LOG.error("Cannot change logger quick access field");
-        }
-        catch (NoSuchFieldException e)
-        {
+        } catch (NoSuchFieldException e) {
             CarpetSettings.LOG.error("Wrong logger name");
         }
     }
+
     /**
      * Called when the server starts. Creates the logs used by Carpet mod.
      */
-    private static void registerLogger(String name, Logger logger)
-    {
+    private static void registerLogger(String name, Logger logger) {
         loggerRegistry.put(name, logger);
         setAccess(logger);
     }
+
     /**
      * Used to register runtime debugging logger.
      */
@@ -354,8 +352,7 @@ public class LoggerRegistry
         registerLogger(recipes, recipes1.asGeneric());
     }
 
-    public static void playerConnected(EntityPlayer player)
-    {
+    public static void playerConnected(EntityPlayer player) {
         String playerName = player.getName();
 
         Map<String, LoggerOptions> subs = getPlayerSubscriptions(playerName);
@@ -367,8 +364,8 @@ public class LoggerRegistry
             subscribePlayer(playerName, option.logger, option.option, handler);
         }
     }
-    public static void playerDisconnected(EntityPlayer player)
-    {
+
+    public static void playerDisconnected(EntityPlayer player) {
         String playerName = player.getName();
 
         for (String logName : LoggerRegistry.getLoggerNames(0)) {
@@ -379,7 +376,7 @@ public class LoggerRegistry
     // ===== PRIVATE FUNCTIONS TO PREVENT CODE DUPLICATION ===== //
     private static void subscribePlayer(String playerName, String logName, String option, LogHandler handler) {
         carpet.logging.Logger log = LoggerRegistry.getLogger(logName);
-        if(log == null) return;
+        if (log == null) return;
 
         if (option == null)
             option = log.getDefault();
