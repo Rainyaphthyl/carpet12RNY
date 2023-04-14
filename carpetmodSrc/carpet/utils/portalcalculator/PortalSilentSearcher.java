@@ -136,7 +136,7 @@ public class PortalSilentSearcher implements Runnable
         {
             try
             {
-                chunk = provider.chunkLoader.loadChunk(world, x, z, true);
+                chunk = provider.chunkLoader.loadChunk_silent(world, x, z);
             }
             catch (IOException ignored)
             {

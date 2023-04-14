@@ -39,3 +39,7 @@ Merge the records with repeated positions in the `full` logger to avoid `Despawn
 [//]: # (- Displaying the total counting time;)
 
 [//]: # (- Marking items with colors.)
+
+## Codes
+
+Methods of silent chunk loading have been separated from the vanilla codes, reserving the vanilla method parameters.
