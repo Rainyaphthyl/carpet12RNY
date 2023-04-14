@@ -58,19 +58,17 @@ Displays the name, ID, metadata, and stacking size of the logged items.
 
 The option `minimal` of `log items` is removed, and replaced with the `itemLoggerIgnoringCounters` rule.
 
-Merge the records with repeated positions in the `full` logger to avoid `DespawnTimer` spamming.
+Merge the records with repeated positions in the `full` logger, to avoid `DespawnTimer` spamming.
 
-[//]: # (### Better Counter Report)
+### Better Counter Report
 
-[//]: # ()
+The `/counter` command uses better reporting format, (some of which ported from [fabric-carpet](https://github.com/gnembon/fabric-carpet)) with features:
 
-[//]: # (The `/counter` command uses better reporting format ported from [fabric-carpet]&#40;https://github.com/gnembon/fabric-carpet&#41;, with features:)
-
-[//]: # (- Displaying the total counting time;)
-
-[//]: # (- Marking items with colors.)
+- Displaying the total duration of item counting.
+- Displaying the total and average of all items.
+- Using bold or italic style on some important information.
 
 ## Miscellaneous
 
-1. Methods of silent chunk loading have been separated from the vanilla codes, reserving the vanilla method parameters. 
+1. Methods of silent chunk loading have been separated from the vanilla codes, reserving the vanilla method parameters.
 2. Color marks of default values can be displayed correctly on carpet rules with Double type.

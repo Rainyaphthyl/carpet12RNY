@@ -10,6 +10,8 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.text.ITextComponent;
 
+import javax.annotation.Nonnull;
+import javax.annotation.ParametersAreNonnullByDefault;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,6 +27,24 @@ public class ItemLogHelper {
         this.logger = LoggerRegistry.getLogger(logName);
         this.doLog = this.logger.hasSubscribers();
         sentLogs = 0;
+    }
+
+    @Nonnull
+    @ParametersAreNonnullByDefault
+    private static ITextComponent getDetailedRecord(Vec3d pos, Vec3d mot, int tick) {
+        return Messenger.m(null,
+                String.format("w tick: %d pos", tick),
+                Messenger.dblt("w", pos.x, pos.y, pos.z),
+                "w   mot", Messenger.dblt("w", mot.x, mot.y, mot.z),
+                Messenger.m(null, "w  [tp]", "/tp " + pos.x + " " + pos.y + " " + pos.z));
+    }
+
+    @Nonnull
+    @ParametersAreNonnullByDefault
+    private static ITextComponent getRepeatedReport(String itemName, String idMetaText, int itemCount, int logCount) {
+        return Messenger.m(null,
+                String.format("q %s (%s) *%d ", itemName, idMetaText, itemCount),
+                String.format("g ... %d repeated loggings ...", logCount));
     }
 
     public void onTick(double x, double y, double z, double motionX, double motionY, double motionZ) {
@@ -78,46 +98,37 @@ public class ItemLogHelper {
                             String.format("q %s (%s)", name, idMetaText),
                             String.format("w  *%d", count)));
                     Vec3d prevPos = null, prevMot = null;
-                    int repeatCount = 0;
-                    for (int i = sentLogs; i < positions.size(); i++) {
+                    int repeatCount = 1;
+                    if (positions.size() <= 0) {
+                        Vec3d pos = entityIn.getPositionVector();
+                        Vec3d mot = new Vec3d(entityIn.motionX, entityIn.motionY, entityIn.motionZ);
+                        comp.add(getDetailedRecord(pos, mot, 0));
+                    }
+                    for (int i = sentLogs, maxIndex = positions.size() - 1; i <= maxIndex; i++) {
                         sentLogs++;
                         Vec3d pos = positions.get(i);
                         Vec3d mot = motions.get(i);
                         if (prevPos != null && prevPos.equals(pos)) {
                             ++repeatCount;
                             // merge repeated loggings
-                            if (i == positions.size() - 1) {
-                                if (repeatCount > 0) {
-                                    if (repeatCount > 1) {
-                                        comp.add(Messenger.m(null,
-                                                String.format("g     ... %d repeated loggings ...", repeatCount + 1)));
+                            if (i == maxIndex) {
+                                if (repeatCount > 1) {
+                                    if (repeatCount > 2) {
+                                        comp.add(getRepeatedReport(name, idMetaText, count, repeatCount));
                                     }
-                                    comp.add(Messenger.m(null,
-                                            String.format("w tick: %d pos", i + 1),
-                                            Messenger.dblt("w", prevPos.x, prevPos.y, prevPos.z),
-                                            "w   mot", Messenger.dblt("w", prevMot.x, prevMot.y, prevMot.z),
-                                            Messenger.m(null, "w  [tp]", "/tp " + prevPos.x + " " + prevPos.y + " " + prevPos.z)));
-                                    repeatCount = 0;
+                                    comp.add(getDetailedRecord(prevPos, prevMot, i + 1));
+                                    repeatCount = 1;
                                 }
                             }
                         } else {
-                            if (repeatCount > 0) {
-                                if (repeatCount > 1) {
-                                    comp.add(Messenger.m(null,
-                                            String.format("g     %d repeated loggings ...", repeatCount + 1)));
+                            if (repeatCount > 1) {
+                                if (repeatCount > 2) {
+                                    comp.add(getRepeatedReport(name, idMetaText, count, repeatCount));
                                 }
-                                comp.add(Messenger.m(null,
-                                        String.format("w tick: %d pos", i),
-                                        Messenger.dblt("w", prevPos.x, prevPos.y, prevPos.z),
-                                        "w   mot", Messenger.dblt("w", prevMot.x, prevMot.y, prevMot.z),
-                                        Messenger.m(null, "w  [tp]", "/tp " + prevPos.x + " " + prevPos.y + " " + prevPos.z)));
-                                repeatCount = 0;
+                                comp.add(getDetailedRecord(prevPos, prevMot, i));
+                                repeatCount = 1;
                             }
-                            comp.add(Messenger.m(null,
-                                    String.format("w tick: %d pos", (i + 1)),
-                                    Messenger.dblt("w", pos.x, pos.y, pos.z),
-                                    "w   mot", Messenger.dblt("w", mot.x, mot.y, mot.z),
-                                    Messenger.m(null, "w  [tp]", "/tp " + pos.x + " " + pos.y + " " + pos.z)));
+                            comp.add(getDetailedRecord(pos, mot, i + 1));
                         }
                         prevPos = pos;
                         prevMot = mot;

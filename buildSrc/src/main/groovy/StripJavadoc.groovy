@@ -1,7 +1,7 @@
 
 class StripJavadoc extends FilterReader {
-	StripJavadoc() {
-	}
+//	StripJavadoc() {
+//	}
 	StripJavadoc(Reader reader) {
 		super(new BufferedReader(reader))
 	}
