@@ -1,22 +1,5 @@
 package carpet;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
-import java.util.*;
-
-import java.io.File;
-import java.io.FileWriter;
-import java.io.FileReader;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.FileNotFoundException;
-import java.util.stream.Collectors;
-
 import carpet.carpetclient.CarpetClientChunkLogger;
 import carpet.carpetclient.CarpetClientRuleChanger;
 import carpet.helpers.RandomTickOptimization;
@@ -29,12 +12,6 @@ import net.minecraft.init.Blocks;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.dedicated.DedicatedServer;
 import net.minecraft.util.math.ChunkPos;
-import net.minecraft.command.NumberInvalidException;
-import net.minecraft.init.Blocks;
-import net.minecraft.server.dedicated.DedicatedServer;
-import net.minecraft.util.math.AxisAlignedBB;
-import net.minecraft.util.math.ChunkPos;
-import net.minecraft.world.NextTickListEntry;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
 import org.apache.logging.log4j.LogManager;
@@ -50,7 +27,6 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.*;
 import java.util.stream.Collectors;
-import net.minecraft.server.MinecraftServer;
 
 import static carpet.CarpetSettings.RuleCategory.*;
 
@@ -1035,34 +1011,6 @@ public class CarpetSettings
     @Rule(desc = "Removes tnt applying velocity to other entities.", category = CREATIVE)
     public static boolean removeTNTVelocity = false;
 
-    /////////////////////// TISCM ///////////////////////
-
-    public static final double VANILLA_BLOCK_EVENT_PACKET_RANGE = 64.0D;
-    @Rule(
-            desc = "Set the range where player will receive a block event packet after a block event fires successfully",
-            validator = "validateNonNegative",
-            options = {"0", "16", "64", "128"},
-            category = CREATIVE
-    )
-    public static double blockEventPacketRange = VANILLA_BLOCK_EVENT_PACKET_RANGE;
-
-    @Rule(
-            desc = "The maximum horizontal chebyshev distance (in chunks) for the server to sync entities information to the client",
-            options = {"-1", "16", "64"},
-            category = {CREATIVE}
-    )
-    public static int entityTrackerDistance = -1;
-
-    public static final double VANILLA_EXPLOSION_PACKET_RANGE = 64.0D;  // sqrt(4096)
-    @Rule(
-            desc = "Set the range where player will receive an explosion packet when an explosion happens",
-            validator = "validateNonNegative",
-            options = {"0", "16", "64", "128", "2048"},
-            category = CREATIVE
-    )
-    public static double explosionPacketRange = VANILLA_EXPLOSION_PACKET_RANGE;
-
-    /////////////////////// TISCM ///////////////////////
     // ===== Naftalluvia ===== //
     // carpet-RNY-addition options and options ported from other forks
 
@@ -1101,8 +1049,39 @@ public class CarpetSettings
     })
     public static boolean commandLifeTime = true;
 
-    @Rule(desc = "Item Logger will not report the items killed by cactus when the Cactus Counter is on, etc.", category = {CREATIVE, NAFTALLUVIA})
+    @Rule(desc = "Item Logger will not report the items killed by cactus when the Cactus Counter is on, etc.",
+            category = {CREATIVE, NAFTALLUVIA})
     public static boolean itemLoggerIgnoringCounters = true;
+
+    // TISCM ported from https://github.com/Fallen-Breath/carpetmod112
+    public static final double VANILLA_BLOCK_EVENT_PACKET_RANGE = 64.0D;
+    @Rule(
+            desc = "Set the range where player will receive a block event packet after a block event fires successfully",
+            validator = "validateNonNegative",
+            options = {"0", "16", "64", "128"},
+            category = {CREATIVE, NAFTALLUVIA}
+    )
+    public static double blockEventPacketRange = VANILLA_BLOCK_EVENT_PACKET_RANGE;
+
+    // TISCM ported from https://github.com/Fallen-Breath/carpetmod112
+    @Rule(
+            desc = "The maximum horizontal chebyshev distance (in chunks) for the server to sync entities information to the client",
+            options = {"-1", "16", "64"},
+            category = {CREATIVE, NAFTALLUVIA}
+    )
+    public static int entityTrackerDistance = -1;
+
+    // TISCM ported from https://github.com/Fallen-Breath/carpetmod112
+    public static final double VANILLA_EXPLOSION_PACKET_RANGE = 64.0D;  // sqrt(4096)
+
+    // TISCM ported from https://github.com/Fallen-Breath/carpetmod112
+    @Rule(
+            desc = "Set the range where player will receive an explosion packet when an explosion happens",
+            validator = "validateNonNegative",
+            options = {"0", "16", "64", "128", "2048"},
+            category = {CREATIVE, NAFTALLUVIA}
+    )
+    public static double explosionPacketRange = VANILLA_EXPLOSION_PACKET_RANGE;
 
     // ===== API ===== //
 
