@@ -77,13 +77,50 @@ public class ItemLogHelper {
                             String.format("w ----%s---- t: %d ", type, age),
                             String.format("q %s (%s)", name, idMetaText),
                             String.format("w  *%d", count)));
+                    Vec3d prevPos = null, prevMot = null;
+                    int repeatCount = 0;
                     for (int i = sentLogs; i < positions.size(); i++) {
                         sentLogs++;
                         Vec3d pos = positions.get(i);
                         Vec3d mot = motions.get(i);
-                        comp.add(Messenger.m(null,
-                                String.format("w tick: %d pos", (i + 1)), Messenger.dblt("w", pos.x, pos.y, pos.z),
-                                "w   mot", Messenger.dblt("w", mot.x, mot.y, mot.z), Messenger.m(null, "w  [tp]", "/tp " + pos.x + " " + pos.y + " " + pos.z)));
+                        if (prevPos != null && prevPos.equals(pos)) {
+                            ++repeatCount;
+                            // merge repeated loggings
+                            if (i == positions.size() - 1) {
+                                if (repeatCount > 0) {
+                                    if (repeatCount > 1) {
+                                        comp.add(Messenger.m(null,
+                                                String.format("g     ... %d repeated loggings ...", repeatCount + 1)));
+                                    }
+                                    comp.add(Messenger.m(null,
+                                            String.format("w tick: %d pos", i + 1),
+                                            Messenger.dblt("w", prevPos.x, prevPos.y, prevPos.z),
+                                            "w   mot", Messenger.dblt("w", prevMot.x, prevMot.y, prevMot.z),
+                                            Messenger.m(null, "w  [tp]", "/tp " + prevPos.x + " " + prevPos.y + " " + prevPos.z)));
+                                    repeatCount = 0;
+                                }
+                            }
+                        } else {
+                            if (repeatCount > 0) {
+                                if (repeatCount > 1) {
+                                    comp.add(Messenger.m(null,
+                                            String.format("g     %d repeated loggings ...", repeatCount + 1)));
+                                }
+                                comp.add(Messenger.m(null,
+                                        String.format("w tick: %d pos", i),
+                                        Messenger.dblt("w", prevPos.x, prevPos.y, prevPos.z),
+                                        "w   mot", Messenger.dblt("w", prevMot.x, prevMot.y, prevMot.z),
+                                        Messenger.m(null, "w  [tp]", "/tp " + prevPos.x + " " + prevPos.y + " " + prevPos.z)));
+                                repeatCount = 0;
+                            }
+                            comp.add(Messenger.m(null,
+                                    String.format("w tick: %d pos", (i + 1)),
+                                    Messenger.dblt("w", pos.x, pos.y, pos.z),
+                                    "w   mot", Messenger.dblt("w", mot.x, mot.y, mot.z),
+                                    Messenger.m(null, "w  [tp]", "/tp " + pos.x + " " + pos.y + " " + pos.z)));
+                        }
+                        prevPos = pos;
+                        prevMot = mot;
                     }
                     break;
             }
