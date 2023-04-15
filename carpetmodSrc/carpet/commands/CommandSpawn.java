@@ -125,12 +125,12 @@ public class CommandSpawn extends CommandCarpetBase
             //counter reset
             if (counter == null)
             {
-                HopperCounter.resetAll();
+                HopperCounter.resetAll(true);
             }
             else
             {
                 HopperCounter hopperCounter = HopperCounter.getCounter(counter);
-                if (hopperCounter != null) hopperCounter.reset();
+                if (hopperCounter != null) hopperCounter.reset(true);
             }
 
             // tick warp 0

@@ -17,11 +17,20 @@ The `/counter` command uses better reporting format with features:
 
 ## 1.2. Statistics and Error Analysis
 
-The statistic display is moved to a certain game phase to ensure an accurate tick counting.
-
 Work in Progress...
 
 Calculates the Variance, the Standard Deviation, and the Standard Error of the counted samples.
+
+## 1.3. Command Modifications
+
+### 1.3.1. Counter Stop
+
+New command, partially different from `/counter [<color>] reset`.
+
+- Usage: `/counter [<color>] stop`
+- Effect: Stops the item counter, and set it to the initial state with `tick = 0`, waiting for items to start counting.
+
+The argument `<color>` includes `cactus`, `all`, and Dye Colors.
 
 # 2. Better Item Logger
 

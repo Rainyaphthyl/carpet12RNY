@@ -62,11 +62,11 @@ public class WoolTool
                 {
                     EnumDyeColor under = getWoolColorAtPosition(worldIn, pos.down());
                     if (under == null) return;
-                    HopperCounter.COUNTERS.get(under.getName()).reset();
+                    HopperCounter.COUNTERS.get(under.getName()).reset(true);
                     Messenger.s(placer, String.format("%s counter reset",under.toString() ));
                 }
                 else if (CarpetSettings.hopperCounters == CarpetSettings.HopperCounters.all){
-                    HopperCounter.COUNTERS.get("all").reset();
+                    HopperCounter.COUNTERS.get("all").reset(true);
                     Messenger.s(placer, "Reset hopper counters");
                 }
 			    break;

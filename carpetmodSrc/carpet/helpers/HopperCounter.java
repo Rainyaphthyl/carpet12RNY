@@ -36,7 +36,7 @@ public class HopperCounter {
     private final Object2LongMap<ItemWithMeta> currentPartials = new Object2LongLinkedOpenHashMap<>();
     private final PubSubInfoProvider<Long> pubSubProvider;
     private final String name;
-    private long startTick = 0;
+    private long startTick = -1;
     private long startMillis = 0;
     private long linearTotal = 0;
     /**
@@ -51,9 +51,9 @@ public class HopperCounter {
         pubSubProvider = new PubSubInfoProvider<>(CarpetServer.PUBSUB, "carpet.counter." + name, 0, this::getTotalItems);
     }
 
-    public static void resetAll() {
+    public static void resetAll(boolean instant) {
         for (HopperCounter counter : COUNTERS.values()) {
-            counter.reset();
+            counter.reset(instant);
         }
     }
 
@@ -87,8 +87,8 @@ public class HopperCounter {
         }
     }
 
-    public void update() {
-        if (startTick > 0) {
+    private void update() {
+        if (startTick >= 0) {
             long totalInc = 0;
             for (ItemWithMeta item : currentPartials.keySet()) {
                 long partialInc = currentPartials.getLong(item);
@@ -105,7 +105,7 @@ public class HopperCounter {
     }
 
     public void add(ItemStack stack) {
-        if (startTick == 0) {
+        if (startTick == -1) {
             startTick = currSyncTick;
             startMillis = MinecraftServer.getCurrentTimeMillis();
         }
@@ -115,13 +115,21 @@ public class HopperCounter {
         pubSubProvider.publish();
     }
 
-    public void reset() {
+    /**
+     * @param instant {@code true} for "reset" and {@code false} for "stop"
+     */
+    public void reset(boolean instant) {
         linearPartials.clear();
         currentPartials.clear();
         linearTotal = 0;
-        startTick = currSyncTick;
+        if (instant) {
+            startTick = currSyncTick;
+            startMillis = MinecraftServer.getCurrentTimeMillis();
+        } else {
+            startTick = -1;
+            startMillis = 0;
+        }
         actualTicks = 0;
-        startMillis = MinecraftServer.getCurrentTimeMillis();
         pubSubProvider.publish();
     }
 
@@ -151,10 +159,10 @@ public class HopperCounter {
         }
         List<ITextComponent> list = new ArrayList<>();
         if (ticks == actualTicks) {
-            list.add(Messenger.s(null, "Tick Counting Correct"));
+            list.add(Messenger.m(null, "c Tick Counting Correct"));
         } else {
-            list.add(Messenger.s(null,
-                    "Tick Counting FAILED!! " + "ticks = " + ticks + ", actualTicks = " + actualTicks));
+            list.add(Messenger.m(null,
+                    "c Tick Counting FAILED!! " + "ticks = " + ticks + ", actualTicks = " + actualTicks));
         }
         //StringBuilder colorFullName = new StringBuilder(Messenger.color_by_enum(color)).append('b');
         StringBuilder colorFullName = new StringBuilder("w").append('b');
