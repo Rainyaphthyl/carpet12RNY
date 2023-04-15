@@ -32,7 +32,7 @@ public class HopperCounter {
 
     public final EnumDyeColor color;
     private final Object2LongMap<ItemWithMeta> linearPartials = new Object2LongLinkedOpenHashMap<>();
-    //private final Object2LongMap<ItemWithMeta> squaredPartials = new Object2LongLinkedOpenHashMap<>();
+    private final Object2LongMap<ItemWithMeta> squaredPartials = new Object2LongLinkedOpenHashMap<>();
     private final Object2LongMap<ItemWithMeta> currentPartials = new Object2LongLinkedOpenHashMap<>();
     private final PubSubInfoProvider<Long> pubSubProvider;
     private final String name;
@@ -43,7 +43,7 @@ public class HopperCounter {
      * used for debug
      */
     private long actualTicks = 0;
-    //private long squaredTotal = 0;
+    private long squaredTotal = 0;
 
     private HopperCounter(EnumDyeColor color, String name) {
         this.name = name;
@@ -87,16 +87,41 @@ public class HopperCounter {
         }
     }
 
+    @Nonnull
+    public static StatsRecord get_reliable_average(long ticks, long linearTotal, long squaredTotal) {
+        double average;
+        double error;
+        if (ticks <= 1) {
+            average = ticks == 1 ? linearTotal : Double.NaN;
+            error = Double.NaN;
+        } else {
+            average = (double) linearTotal / ticks;
+            double temp = squaredTotal - average * linearTotal;
+            double divisor = ticks * (ticks - 1);
+            error = Math.sqrt(temp / divisor);
+        }
+        average *= 72000;
+        error *= 72000;
+        return new StatsRecord(average, error);
+    }
+
+    public static double round_half_even(double value, int scale) {
+        double rate = Math.pow(10, scale);
+        return Math.rint(value * rate) / rate;
+    }
+
     private void update() {
         if (startTick >= 0) {
             long totalInc = 0;
             for (ItemWithMeta item : currentPartials.keySet()) {
                 long partialInc = currentPartials.getLong(item);
                 linearPartials.put(item, linearPartials.getLong(item) + partialInc);
+                squaredPartials.put(item, squaredPartials.getLong(item) + partialInc * partialInc);
                 totalInc += partialInc;
                 currentPartials.put(item, 0);
             }
             linearTotal += totalInc;
+            squaredTotal += totalInc * totalInc;
             if (currSyncTick % 900 == 0) {
                 currentPartials.clear();
             }
@@ -119,9 +144,11 @@ public class HopperCounter {
      * @param instant {@code true} for "reset" and {@code false} for "stop"
      */
     public void reset(boolean instant) {
-        linearPartials.clear();
         currentPartials.clear();
+        linearPartials.clear();
         linearTotal = 0;
+        squaredPartials.clear();
+        squaredTotal = 0;
         if (instant) {
             startTick = currSyncTick;
             startMillis = MinecraftServer.getCurrentTimeMillis();
@@ -151,6 +178,9 @@ public class HopperCounter {
                     String.format("w No items for %s yet (%.2f min.%s)",
                             name, ticks / (20.0 * 60.0), (realTime ? " - real time" : "")),
                     "nb  [X]", "^g reset", "!/counter " + name + " reset"));
+        }
+        if (!realTime) {
+            return formatReliable(brief);
         }
         if (brief) {
             return Collections.singletonList(Messenger.m(null,
@@ -182,14 +212,63 @@ public class HopperCounter {
             String itemName = e.getKey().getDisplayName();
             long count = e.getValue();
             return Messenger.s(null, String.format(" - %s: %d, %.1f/h",
-                    itemName,
-                    count,
-                    count * (20.0 * 60.0 * 60.0) / ticks));
+                    itemName, count, count * (20.0 * 60.0 * 60.0) / ticks));
+        }).collect(Collectors.toList()));
+        return list;
+    }
+
+    public List<ITextComponent> formatReliable(boolean brief) {
+        StatsRecord stats = get_reliable_average(actualTicks, linearTotal, squaredTotal);
+        double minutes;
+        if (brief) {
+            minutes = Math.rint(actualTicks / 120.0) / 10.0;
+            return Collections.singletonList(Messenger.m(null,
+                    String.format("c %s: %d, %.0f(~%.0f)/h, %.1f min ", name, linearTotal,
+                            Math.rint(stats.average), Math.rint(stats.error), minutes)));
+        }
+        List<ITextComponent> list = new ArrayList<>();
+        StringBuilder colorFullName = new StringBuilder("w").append('b');
+        if ("cactus".equalsIgnoreCase(name) || "all".equalsIgnoreCase(name)) {
+            colorFullName.append('i');
+        }
+        colorFullName.append(' ').append(name);
+        boolean realTime = false;
+        minutes = Math.rint(actualTicks / 12.0) / 100.0;
+        list.add(Messenger.c("w Counter ", colorFullName,
+                "w  for ", String.format("wb %.2f", minutes), "w  min (in game)"
+        ));
+        list.add(Messenger.c("w Total: " + linearTotal + ", Average: ",
+                String.format("wb %.1f", round_half_even(stats.average, 1)), "w /h, SE: "
+                        + String.format("%.1f", round_half_even(stats.error, 1)) + "/h ("
+                        + String.format("%.2f", round_half_even(stats.error * 100.0 / stats.average, 2))
+                        + "percent) ", "nb [X]", "^g reset", "!/counter " + name + " reset"
+        ));
+        list.addAll(linearPartials.entrySet().stream().map(e -> {
+            ItemWithMeta item = e.getKey();
+            String itemName = item.getDisplayName();
+            long count = e.getValue();
+            StatsRecord statsPartial = get_reliable_average(actualTicks, count, squaredPartials.getLong(item));
+            return Messenger.s(null, String.format(" - %s: %d, %.1f/h, SE: %.1f/h, %.2f percent",
+                    itemName, count,
+                    round_half_even(statsPartial.average, 1),
+                    round_half_even(statsPartial.error, 1),
+                    round_half_even(statsPartial.error * 100.0 / statsPartial.average, 2))
+            );
         }).collect(Collectors.toList()));
         return list;
     }
 
     public long getTotalItems() {
         return linearPartials.values().stream().mapToLong(Long::longValue).sum();
+    }
+
+    private static class StatsRecord {
+        public final double average;
+        public final double error;
+
+        private StatsRecord(double average, double error) {
+            this.average = average;
+            this.error = error;
+        }
     }
 }
