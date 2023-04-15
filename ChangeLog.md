@@ -11,8 +11,9 @@ The `/counter` command uses better reporting format with features:
 - Displaying the total duration of item counting.
 - Displaying the total and average of all items.
 - Using bold or italic style on some important information.
+- Marking wool counters with the respective colors, as well as "all" hoppers with gray and cactus counter with green.
 
-(some of which ported from [fabric-carpet](https://github.com/gnembon/fabric-carpet))
+(some of which are ported from [fabric-carpet](https://github.com/gnembon/fabric-carpet))
 
 ## 1.2. Statistics and Error Analysis
 
