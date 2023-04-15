@@ -17,6 +17,8 @@ The `/counter` command uses better reporting format with features:
 
 ## 1.2. Statistics and Error Analysis
 
+The statistic display is moved to a certain game phase to ensure an accurate tick counting.
+
 Work in Progress...
 
 Calculates the Variance, the Standard Deviation, and the Standard Error of the counted samples.

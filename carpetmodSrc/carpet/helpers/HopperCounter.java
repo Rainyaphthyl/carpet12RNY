@@ -32,10 +32,18 @@ public class HopperCounter {
 
     public final EnumDyeColor color;
     private final Object2LongMap<ItemWithMeta> linearPartials = new Object2LongLinkedOpenHashMap<>();
+    //private final Object2LongMap<ItemWithMeta> squaredPartials = new Object2LongLinkedOpenHashMap<>();
+    private final Object2LongMap<ItemWithMeta> currentPartials = new Object2LongLinkedOpenHashMap<>();
     private final PubSubInfoProvider<Long> pubSubProvider;
     private final String name;
     private long startTick = 0;
     private long startMillis = 0;
+    private long linearTotal = 0;
+    /**
+     * used for debug
+     */
+    private long actualTicks = 0;
+    //private long squaredTotal = 0;
 
     private HopperCounter(EnumDyeColor color, String name) {
         this.name = name;
@@ -80,6 +88,20 @@ public class HopperCounter {
     }
 
     public void update() {
+        if (startTick > 0) {
+            long totalInc = 0;
+            for (ItemWithMeta item : currentPartials.keySet()) {
+                long partialInc = currentPartials.getLong(item);
+                linearPartials.put(item, linearPartials.getLong(item) + partialInc);
+                totalInc += partialInc;
+                currentPartials.put(item, 0);
+            }
+            linearTotal += totalInc;
+            if (currSyncTick % 900 == 0) {
+                currentPartials.clear();
+            }
+            ++actualTicks;
+        }
     }
 
     public void add(ItemStack stack) {
@@ -88,13 +110,17 @@ public class HopperCounter {
             startMillis = MinecraftServer.getCurrentTimeMillis();
         }
         ItemWithMeta item = new ItemWithMeta(stack);
-        linearPartials.put(item, linearPartials.getLong(item) + stack.getCount());
+        long stackCount = stack.getCount();
+        currentPartials.put(item, currentPartials.getLong(item) + stackCount);
         pubSubProvider.publish();
     }
 
     public void reset() {
         linearPartials.clear();
+        currentPartials.clear();
+        linearTotal = 0;
         startTick = currSyncTick;
+        actualTicks = 0;
         startMillis = MinecraftServer.getCurrentTimeMillis();
         pubSubProvider.publish();
     }
@@ -106,7 +132,7 @@ public class HopperCounter {
             }
             return Collections.singletonList(Messenger.s(null, String.format("No items for %s yet", name)));
         }
-        long total = getTotalItems();
+        long total = linearTotal;
         long ticks = Math.max(realTime ? (MinecraftServer.getCurrentTimeMillis() - startMillis) / 50 : currSyncTick - startTick, 1);
         if (total == 0) {
             if (brief) {
@@ -124,6 +150,12 @@ public class HopperCounter {
                             name, total, total * (20 * 60 * 60) / ticks, ticks / (20.0 * 60.0))));
         }
         List<ITextComponent> list = new ArrayList<>();
+        if (ticks == actualTicks) {
+            list.add(Messenger.s(null, "Tick Counting Correct"));
+        } else {
+            list.add(Messenger.s(null,
+                    "Tick Counting FAILED!! " + "ticks = " + ticks + ", actualTicks = " + actualTicks));
+        }
         //StringBuilder colorFullName = new StringBuilder(Messenger.color_by_enum(color)).append('b');
         StringBuilder colorFullName = new StringBuilder("w").append('b');
         if ("cactus".equalsIgnoreCase(name) || "all".equalsIgnoreCase(name)) {
