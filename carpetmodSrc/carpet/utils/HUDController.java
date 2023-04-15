@@ -168,7 +168,7 @@ public class HUDController
     private static ITextComponent [] send_counter_info(MinecraftServer server, String color)
     {
         HopperCounter counter = HopperCounter.getCounter(color);
-        List<ITextComponent> res = counter == null ? Collections.emptyList() : counter.format(server, false, true);
+        List<ITextComponent> res = counter == null ? Collections.emptyList() : counter.format(false, true);
         return new ITextComponent[]{ Messenger.m(null, res.toArray(new Object[0]))};
     }
     private static ITextComponent [] packetCounter()

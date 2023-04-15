@@ -15,7 +15,6 @@ import net.minecraft.command.ICommandSender;
 import net.minecraft.command.WrongUsageException;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
 
 import net.minecraft.item.EnumDyeColor;
 
@@ -44,30 +43,30 @@ public class CommandCounter extends CommandCarpetBase
             return;
         }
         if (args.length == 0) {
-            msg(sender, HopperCounter.formatAll(server, false));
+            msg(sender, HopperCounter.formatAll(false));
             return;
         }
         switch (args[0].toLowerCase(Locale.ROOT)) {
             case "realtime":
-                msg(sender, HopperCounter.formatAll(server, true));
+                msg(sender, HopperCounter.formatAll(true));
                 return;
             case "reset":
-                HopperCounter.resetAll(server);
+                HopperCounter.resetAll();
                 notifyCommandListener(sender, this, "All counters restarted.");
                 return;
         }
         HopperCounter counter = HopperCounter.getCounter(args[0]);
         if (counter == null) throw new WrongUsageException("Invalid color");
         if (args.length == 1) {
-            msg(sender, counter.format(server,false, false));
+            msg(sender, counter.format(false, false));
             return;
         }
         switch (args[1].toLowerCase(Locale.ROOT)) {
             case "realtime":
-                msg(sender, counter.format(server, true, false));
+                msg(sender, counter.format(true, false));
                 return;
             case "reset":
-                counter.reset(server);
+                counter.reset();
                 notifyCommandListener(sender, this, String.format("%s counters restarted.", args[0]));
                 return;
         }
