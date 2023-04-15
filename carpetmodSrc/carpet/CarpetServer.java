@@ -1,7 +1,6 @@
 package carpet;
 
 import carpet.carpetclient.CarpetClientServer;
-import carpet.helpers.HopperCounter;
 import carpet.helpers.StackTraceDeobfuscator;
 import carpet.helpers.TickSpeed;
 import carpet.helpers.lifetime.LifeTimeTracker;
@@ -126,9 +125,6 @@ public class CarpetServer // static for now - easier to handle all around the co
         TickSpeed.tick(server);
         if (CarpetSettings.redstoneMultimeterLegacy) {
             TickStartEventDispatcher.dispatchEvent(server.getTickCounter());
-        }
-        if (CarpetSettings.hopperCounters != CarpetSettings.HopperCounters.off || CarpetSettings.cactusCounter) {
-            HopperCounter.updateAll(server.getTickCounter());
         }
         HUDController.update_hud(server);
         WorldEditBridge.onStartTick();
