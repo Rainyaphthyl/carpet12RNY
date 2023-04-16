@@ -8,6 +8,7 @@ import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import net.minecraft.item.EnumDyeColor;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.text.ITextComponent;
 
 import javax.annotation.Nonnull;
@@ -106,8 +107,42 @@ public class HopperCounter {
     }
 
     public static double round_half_even(double value, int scale) {
-        double rate = Math.pow(10, scale);
+        double rate = simplePow(10.0, scale);
         return Math.rint(value * rate) / rate;
+    }
+
+    /**
+     * {@code O(n)}
+     */
+    public static double simplePow(double base, int exponent) {
+        double pow = 1.0;
+        if (exponent >= 0) {
+            for (int i = 0; i < exponent; ++i) {
+                pow *= base;
+            }
+        } else {
+            for (int i = exponent; i < 0; ++i) {
+                pow /= base;
+            }
+        }
+        return pow;
+    }
+
+    /**
+     * {@code O(n)}
+     */
+    public static long simplePow(long base, int exponent) {
+        long pow = 1;
+        if (exponent >= 0) {
+            for (int i = 0; i < exponent; ++i) {
+                pow *= base;
+            }
+        } else {
+            for (int i = exponent; i < 0; ++i) {
+                pow /= base;
+            }
+        }
+        return pow;
     }
 
     private void update() {
@@ -223,8 +258,7 @@ public class HopperCounter {
         if (brief) {
             minutes = Math.rint(actualTicks / 120.0) / 10.0;
             return Collections.singletonList(Messenger.m(null,
-                    String.format("c %s: %d, %.0f(~%.0f)/h, %.1f min ", name, linearTotal,
-                            Math.rint(stats.average), Math.rint(stats.error), minutes)));
+                    String.format("c %s: %d, %s/h, %.1f min ", name, linearTotal, stats.getRoundedCombined(), minutes)));
         }
         List<ITextComponent> list = new ArrayList<>();
         StringBuilder colorFullName = new StringBuilder("w").append('b');
@@ -238,22 +272,20 @@ public class HopperCounter {
                 "w  for ", String.format("wb %.2f", minutes), "w  min (in game)"
         ));
         list.add(Messenger.c("w Total: " + linearTotal + ", Average: ",
-                String.format("wb %.1f", round_half_even(stats.average, 1)), "w /h, SE: "
-                        + String.format("%.1f", round_half_even(stats.error, 1)) + "/h ("
-                        + String.format("%.2f", round_half_even(stats.error * 100.0 / stats.average, 2))
-                        + "percent) ", "nb [X]", "^g reset", "!/counter " + name + " reset"
+                String.format("wb %s", stats.getRoundedAverage()), "w /h (SE: "
+                        + String.format("%s", stats.getRoundedError()) + "/h) ",
+                "nb [X]", "^g reset", "!/counter " + name + " reset"
         ));
         list.addAll(linearPartials.entrySet().stream().map(e -> {
             ItemWithMeta item = e.getKey();
             String itemName = item.getDisplayName();
             long count = e.getValue();
             StatsRecord statsPartial = get_reliable_average(actualTicks, count, squaredPartials.getLong(item));
-            return Messenger.s(null, String.format(" - %s: %d, %.1f/h, SE: %.1f/h, %.2f percent",
+            return Messenger.s(null, String.format(" - %s: %d, %s/h (SE: %s/h)",
                     itemName, count,
-                    round_half_even(statsPartial.average, 1),
-                    round_half_even(statsPartial.error, 1),
-                    round_half_even(statsPartial.error * 100.0 / statsPartial.average, 2))
-            );
+                    statsPartial.getRoundedAverage(),
+                    statsPartial.getRoundedError()
+            ));
         }).collect(Collectors.toList()));
         return list;
     }
@@ -263,12 +295,102 @@ public class HopperCounter {
     }
 
     private static class StatsRecord {
+        private static final SortedMap<Integer, String> PREFIXES_MAP;
+        private static final int I_AVG = 0;
+        private static final int I_ERR = I_AVG + 1;
+
+        static {
+            PREFIXES_MAP = new TreeMap<>();
+            PREFIXES_MAP.put(0, "");
+            PREFIXES_MAP.put(3, "k");
+            PREFIXES_MAP.put(6, "M");
+            PREFIXES_MAP.put(9, "G");
+            PREFIXES_MAP.put(12, "T");
+        }
+
         public final double average;
         public final double error;
+        private boolean flagRounded = false;
+        /**
+         * Significant Figures
+         */
+        private int[] firstDigitIndices = null;
+        /**
+         * Rounds {@code average} according to {@code error}
+         */
+        private String roundedAverage = null;
+        /**
+         * Rounds {@code error} with 1 or 2 significant figures
+         */
+        private String roundedError = null;
+        private String roundedCombined = null;
 
         private StatsRecord(double average, double error) {
             this.average = average;
             this.error = error;
+        }
+
+        /**
+         * Rounds {@code average} according to {@code error}
+         * <p>
+         * Example: 187236.9(766.2) = 187.2(0.8)k
+         * <p>
+         * {@code error = 766.2}, and {@code floor(log10(766.2)) = 2} is the {@code firstDigitIndex} of {@code error}
+         * <p>
+         * {@code roundUp(2, 3) = 3}, using prefix "k"
+         */
+        public String getRoundedAverage() {
+            if (!flagRounded) {
+                setRoundedResults();
+            }
+            return roundedAverage;
+        }
+
+        public String getRoundedError() {
+            if (!flagRounded) {
+                setRoundedResults();
+            }
+            return roundedError;
+        }
+
+        /**
+         * format: {@code <avg>\(<err>\)<unit>}
+         * <p>
+         * Example: 187.2(0.8)k
+         */
+        public String getRoundedCombined() {
+            if (!flagRounded) {
+                setRoundedResults();
+            }
+            return roundedCombined;
+        }
+
+        private void setRoundedResults() {
+            if (firstDigitIndices == null) {
+                setFirstDigitIndices();
+            }
+            int minimal = firstDigitIndices[I_ERR];
+            int level = MathHelper.roundUp(minimal, 3);
+            String prefix = PREFIXES_MAP.get(level);
+            if (prefix == null) {
+                level = MathHelper.clamp(level, PREFIXES_MAP.firstKey(), PREFIXES_MAP.lastKey());
+            }
+            int postfix = level - minimal;
+            String format = "%." + postfix + 'f' + prefix;
+            double rate = simplePow(10, level);
+            double avgToDisplay = round_half_even(average / rate, postfix);
+            roundedAverage = String.format(format, avgToDisplay);
+            double errToDisplay = round_half_even(error / rate, postfix);
+            roundedError = String.format(format, errToDisplay);
+            format = "%." + postfix + "f(%." + postfix + "f)" + prefix;
+            roundedCombined = String.format(format, avgToDisplay, errToDisplay);
+            flagRounded = true;
+        }
+
+        private void setFirstDigitIndices() {
+            firstDigitIndices = new int[I_ERR + 1];
+            firstDigitIndices[I_AVG] = MathHelper.floor(Math.log10(average));
+            firstDigitIndices[I_ERR] = MathHelper.floor(Math.log10(error));
         }
     }
 }
