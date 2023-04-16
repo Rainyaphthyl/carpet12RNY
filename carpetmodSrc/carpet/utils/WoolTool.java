@@ -1,21 +1,15 @@
 package carpet.utils;
 
-import net.minecraft.block.Block;
 import net.minecraft.block.BlockColored;
 import net.minecraft.block.properties.PropertyEnum;
 import net.minecraft.block.state.IBlockState;
 import carpet.CarpetSettings;
 import carpet.helpers.HopperCounter;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.init.Blocks;
 import net.minecraft.item.EnumDyeColor;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.text.ITextComponent;
 import net.minecraft.world.World;
-
-import java.util.List;
 
 public class WoolTool
 {
@@ -57,10 +51,10 @@ public class WoolTool
                 {
                     EnumDyeColor under = getWoolColorAtPosition(worldIn, pos.down());
                     if (under == null) return;
-                    Messenger.send(placer, HopperCounter.COUNTERS.get(under.getName()).format(worldIn.getMinecraftServer(), false, false));
+                    Messenger.send(placer, HopperCounter.COUNTERS.get(under.getName()).format(false, false));
                 }
                 else if (CarpetSettings.hopperCounters == CarpetSettings.HopperCounters.all){
-                    Messenger.send(placer, HopperCounter.COUNTERS.get("all").format(worldIn.getMinecraftServer(), false, false));
+                    Messenger.send(placer, HopperCounter.COUNTERS.get("all").format(false, false));
                 }
 				break;
 			case RED:
@@ -68,11 +62,11 @@ public class WoolTool
                 {
                     EnumDyeColor under = getWoolColorAtPosition(worldIn, pos.down());
                     if (under == null) return;
-                    HopperCounter.COUNTERS.get(under.getName()).reset(worldIn.getMinecraftServer());
+                    HopperCounter.COUNTERS.get(under.getName()).reset(true);
                     Messenger.s(placer, String.format("%s counter reset",under.toString() ));
                 }
                 else if (CarpetSettings.hopperCounters == CarpetSettings.HopperCounters.all){
-                    HopperCounter.COUNTERS.get("all").reset(worldIn.getMinecraftServer());
+                    HopperCounter.COUNTERS.get("all").reset(true);
                     Messenger.s(placer, "Reset hopper counters");
                 }
 			    break;

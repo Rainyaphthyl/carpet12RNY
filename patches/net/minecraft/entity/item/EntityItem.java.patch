@@ -155,7 +155,7 @@
 +                boolean cactusCounting = CarpetSettings.cactusCounter && p_70097_1_ == DamageSource.field_76367_g;
 +                // Add cactus counter CARPET-XCOM
 +                if(cactusCounting){
-+                    HopperCounter.cactus.add(field_70170_p.func_73046_m(), func_92059_d());
++                    HopperCounter.CACTUS.add(func_92059_d());
 +                }
 +                // ----- Carpet Start ----- //
 +                if (LoggerRegistry.__items && logHelper != null && !(cactusCounting && CarpetSettings.itemLoggerIgnoringCounters)) {
