@@ -3,12 +3,12 @@ package carpet.helpers;
 import carpet.CarpetServer;
 import carpet.pubsub.PubSubInfoProvider;
 import carpet.utils.Messenger;
+import carpet.utils.StatsBundle;
 import it.unimi.dsi.fastutil.objects.Object2LongLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import net.minecraft.item.EnumDyeColor;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.text.ITextComponent;
 
 import javax.annotation.Nonnull;
@@ -89,7 +89,7 @@ public class HopperCounter {
     }
 
     @Nonnull
-    public static StatsRecord get_reliable_average(long ticks, long linearTotal, long squaredTotal) {
+    public static StatsBundle get_reliable_average(long ticks, long linearTotal, long squaredTotal) {
         double average;
         double error;
         if (ticks <= 1) {
@@ -103,46 +103,7 @@ public class HopperCounter {
         }
         average *= 72000;
         error *= 72000;
-        return new StatsRecord(average, error);
-    }
-
-    public static double round_half_even(double value, int scale) {
-        double rate = simplePow(10.0, scale);
-        return Math.rint(value * rate) / rate;
-    }
-
-    /**
-     * {@code O(n)}
-     */
-    public static double simplePow(double base, int exponent) {
-        double pow = 1.0;
-        if (exponent >= 0) {
-            for (int i = 0; i < exponent; ++i) {
-                pow *= base;
-            }
-        } else {
-            for (int i = exponent; i < 0; ++i) {
-                pow /= base;
-            }
-        }
-        return pow;
-    }
-
-    /**
-     * {@code O(n)}
-     */
-    public static long simplePow(long base, int exponent) {
-        long pow = 1;
-        if (exponent >= 0) {
-            for (int i = 0; i < exponent; ++i) {
-                pow *= base;
-            }
-        } else {
-            for (int i = exponent; i < 0; ++i) {
-                pow /= base;
-            }
-        }
-        return pow;
+        return new StatsBundle(average, error);
     }
 
     private void update() {
@@ -253,12 +214,17 @@ public class HopperCounter {
     }
 
     public List<ITextComponent> formatReliable(boolean brief) {
-        StatsRecord stats = get_reliable_average(actualTicks, linearTotal, squaredTotal);
+        StatsBundle stats = get_reliable_average(actualTicks, linearTotal, squaredTotal);
+        double percent = 100.0 * stats.error / stats.average;
+        String color = Messenger.heatmap_color(percent, 50);
+        StatsBundle.RoundedStatsBundle rounded = stats.getRoundedBundle();
         double minutes;
         if (brief) {
             minutes = Math.rint(actualTicks / 120.0) / 10.0;
             return Collections.singletonList(Messenger.m(null,
-                    String.format("c %s: %d, %s/h, %.1f min ", name, linearTotal, stats.getRoundedCombined(), minutes)));
+                    String.format("c %s: %d, ", name, linearTotal),
+                    String.format("%s %s(%s)%s/h", color, rounded.average, rounded.error, rounded.unit),
+                    String.format("c , %.1f min ", minutes)));
         }
         List<ITextComponent> list = new ArrayList<>();
         StringBuilder colorFullName = new StringBuilder("w").append('b');
@@ -267,25 +233,22 @@ public class HopperCounter {
         }
         colorFullName.append(' ').append(name);
         boolean realTime = false;
-        minutes = Math.rint(actualTicks / 12.0) / 100.0;
+        minutes = actualTicks / 1200.0;
         list.add(Messenger.c("w Counter ", colorFullName,
-                "w  for ", String.format("wb %.2f", minutes), "w  min (in game)"
-        ));
+                "w  for ", String.format("wb %.2f", minutes), "w  min (in game)"));
         list.add(Messenger.c("w Total: " + linearTotal + ", Average: ",
-                String.format("wb %s", stats.getRoundedAverage()), "w /h (SE: "
-                        + String.format("%s", stats.getRoundedError()) + "/h) ",
-                "nb [X]", "^g reset", "!/counter " + name + " reset"
-        ));
+                String.format("wb %s(%s)%s", rounded.average, rounded.error, rounded.unit), "w /h ",
+                "nb [X]", "^g reset", "!/counter " + name + " reset"));
         list.addAll(linearPartials.entrySet().stream().map(e -> {
             ItemWithMeta item = e.getKey();
             String itemName = item.getDisplayName();
             long count = e.getValue();
-            StatsRecord statsPartial = get_reliable_average(actualTicks, count, squaredPartials.getLong(item));
-            return Messenger.s(null, String.format(" - %s: %d, %s/h (SE: %s/h)",
-                    itemName, count,
-                    statsPartial.getRoundedAverage(),
-                    statsPartial.getRoundedError()
-            ));
+            StatsBundle statsPartial = get_reliable_average(actualTicks, count, squaredPartials.getLong(item));
+            StatsBundle.RoundedStatsBundle roundedPartial = statsPartial.getRoundedBundle();
+            double percentPartial = 100.0 * statsPartial.error / statsPartial.average;
+            return Messenger.s(null, String.format(" - %s: %d, %s(%s)%s/h, E: %s%%", itemName, count,
+                    roundedPartial.average, roundedPartial.error, roundedPartial.unit,
+                    StatsBundle.round_to_sig_figs(percentPartial, 3)));
         }).collect(Collectors.toList()));
         return list;
     }
@@ -294,103 +257,4 @@ public class HopperCounter {
         return linearPartials.values().stream().mapToLong(Long::longValue).sum();
     }
 
-    private static class StatsRecord {
-        private static final SortedMap<Integer, String> PREFIXES_MAP;
-        private static final int I_AVG = 0;
-        private static final int I_ERR = I_AVG + 1;
-
-        static {
-            PREFIXES_MAP = new TreeMap<>();
-            PREFIXES_MAP.put(0, "");
-            PREFIXES_MAP.put(3, "k");
-            PREFIXES_MAP.put(6, "M");
-            PREFIXES_MAP.put(9, "G");
-            PREFIXES_MAP.put(12, "T");
-        }
-
-        public final double average;
-        public final double error;
-        private boolean flagRounded = false;
-        /**
-         * Significant Figures
-         */
-        private int[] firstDigitIndices = null;
-        /**
-         * Rounds {@code average} according to {@code error}
-         */
-        private String roundedAverage = null;
-        /**
-         * Rounds {@code error} with 1 or 2 significant figures
-         */
-        private String roundedError = null;
-        private String roundedCombined = null;
-
-        private StatsRecord(double average, double error) {
-            this.average = average;
-            this.error = error;
-        }
-
-        /**
-         * Rounds {@code average} according to {@code error}
-         * <p>
-         * Example: 187236.9(766.2) = 187.2(0.8)k
-         * <p>
-         * {@code error = 766.2}, and {@code floor(log10(766.2)) = 2} is the {@code firstDigitIndex} of {@code error}
-         * <p>
-         * {@code roundUp(2, 3) = 3}, using prefix "k"
-         */
-        public String getRoundedAverage() {
-            if (!flagRounded) {
-                setRoundedResults();
-            }
-            return roundedAverage;
-        }
-
-        public String getRoundedError() {
-            if (!flagRounded) {
-                setRoundedResults();
-            }
-            return roundedError;
-        }
-
-        /**
-         * format: {@code <avg>\(<err>\)<unit>}
-         * <p>
-         * Example: 187.2(0.8)k
-         */
-        public String getRoundedCombined() {
-            if (!flagRounded) {
-                setRoundedResults();
-            }
-            return roundedCombined;
-        }
-
-        private void setRoundedResults() {
-            if (firstDigitIndices == null) {
-                setFirstDigitIndices();
-            }
-            int minimal = firstDigitIndices[I_ERR];
-            int level = MathHelper.roundUp(minimal, 3);
-            String prefix = PREFIXES_MAP.get(level);
-            if (prefix == null) {
-                level = MathHelper.clamp(level, PREFIXES_MAP.firstKey(), PREFIXES_MAP.lastKey());
-            }
-            int postfix = level - minimal;
-            String format = "%." + postfix + 'f' + prefix;
-            double rate = simplePow(10, level);
-            double avgToDisplay = round_half_even(average / rate, postfix);
-            roundedAverage = String.format(format, avgToDisplay);
-            double errToDisplay = round_half_even(error / rate, postfix);
-            roundedError = String.format(format, errToDisplay);
-            format = "%." + postfix + "f(%." + postfix + "f)" + prefix;
-            roundedCombined = String.format(format, avgToDisplay, errToDisplay);
-            flagRounded = true;
-        }
-
-        private void setFirstDigitIndices() {
-            firstDigitIndices = new int[I_ERR + 1];
-            firstDigitIndices[I_AVG] = MathHelper.floor(Math.log10(average));
-            firstDigitIndices[I_ERR] = MathHelper.floor(Math.log10(error));
-        }
-    }
 }
