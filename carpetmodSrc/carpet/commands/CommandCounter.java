@@ -43,12 +43,12 @@ public class CommandCounter extends CommandCarpetBase {
             return;
         }
         if (args.length == 0) {
-            msg(sender, HopperCounter.formatAll(false));
+            Messenger.send(sender, HopperCounter.formatAll(false));
             return;
         }
         switch (args[0].toLowerCase(Locale.ROOT)) {
             case "realtime":
-                msg(sender, HopperCounter.formatAll(true));
+                Messenger.send(sender, HopperCounter.formatAll(true));
                 return;
             case "reset":
                 HopperCounter.resetAll(true);
@@ -62,12 +62,12 @@ public class CommandCounter extends CommandCarpetBase {
         HopperCounter counter = HopperCounter.getCounter(args[0]);
         if (counter == null) throw new WrongUsageException("Invalid color");
         if (args.length == 1) {
-            msg(sender, counter.format(false, false));
+            Messenger.send(sender, counter.format(false, false));
             return;
         }
         switch (args[1].toLowerCase(Locale.ROOT)) {
             case "realtime":
-                msg(sender, counter.format(true, false));
+                Messenger.send(sender, counter.format(true, false));
                 return;
             case "reset":
                 counter.reset(true);

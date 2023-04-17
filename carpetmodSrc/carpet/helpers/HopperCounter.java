@@ -216,7 +216,7 @@ public class HopperCounter {
     public List<ITextComponent> formatReliable(boolean brief) {
         StatsBundle stats = get_reliable_average(actualTicks, linearTotal, squaredTotal);
         double percent = 100.0 * stats.error / stats.average;
-        String color = Messenger.heatmap_color(percent, 50);
+        String color = (new Random()).nextBoolean() ? Messenger.heatmap_color(percent, 50) : "w";
         StatsBundle.RoundedStatsBundle rounded = stats.getRoundedBundle();
         double minutes;
         if (brief) {
@@ -237,7 +237,8 @@ public class HopperCounter {
         list.add(Messenger.c("w Counter ", colorFullName,
                 "w  for ", String.format("wb %.2f", minutes), "w  min (in game)"));
         list.add(Messenger.c("w Total: " + linearTotal + ", Average: ",
-                String.format("wb %s(%s)%s", rounded.average, rounded.error, rounded.unit), "w /h ",
+                String.format("wb %s(%s)%s", rounded.average, rounded.error, rounded.unit),
+                "w /h, E: " + StatsBundle.round_to_sig_figs(percent, 3) + "% ",
                 "nb [X]", "^g reset", "!/counter " + name + " reset"));
         list.addAll(linearPartials.entrySet().stream().map(e -> {
             ItemWithMeta item = e.getKey();
