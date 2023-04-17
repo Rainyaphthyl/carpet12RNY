@@ -75,7 +75,7 @@
              {
 +                // ----- Carpet Start ----- //
 +                if (LoggerRegistry.__items && logHelper != null) {
-+                    logHelper.onFinish("Despawn Timer", this);
++                    logHelper.onFinish("despawn", this);
 +                }
 +                this.recordRemoval(LiteralRemovalReason.DESPAWN_TIMEOUT);  // CM lifetime tracker
 +                // ----- Carpet End ----- //

@@ -20,6 +20,16 @@ public class ItemWithMeta {
         return new ItemStack(item, 1, metadata).getDisplayName();
     }
 
+    public String getDisplayID() {
+        StringBuilder display = new StringBuilder();
+        int id = Item.getIdFromItem(item);
+        display.append('#').append(String.format("%04d", id));
+        if (item.getHasSubtypes()) {
+            display.append('/').append(metadata);
+        }
+        return display.toString();
+    }
+
     @Override
     public int hashCode() {
         return (item.hashCode() << 4) | metadata;

@@ -14,6 +14,7 @@ import net.minecraft.util.text.TextFormatting;
 import net.minecraft.util.text.event.ClickEvent;
 import net.minecraft.util.text.event.HoverEvent;
 
+import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -120,6 +121,23 @@ public class Messenger {
         if (actual > 0.8D * reference) color = "r";
         if (actual > reference) color = "m";
         return color;
+    }
+
+    @Nonnull
+    public static String stats_error_color(double percent) {
+        if (percent < 1.0) {
+            return "y";
+        } else if (percent < 3.0) {
+            return "d";
+        } else if (percent < 10.0) {
+            return "r";
+        } else if (percent < 25.0) {
+            return "m";
+        } else if (percent < 99.0) {
+            return "e";
+        } else {
+            return "g";
+        }
     }
 
     public static String creatureTypeColor(EnumCreatureType type) {

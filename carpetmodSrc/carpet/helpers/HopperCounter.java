@@ -184,12 +184,12 @@ public class HopperCounter {
                             name, total, total * (20 * 60 * 60) / ticks, ticks / (20.0 * 60.0))));
         }
         List<ITextComponent> list = new ArrayList<>();
-        if (ticks == actualTicks) {
-            list.add(Messenger.m(null, "c Tick Counting Correct"));
-        } else {
-            list.add(Messenger.m(null,
-                    "c Tick Counting FAILED!! " + "ticks = " + ticks + ", actualTicks = " + actualTicks));
-        }
+        //if (ticks == actualTicks) {
+        //    list.add(Messenger.m(null, "c Tick Counting Correct"));
+        //} else {
+        //    list.add(Messenger.m(null,
+        //            "c Tick Counting FAILED!! " + "ticks = " + ticks + ", actualTicks = " + actualTicks));
+        //}
         //StringBuilder colorFullName = new StringBuilder(Messenger.color_by_enum(color)).append('b');
         StringBuilder colorFullName = new StringBuilder("w").append('b');
         if ("cactus".equalsIgnoreCase(name) || "all".equalsIgnoreCase(name)) {
@@ -216,15 +216,14 @@ public class HopperCounter {
     public List<ITextComponent> formatReliable(boolean brief) {
         StatsBundle stats = get_reliable_average(actualTicks, linearTotal, squaredTotal);
         double percent = 100.0 * stats.error / stats.average;
-        String color = (new Random()).nextBoolean() ? Messenger.heatmap_color(percent, 50) : "w";
+        String color = Messenger.stats_error_color(percent);
         StatsBundle.RoundedStatsBundle rounded = stats.getRoundedBundle();
         double minutes;
         if (brief) {
             minutes = Math.rint(actualTicks / 120.0) / 10.0;
             return Collections.singletonList(Messenger.m(null,
-                    String.format("c %s: %d, ", name, linearTotal),
-                    String.format("%s %s(%s)%s/h", color, rounded.average, rounded.error, rounded.unit),
-                    String.format("c , %.1f min ", minutes)));
+                    String.format("%s %s: %d, %s(%s)%s/h, %.1f min", color, name, linearTotal,
+                            rounded.average, rounded.error, rounded.unit, minutes)));
         }
         List<ITextComponent> list = new ArrayList<>();
         StringBuilder colorFullName = new StringBuilder("w").append('b');
@@ -235,21 +234,26 @@ public class HopperCounter {
         boolean realTime = false;
         minutes = actualTicks / 1200.0;
         list.add(Messenger.c("w Counter ", colorFullName,
-                "w  for ", String.format("wb %.2f", minutes), "w  min (in game)"));
-        list.add(Messenger.c("w Total: " + linearTotal + ", Average: ",
-                String.format("wb %s(%s)%s", rounded.average, rounded.error, rounded.unit),
-                "w /h, E: " + StatsBundle.round_to_sig_figs(percent, 3) + "% ",
+                "w  for ", String.format("wb %.2f", minutes), "w  min (in game) ",
                 "nb [X]", "^g reset", "!/counter " + name + " reset"));
+        list.add(Messenger.c("w Total: " + linearTotal + ", Average: ",
+                "wb " + rounded.average, "w (" + rounded.error + ')', "wb " + rounded.unit, "w /h, ",
+                color + " E: " + StatsBundle.round_to_sig_figs(percent, 3) + '%'));
         list.addAll(linearPartials.entrySet().stream().map(e -> {
             ItemWithMeta item = e.getKey();
             String itemName = item.getDisplayName();
+            String itemID = item.getDisplayID();
             long count = e.getValue();
             StatsBundle statsPartial = get_reliable_average(actualTicks, count, squaredPartials.getLong(item));
             StatsBundle.RoundedStatsBundle roundedPartial = statsPartial.getRoundedBundle();
             double percentPartial = 100.0 * statsPartial.error / statsPartial.average;
-            return Messenger.s(null, String.format(" - %s: %d, %s(%s)%s/h, E: %s%%", itemName, count,
-                    roundedPartial.average, roundedPartial.error, roundedPartial.unit,
-                    StatsBundle.round_to_sig_figs(percentPartial, 3)));
+            String colorPartial = Messenger.stats_error_color(percentPartial);
+            return Messenger.m(null, colorPartial + " - " + itemName + " (" + itemID + "): "
+                            + roundedPartial.average + roundedPartial.unit + "/h ",
+                    colorPartial + "u +",
+                    colorPartial + ' ' + roundedPartial.error + roundedPartial.unit + "/h, "
+                            + "err: " + StatsBundle.round_to_sig_figs(percentPartial, 3),
+                    "g ; total: " + count);
         }).collect(Collectors.toList()));
         return list;
     }
