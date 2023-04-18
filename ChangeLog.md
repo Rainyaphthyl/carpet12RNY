@@ -11,19 +11,14 @@ The `/counter` command uses better reporting format with features:
 - Displaying the total duration of item counting.
 - Displaying the total and average of all items.
 - Using bold or italic style on some important information.
-- Marking wool counters with the respective colors, as well as "all" hoppers with gray and cactus counter with green.
+
+[//]: # (- Marking wool counters with the respective colors, as well as "all" hoppers with gray and cactus counter with green.)
 
 (some of which are ported from [fabric-carpet](https://github.com/gnembon/fabric-carpet))
 
-## 1.2. Statistics and Error Analysis
+## 1.2. Command Modifications
 
-Work in Progress...
-
-Calculates the Variance, the Standard Deviation, and the Standard Error of the counted samples.
-
-## 1.3. Command Modifications
-
-### 1.3.1. Counter Stop
+### 1.2.1. Counter Stop
 
 New command, partially different from `/counter [<color>] reset`.
 
@@ -31,6 +26,38 @@ New command, partially different from `/counter [<color>] reset`.
 - Effect: Stops the item counter, and set it to the initial state with `tick = 0`, waiting for items to start counting.
 
 The argument `<color>` includes `cactus`, `all`, and Dye Colors.
+
+### 1.2.2. Counter Raw
+
+New command.
+
+- Usage: `/counter [<color>] raw`
+- Effect: Displays the raw data with the format of the old `/counter` command, while the `/counter` command as been modified.
+
+### 1.2.3. Counter
+
+Modified command, with effect different from the old command with same name.
+
+- Usage: `/counter [<color>]`
+- Effect: Displays the reliable data with error analysis and appropriate rounding of significant figures.
+
+## 1.3. Statistics and Error Analysis
+
+### 1.3.1. Functions
+
+Item rates will be displayed in the format of `<average>\(<error>\)<unit>, E: <relative-error>`. The unit will be automatically chosen from `(items)/h`, `k/h`, `M/h`, and `G/h`.
+
+The component `error` is the Standard Error calculated from $\frac{s^2}{n}$ .
+
+For example, the raw value of rate of a Mob Farm is `183789.4/h` with standard error `238.1/h`. The relative error is `238.1 / 183789.4 = 0.130%`. The rate will be displayed as `183.79(0.24)k/h`.
+
+Text components will be marked with different colors according to the level of relative error.
+
+### 1.3.2. Details
+
+To implement the distribution recording and the variance calculation, item counting has been separated into two parts:
+- The first is called by hoppers and items (for the cactus counter), adding items into a temporary map instantly;
+- The second runs at the phase `CarperServer.tick()`, collecting the temporary data into long-term maps.
 
 # 2. Better Item Logger
 

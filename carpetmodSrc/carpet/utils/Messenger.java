@@ -124,19 +124,33 @@ public class Messenger {
     }
 
     @Nonnull
-    public static String stats_error_color(double percent) {
-        if (percent < 1.0) {
-            return "y";
-        } else if (percent < 3.0) {
-            return "d";
-        } else if (percent < 10.0) {
-            return "r";
-        } else if (percent < 25.0) {
-            return "m";
-        } else if (percent < 99.0) {
-            return "e";
+    public static String stats_error_color(double percent, boolean fullLine) {
+        if (percent < 3.0) {
+            if (percent < 1.0) {
+                // 0.0 ~ 1.0
+                return fullLine ? "y" : "e";
+            } else {
+                // 1.0 ~ 3.0
+                return fullLine ? "d" : "l";
+            }
         } else {
-            return "g";
+            if (percent < 30.0) {
+                if (percent < 10.0) {
+                    // 3.0 ~ 10.0
+                    return fullLine ? "r" : "y";
+                } else {
+                    // 10.0 ~ 30.0
+                    return fullLine ? "m" : "d";
+                }
+            } else {
+                if (percent < 90.0) {
+                    // 30.0 ~ 90.0
+                    return fullLine ? "p" : "r";
+                } else {
+                    // 90.0 ~ inf
+                    return fullLine ? "g" : "m";
+                }
+            }
         }
     }
 
