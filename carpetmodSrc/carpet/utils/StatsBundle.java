@@ -106,7 +106,7 @@ public class StatsBundle {
         if (error / simplePow(10.0, minimal) < 2.95) {
             --minimal;
         }
-        int level = MathHelper.roundUp(minimal, 3);
+        int level = minimal > 0 ? MathHelper.roundUp(minimal, 3) : 0;
         if (!PREFIXES_MAP.containsKey(level)) {
             level = MathHelper.clamp(level, PREFIXES_MAP.firstIntKey(), PREFIXES_MAP.lastIntKey());
         }

@@ -216,14 +216,14 @@ public class HopperCounter {
     public List<ITextComponent> formatReliable(boolean brief) {
         StatsBundle stats = get_reliable_average(actualTicks, linearTotal, squaredTotal);
         double percent = 100.0 * stats.error / stats.average;
-        String color = Messenger.stats_error_color(percent);
+        String color = Messenger.stats_error_color(percent, true);
         StatsBundle.RoundedStatsBundle rounded = stats.getRoundedBundle();
         double minutes;
         if (brief) {
             minutes = Math.rint(actualTicks / 120.0) / 10.0;
             return Collections.singletonList(Messenger.m(null,
-                    String.format("%s %s: %d, %s(%s)%s/h, %.1f min", color, name, linearTotal,
-                            rounded.average, rounded.error, rounded.unit, minutes)));
+                    String.format("%s %s: %d, %s(%s)%s/h, %.1f min", Messenger.stats_error_color(percent, true),
+                            name, linearTotal, rounded.average, rounded.error, rounded.unit, minutes)));
         }
         List<ITextComponent> list = new ArrayList<>();
         StringBuilder colorFullName = new StringBuilder("w").append('b');
@@ -237,24 +237,29 @@ public class HopperCounter {
                 "w  for ", String.format("wb %.2f", minutes), "w  min (in game) ",
                 "nb [X]", "^g reset", "!/counter " + name + " reset"));
         list.add(Messenger.c("w Total: " + linearTotal + ", Average: ",
-                "wb " + rounded.average, "w (" + rounded.error + ')', "wb " + rounded.unit, "w /h, ",
-                color + " E: " + StatsBundle.round_to_sig_figs(percent, 3) + '%'));
-        list.addAll(linearPartials.entrySet().stream().map(e -> {
+                "wb " + rounded.average, "w (" + rounded.error + ')', "wb " + rounded.unit, "w /h, E: ",
+                color + ' ' + StatsBundle.round_to_sig_figs(percent, 3) + '%'));
+        boolean flagColor = false;
+        for (Object2LongMap.Entry<ItemWithMeta> e : linearPartials.object2LongEntrySet()) {
             ItemWithMeta item = e.getKey();
+            long itemCount = e.getLongValue();
             String itemName = item.getDisplayName();
             String itemID = item.getDisplayID();
-            long count = e.getValue();
-            StatsBundle statsPartial = get_reliable_average(actualTicks, count, squaredPartials.getLong(item));
-            StatsBundle.RoundedStatsBundle roundedPartial = statsPartial.getRoundedBundle();
-            double percentPartial = 100.0 * statsPartial.error / statsPartial.average;
-            String colorPartial = Messenger.stats_error_color(percentPartial);
-            return Messenger.m(null, colorPartial + " - " + itemName + " (" + itemID + "): "
-                            + roundedPartial.average + roundedPartial.unit + "/h ",
-                    colorPartial + "u +",
-                    colorPartial + ' ' + roundedPartial.error + roundedPartial.unit + "/h, "
-                            + "err: " + StatsBundle.round_to_sig_figs(percentPartial, 3),
-                    "g ; total: " + count);
-        }).collect(Collectors.toList()));
+            stats = get_reliable_average(actualTicks, itemCount, squaredPartials.getLong(item));
+            rounded = stats.getRoundedBundle();
+            percent = 100.0 * stats.error / stats.average;
+            String percentDisplay = StatsBundle.round_to_sig_figs(percent, 3);
+            color = Messenger.stats_error_color(percent, true);
+            String colorCyan = flagColor ? "c" : "q";
+            String colorWhite = flagColor ? "w" : "g";
+            flagColor = !flagColor;
+            list.add(Messenger.m(null, String.format("%s - %s, ", colorWhite, itemID),
+                    String.format("%s %s", colorWhite, itemName), String.format("%s : %d, ", colorWhite, itemCount),
+                    String.format("%sb %s", colorCyan, rounded.average),
+                    String.format("%s (%s)", colorCyan, rounded.error),
+                    String.format("%sb %s", colorCyan, rounded.unit), String.format("%s /h", colorCyan),
+                    String.format("%s , E: ", colorWhite), String.format("%s %s%%", color, percentDisplay)));
+        }
         return list;
     }
 
