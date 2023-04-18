@@ -59,10 +59,10 @@ public class HopperCounter {
         }
     }
 
-    public static List<ITextComponent> formatAll(boolean realtime) {
+    public static List<ITextComponent> formatAll(boolean realtime, boolean reliable) {
         List<ITextComponent> text = new ArrayList<>();
         for (HopperCounter counter : COUNTERS.values()) {
-            List<ITextComponent> temp = counter.format(realtime, false);
+            List<ITextComponent> temp = counter.format(realtime, false, reliable);
             if (temp.size() > 1) {
                 text.addAll(temp);
             }
@@ -157,7 +157,7 @@ public class HopperCounter {
         pubSubProvider.publish();
     }
 
-    public List<ITextComponent> format(boolean realTime, boolean brief) {
+    public List<ITextComponent> format(boolean realTime, boolean brief, boolean reliable) {
         if (linearPartials.isEmpty()) {
             if (brief) {
                 return Collections.singletonList(Messenger.m(null, "g " + name + ": -, -/h, - min "));
@@ -176,7 +176,7 @@ public class HopperCounter {
                             name, ticks / (20.0 * 60.0), (realTime ? " - real time" : "")),
                     "nb  [X]", "^g reset", "!/counter " + name + " reset"));
         }
-        if (!realTime) {
+        if (reliable && !realTime) {
             return formatReliable(brief);
         }
         if (brief) {
@@ -214,7 +214,8 @@ public class HopperCounter {
         return list;
     }
 
-    public List<ITextComponent> formatReliable(boolean brief) {
+    @Nonnull
+    private List<ITextComponent> formatReliable(boolean brief) {
         StatsBundle stats = get_reliable_average(actualTicks, linearTotal, squaredTotal);
         double percent = 100.0 * stats.error / stats.average;
         String color = Messenger.stats_error_color(percent, true);
@@ -240,7 +241,7 @@ public class HopperCounter {
         list.add(Messenger.c("w Total: " + linearTotal + ", Average: ",
                 "wb " + rounded.average, "w (" + rounded.error + ')', "wb " + rounded.unit, "w /h, E: ",
                 color + ' ' + StatsBundle.round_to_sig_figs(percent, 3) + '%'));
-        boolean flagColor = false;
+        //boolean flagColor = false;
         List<Integer> indexList = new IntArrayList();
         List<ItemWithMeta> itemList = new ArrayList<>(linearPartials.keySet());
         List<StatsBundle> statsList = linearPartials.object2LongEntrySet().stream().map(e -> {
@@ -260,15 +261,15 @@ public class HopperCounter {
             percent = percentList.get(i);
             String percentDisplay = StatsBundle.round_to_sig_figs(percent, 3);
             color = Messenger.stats_error_color(percent, true);
-            String colorCyan = flagColor ? "c" : "q";
-            String colorWhite = flagColor ? "w" : "g";
-            flagColor = !flagColor;
-            list.add(Messenger.m(null, String.format("%s - %s, ", colorWhite, itemID),
-                    String.format("%s %s", colorWhite, itemName), String.format("%s : %d, ", colorWhite, itemCount),
-                    String.format("%sb %s", colorCyan, rounded.average),
-                    String.format("%s (%s)", colorCyan, rounded.error),
-                    String.format("%sb %s", colorCyan, rounded.unit), String.format("%s /h", colorCyan),
-                    String.format("%s , E: ", colorWhite), String.format("%s %s%%", color, percentDisplay)));
+            //String colorCyan = flagColor ? "c" : "q";
+            //String colorWhite = flagColor ? "w" : "g";
+            //flagColor = !flagColor;
+            list.add(Messenger.m(null, String.format("%s - %s, ", "g", itemID),
+                    String.format("%s %s", "w", itemName), String.format("%s : %d, ", "g", itemCount),
+                    String.format("%sb %s", "w", rounded.average),
+                    String.format("%s (%s)", "w", rounded.error),
+                    String.format("%sb %s", "w", rounded.unit), String.format("%s /h", "w"),
+                    String.format("%s , E: ", "g"), String.format("%s %s%%", color, percentDisplay)));
         }
         return list;
     }

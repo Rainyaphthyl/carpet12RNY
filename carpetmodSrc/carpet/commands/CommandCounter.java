@@ -43,12 +43,15 @@ public class CommandCounter extends CommandCarpetBase {
             return;
         }
         if (args.length == 0) {
-            Messenger.send(sender, HopperCounter.formatAll(false));
+            Messenger.send(sender, HopperCounter.formatAll(false, true));
             return;
         }
         switch (args[0].toLowerCase(Locale.ROOT)) {
+            case "raw":
+                Messenger.send(sender, HopperCounter.formatAll(false, false));
+                return;
             case "realtime":
-                Messenger.send(sender, HopperCounter.formatAll(true));
+                Messenger.send(sender, HopperCounter.formatAll(true, false));
                 return;
             case "reset":
                 HopperCounter.resetAll(true);
@@ -62,12 +65,15 @@ public class CommandCounter extends CommandCarpetBase {
         HopperCounter counter = HopperCounter.getCounter(args[0]);
         if (counter == null) throw new WrongUsageException("Invalid color");
         if (args.length == 1) {
-            Messenger.send(sender, counter.format(false, false));
+            Messenger.send(sender, counter.format(false, false, true));
             return;
         }
         switch (args[1].toLowerCase(Locale.ROOT)) {
+            case "raw":
+                Messenger.send(sender, counter.format(false, false, false));
+                return;
             case "realtime":
-                Messenger.send(sender, counter.format(true, false));
+                Messenger.send(sender, counter.format(true, false, false));
                 return;
             case "reset":
                 counter.reset(true);
@@ -99,12 +105,13 @@ public class CommandCounter extends CommandCarpetBase {
             lst.add("all");
             lst.add("realtime");
             lst.add("stop");
+            lst.add("raw");
             String[] stockArr = new String[lst.size()];
             stockArr = lst.toArray(stockArr);
             return getListOfStringsMatchingLastWord(args, stockArr);
         }
         if (args.length == 2) {
-            return getListOfStringsMatchingLastWord(args, "reset", "realtime", "stop");
+            return getListOfStringsMatchingLastWord(args, "reset", "realtime", "stop", "raw");
         }
         return Collections.emptyList();
     }
