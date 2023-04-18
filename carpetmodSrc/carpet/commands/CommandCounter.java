@@ -25,7 +25,7 @@ public class CommandCounter extends CommandCarpetBase {
     @Nonnull
     @ParametersAreNonnullByDefault
     public String getUsage(ICommandSender sender) {
-        return "Usage: counter [<color>] (reset|stop|realtime)";
+        return "Usage: /counter [<color>|cactus|all] (reset|stop|realtime|raw)";
     }
 
     @Nonnull
@@ -55,11 +55,16 @@ public class CommandCounter extends CommandCarpetBase {
                 return;
             case "reset":
                 HopperCounter.resetAll(true);
-                notifyCommandListener(sender, this, "All counters restarted.");
+                notifyCommandListener(sender, this, "All counters restarted instantly.");
                 return;
             case "stop":
                 HopperCounter.resetAll(false);
-                notifyCommandListener(sender, this, "All counters stopped.");
+                notifyCommandListener(sender, this,
+                        "All counters have stopped and will restart on triggering.");
+                return;
+            case "distribution":
+                Messenger.print_server_message(server,
+                        "Command \"counter [<color>] distribution\" is a work in progress.");
                 return;
         }
         HopperCounter counter = HopperCounter.getCounter(args[0]);
@@ -77,11 +82,16 @@ public class CommandCounter extends CommandCarpetBase {
                 return;
             case "reset":
                 counter.reset(true);
-                notifyCommandListener(sender, this, String.format("%s counter restarted.", args[0]));
+                notifyCommandListener(sender, this, String.format("%s counter restarted instantly.", args[0]));
                 return;
             case "stop":
                 counter.reset(false);
-                notifyCommandListener(sender, this, String.format("%s counter stopped.", args[0]));
+                notifyCommandListener(sender, this, String.format(
+                        "%s counter has stopped and will restart on triggering.", args[0]));
+                return;
+            case "distribution":
+                Messenger.print_server_message(server,
+                        "Command \"counter [<color>] distribution\" is a work in progress.");
                 return;
         }
         throw new WrongUsageException(getUsage(sender));
@@ -106,12 +116,13 @@ public class CommandCounter extends CommandCarpetBase {
             lst.add("realtime");
             lst.add("stop");
             lst.add("raw");
+            lst.add("distribution");
             String[] stockArr = new String[lst.size()];
             stockArr = lst.toArray(stockArr);
             return getListOfStringsMatchingLastWord(args, stockArr);
         }
         if (args.length == 2) {
-            return getListOfStringsMatchingLastWord(args, "reset", "realtime", "stop", "raw");
+            return getListOfStringsMatchingLastWord(args, "reset", "realtime", "stop", "raw", "distribution");
         }
         return Collections.emptyList();
     }

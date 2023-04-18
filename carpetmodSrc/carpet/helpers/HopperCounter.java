@@ -5,6 +5,8 @@ import carpet.pubsub.PubSubInfoProvider;
 import carpet.utils.Messenger;
 import carpet.utils.StatsBundle;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.longs.Long2LongMap;
+import it.unimi.dsi.fastutil.longs.Long2LongOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2LongLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import net.minecraft.item.EnumDyeColor;
@@ -36,6 +38,10 @@ public class HopperCounter {
     private final Object2LongMap<ItemWithMeta> linearPartials = new Object2LongLinkedOpenHashMap<>();
     private final Object2LongMap<ItemWithMeta> squaredPartials = new Object2LongLinkedOpenHashMap<>();
     private final Object2LongMap<ItemWithMeta> currentPartials = new Object2LongLinkedOpenHashMap<>();
+    /**
+     * {@code Map<item, Map<instant-rate(items/gt), frequency>>}
+     */
+    private final Map<ItemWithMeta, Long2LongMap> histogramMaps = new HashMap<>();
     private final PubSubInfoProvider<Long> pubSubProvider;
     private final String name;
     private long startTick = -1;
@@ -46,6 +52,7 @@ public class HopperCounter {
      */
     private long actualTicks = 0;
     private long squaredTotal = 0;
+    private boolean shouldUpdate = false;
 
     private HopperCounter(EnumDyeColor color, String name) {
         this.name = name;
@@ -109,18 +116,28 @@ public class HopperCounter {
 
     private void update() {
         if (startTick >= 0) {
-            long totalInc = 0;
-            for (ItemWithMeta item : currentPartials.keySet()) {
-                long partialInc = currentPartials.getLong(item);
-                linearPartials.put(item, linearPartials.getLong(item) + partialInc);
-                squaredPartials.put(item, squaredPartials.getLong(item) + partialInc * partialInc);
-                totalInc += partialInc;
-                currentPartials.put(item, 0);
-            }
-            linearTotal += totalInc;
-            squaredTotal += totalInc * totalInc;
-            if (currSyncTick % 900 == 0) {
-                currentPartials.clear();
+            if (shouldUpdate) {
+                long totalInc = 0;
+                for (ItemWithMeta item : currentPartials.keySet()) {
+                    long partialInc = currentPartials.getLong(item);
+                    if (partialInc != 0) {
+                        linearPartials.put(item, linearPartials.getLong(item) + partialInc);
+                        squaredPartials.put(item, squaredPartials.getLong(item) + partialInc * partialInc);
+                        totalInc += partialInc;
+                        currentPartials.put(item, 0);
+                        if (!histogramMaps.containsKey(item)) {
+                            histogramMaps.put(item, new Long2LongOpenHashMap());
+                        }
+                        Long2LongMap histogram = histogramMaps.get(item);
+                        histogram.put(partialInc, histogram.get(partialInc) + 1);
+                    }
+                }
+                linearTotal += totalInc;
+                squaredTotal += totalInc * totalInc;
+                if (currSyncTick % 900 == 0) {
+                    currentPartials.clear();
+                }
+                shouldUpdate = false;
             }
             ++actualTicks;
         }
@@ -135,6 +152,7 @@ public class HopperCounter {
         long stackCount = stack.getCount();
         currentPartials.put(item, currentPartials.getLong(item) + stackCount);
         pubSubProvider.publish();
+        shouldUpdate = true;
     }
 
     /**
@@ -146,13 +164,17 @@ public class HopperCounter {
         linearTotal = 0;
         squaredPartials.clear();
         squaredTotal = 0;
+        histogramMaps.clear();
         if (instant) {
-            startTick = currSyncTick;
-            startMillis = MinecraftServer.getCurrentTimeMillis();
+            if (startTick >= 0) {
+                startTick = currSyncTick;
+                startMillis = MinecraftServer.getCurrentTimeMillis();
+            }
         } else {
             startTick = -1;
             startMillis = 0;
         }
+        shouldUpdate = false;
         actualTicks = 0;
         pubSubProvider.publish();
     }
@@ -185,12 +207,6 @@ public class HopperCounter {
                             name, total, total * (20 * 60 * 60) / ticks, ticks / (20.0 * 60.0))));
         }
         List<ITextComponent> list = new ArrayList<>();
-        //if (ticks == actualTicks) {
-        //    list.add(Messenger.m(null, "c Tick Counting Correct"));
-        //} else {
-        //    list.add(Messenger.m(null,
-        //            "c Tick Counting FAILED!! " + "ticks = " + ticks + ", actualTicks = " + actualTicks));
-        //}
         //StringBuilder colorFullName = new StringBuilder(Messenger.color_by_enum(color)).append('b');
         StringBuilder colorFullName = new StringBuilder("w").append('b');
         if ("cactus".equalsIgnoreCase(name) || "all".equalsIgnoreCase(name)) {
@@ -203,7 +219,7 @@ public class HopperCounter {
         ));
         list.add(Messenger.c("w Total: " + total + ", Average: ",
                 String.format("wb %.1f", total * 1.0 * (20 * 60 * 60) / ticks), "w /h ",
-                "nb [X]", "^g reset", "!/counter " + name + " reset"
+                "nb [X]", "^g stop", "!/counter " + name + " stop"
         ));
         list.addAll(linearPartials.entrySet().stream().map(e -> {
             String itemName = e.getKey().getDisplayName();
@@ -218,7 +234,7 @@ public class HopperCounter {
     private List<ITextComponent> formatReliable(boolean brief) {
         StatsBundle stats = get_reliable_average(actualTicks, linearTotal, squaredTotal);
         double percent = 100.0 * stats.error / stats.average;
-        String color = Messenger.stats_error_color(percent, true);
+        String colorStats = Messenger.stats_error_color(percent, true);
         StatsBundle.RoundedStatsBundle rounded = stats.getRoundedBundle();
         double minutes;
         if (brief) {
@@ -228,19 +244,19 @@ public class HopperCounter {
                             name, linearTotal, rounded.average, rounded.error, rounded.unit, minutes)));
         }
         List<ITextComponent> list = new ArrayList<>();
+        //StringBuilder colorFullName = new StringBuilder(Messenger.color_by_enum(color)).append('b');
         StringBuilder colorFullName = new StringBuilder("w").append('b');
         if ("cactus".equalsIgnoreCase(name) || "all".equalsIgnoreCase(name)) {
             colorFullName.append('i');
         }
         colorFullName.append(' ').append(name);
-        boolean realTime = false;
         minutes = actualTicks / 1200.0;
         list.add(Messenger.c("w Counter ", colorFullName,
                 "w  for ", String.format("wb %.2f", minutes), "w  min (in game) ",
-                "nb [X]", "^g reset", "!/counter " + name + " reset"));
+                "nb [X]", "^g stop", "!/counter " + name + " stop"));
         list.add(Messenger.c("w Total: " + linearTotal + ", Average: ",
                 "wb " + rounded.average, "w (" + rounded.error + ')', "wb " + rounded.unit, "w /h, E: ",
-                color + ' ' + StatsBundle.round_to_sig_figs(percent, 3) + '%'));
+                colorStats + ' ' + StatsBundle.round_to_sig_figs(percent, 3) + '%'));
         //boolean flagColor = false;
         List<Integer> indexList = new IntArrayList();
         List<ItemWithMeta> itemList = new ArrayList<>(linearPartials.keySet());
@@ -260,7 +276,7 @@ public class HopperCounter {
             rounded = stats.getRoundedBundle();
             percent = percentList.get(i);
             String percentDisplay = StatsBundle.round_to_sig_figs(percent, 3);
-            color = Messenger.stats_error_color(percent, true);
+            colorStats = Messenger.stats_error_color(percent, true);
             //String colorCyan = flagColor ? "c" : "q";
             //String colorWhite = flagColor ? "w" : "g";
             //flagColor = !flagColor;
@@ -269,7 +285,7 @@ public class HopperCounter {
                     String.format("%sb %s", "w", rounded.average),
                     String.format("%s (%s)", "w", rounded.error),
                     String.format("%sb %s", "w", rounded.unit), String.format("%s /h", "w"),
-                    String.format("%s , E: ", "g"), String.format("%s %s%%", color, percentDisplay)));
+                    String.format("%s , E: ", "g"), String.format("%s %s%%", colorStats, percentDisplay)));
         }
         return list;
     }

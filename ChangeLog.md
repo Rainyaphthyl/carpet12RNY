@@ -11,10 +11,9 @@ The `/counter` command uses better reporting format with features:
 - Displaying the total duration of item counting.
 - Displaying the total and average of all items.
 - Using bold or italic style on some important information.
+- Displaying IDs and metadata (if having subtypes) of items, to help distinguish different items with same name.
 
-[//]: # (- Marking wool counters with the respective colors, as well as "all" hoppers with gray and cactus counter with green.)
-
-(some of which are ported from [fabric-carpet](https://github.com/gnembon/fabric-carpet))
+The dark red button `[X]` in the reports uses command `counter stop` instead of `counter reset`.
 
 ## 1.2. Command Modifications
 
@@ -56,8 +55,11 @@ Text components will be marked with different colors according to the level of r
 ### 1.3.2. Details
 
 To implement the distribution recording and the variance calculation, item counting has been separated into two parts:
+
 - The first is called by hoppers and items (for the cactus counter), adding items into a temporary map instantly;
 - The second runs at the phase `CarperServer.tick()`, collecting the temporary data into long-term maps.
+
+*The estimation algorithm needs further optimization.*
 
 # 2. Better Item Logger
 
