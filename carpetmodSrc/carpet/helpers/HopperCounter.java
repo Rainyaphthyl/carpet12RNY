@@ -4,6 +4,7 @@ import carpet.CarpetServer;
 import carpet.pubsub.PubSubInfoProvider;
 import carpet.utils.Messenger;
 import carpet.utils.StatsBundle;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.objects.Object2LongLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import net.minecraft.item.EnumDyeColor;
@@ -240,14 +241,23 @@ public class HopperCounter {
                 "wb " + rounded.average, "w (" + rounded.error + ')', "wb " + rounded.unit, "w /h, E: ",
                 color + ' ' + StatsBundle.round_to_sig_figs(percent, 3) + '%'));
         boolean flagColor = false;
-        for (Object2LongMap.Entry<ItemWithMeta> e : linearPartials.object2LongEntrySet()) {
-            ItemWithMeta item = e.getKey();
-            long itemCount = e.getLongValue();
+        List<Integer> indexList = new IntArrayList();
+        List<ItemWithMeta> itemList = new ArrayList<>(linearPartials.keySet());
+        List<StatsBundle> statsList = linearPartials.object2LongEntrySet().stream().map(e -> {
+            indexList.add(indexList.size());
+            return get_reliable_average(actualTicks, e.getLongValue(), squaredPartials.getLong(e.getKey()));
+        }).collect(Collectors.toList());
+        List<Double> percentList = statsList.stream().map(e -> 100.0 * e.error / e.average)
+                .collect(Collectors.toList());
+        indexList.sort(Comparator.comparing(percentList::get));
+        for (int i : indexList) {
+            ItemWithMeta item = itemList.get(i);
+            long itemCount = linearPartials.getLong(item);
             String itemName = item.getDisplayName();
             String itemID = item.getDisplayID();
-            stats = get_reliable_average(actualTicks, itemCount, squaredPartials.getLong(item));
+            stats = statsList.get(i);
             rounded = stats.getRoundedBundle();
-            percent = 100.0 * stats.error / stats.average;
+            percent = percentList.get(i);
             String percentDisplay = StatsBundle.round_to_sig_figs(percent, 3);
             color = Messenger.stats_error_color(percent, true);
             String colorCyan = flagColor ? "c" : "q";
