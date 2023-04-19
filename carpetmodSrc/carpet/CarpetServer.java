@@ -1,35 +1,37 @@
 package carpet;
 
-import carpet.helpers.lifetime.LifeTimeTracker;
+import carpet.carpetclient.CarpetClientServer;
+import carpet.helpers.HopperCounter;
 import carpet.helpers.StackTraceDeobfuscator;
+import carpet.helpers.TickSpeed;
+import carpet.helpers.lifetime.LifeTimeTracker;
+import carpet.logging.LoggerRegistry;
 import carpet.network.PluginChannelManager;
 import carpet.network.ToggleableChannelHandler;
 import carpet.patches.EntityPlayerMPFake;
-import carpet.pubsub.*;
+import carpet.pubsub.PubSubInfoProvider;
+import carpet.pubsub.PubSubManager;
+import carpet.pubsub.PubSubMessenger;
 import carpet.utils.*;
 import carpet.worldedit.WorldEditBridge;
-
-import java.io.*;
-import java.util.*;
-
 import narcolepticfrog.rsmm.events.TickStartEventDispatcher;
 import narcolepticfrog.rsmm.server.RSMMServer;
-
-import carpet.carpetclient.CarpetClientServer;
-
-import carpet.helpers.TickSpeed;
 import net.minecraft.entity.EnumCreatureType;
 import net.minecraft.entity.player.EntityPlayerMP;
-import carpet.logging.LoggerRegistry;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.Tuple;
 import net.minecraft.world.WorldServer;
 import org.apache.logging.log4j.LogManager;
 import redstone.multimeter.server.MultimeterServer;
 
+import java.io.*;
+import java.util.ArrayList;
+import java.util.Locale;
+import java.util.Random;
+
 public class CarpetServer // static for now - easier to handle all around the code, its one anyways
 {
-    public static final Random rand = new Random((int)((2>>16)*Math.random()));
+    public static final Random rand = new Random((int) ((2 >> 16) * Math.random()));
     public static final PubSubManager PUBSUB = new PubSubManager();
     public static final PubSubMessenger PUBSUB_MESSENGER = new PubSubMessenger(PUBSUB);
 
@@ -46,8 +48,7 @@ public class CarpetServer // static for now - easier to handle all around the co
 
     public static void init(MinecraftServer server) //aka constructor of this static singleton class
     {
-        if (JavaVersionUtil.JAVA_VERSION != 8)
-        {
+        if (JavaVersionUtil.JAVA_VERSION != 8) {
             LogManager.getLogger().warn("!!!!!!!!!!");
             LogManager.getLogger().warn("1.12 TECH SERVERS SHOULD BE RUN USING JAVA 8, DETECTED JAVA " + JavaVersionUtil.JAVA_VERSION);
             LogManager.getLogger().warn("!!!!!!!!!!");
@@ -65,8 +66,8 @@ public class CarpetServer // static for now - easier to handle all around the co
         legacyRsmmChannel = new ToggleableChannelHandler(pluginChannels, legacyRsmmServer.createChannelHandler(), false);
         wecuiChannel = new ToggleableChannelHandler(pluginChannels, WorldEditBridge.createChannelHandler(), false);
     }
-    public static void onServerLoaded(MinecraftServer server)
-    {
+
+    public static void onServerLoaded(MinecraftServer server) {
         CarpetSettings.applySettingsFromConf(server);
         LoggerRegistry.initLoggers(server);
         LoggerRegistry.readSaveFile(server);
@@ -79,8 +80,8 @@ public class CarpetServer // static for now - easier to handle all around the co
                 .withStackTrace(new StackTraceElement[0])
                 .deobfuscate();
     }
-    public static void onLoadAllWorlds(MinecraftServer server)
-    {
+
+    public static void onLoadAllWorlds(MinecraftServer server) {
         TickingArea.loadConfig(server);
         LifeTimeTracker.attachServer(server);
         for (WorldServer world : server.worlds) {
@@ -92,7 +93,7 @@ public class CarpetServer // static for now - easier to handle all around the co
             }
 
             String prefix = "minecraft." + world.provider.getDimensionType().getName();
-            new PubSubInfoProvider<>(PUBSUB,prefix + ".chunk_loading.dropped_chunks.hash_size",20,
+            new PubSubInfoProvider<>(PUBSUB, prefix + ".chunk_loading.dropped_chunks.hash_size", 20,
                     () -> UnloadOrder.getCurrentHashSize(world));
             for (EnumCreatureType creatureType : EnumCreatureType.values()) {
                 String mobCapPrefix = prefix + ".mob_cap." + creatureType.name().toLowerCase(Locale.ROOT);
@@ -109,8 +110,8 @@ public class CarpetServer // static for now - easier to handle all around the co
             }
         }
     }
-    public static void onWorldsSaved(MinecraftServer server)
-    {
+
+    public static void onWorldsSaved(MinecraftServer server) {
         TickingArea.saveConfig(server);
         for (WorldServer world : server.worlds) {
             try {
@@ -121,78 +122,65 @@ public class CarpetServer // static for now - easier to handle all around the co
         }
     }
 
-    public static void tick(MinecraftServer server)
-    {
+    public static void tick(MinecraftServer server) {
         TickSpeed.tick(server);
-        if (CarpetSettings.redstoneMultimeterLegacy)
-        {
+        if (CarpetSettings.redstoneMultimeterLegacy) {
             TickStartEventDispatcher.dispatchEvent(server.getTickCounter());
+        }
+        if (CarpetSettings.cactusCounter || CarpetSettings.hopperCounters != CarpetSettings.HopperCounters.off) {
+            HopperCounter.updateAll(server);
         }
         HUDController.update_hud(server);
         WorldEditBridge.onStartTick();
         PUBSUB.update(server.getTickCounter());
     }
-    public static void playerConnected(EntityPlayerMP player)
-    {
+
+    public static void playerConnected(EntityPlayerMP player) {
         pluginChannels.onPlayerConnected(player);
         LoggerRegistry.playerConnected(player);
     }
 
-    public static void playerDisconnected(EntityPlayerMP player)
-    {
+    public static void playerDisconnected(EntityPlayerMP player) {
         pluginChannels.onPlayerDisconnected(player);
         LoggerRegistry.playerDisconnected(player);
     }
-    
-    public static Random setRandomSeed(int p_72843_1_, int p_72843_2_, int p_72843_3_)
-    {
-        long i = (long)p_72843_1_ * 341873128712L + (long)p_72843_2_ * 132897987541L + CCServer.getMinecraftServer().worlds[0].getWorldInfo().getSeed() + (long)p_72843_3_;
+
+    public static Random setRandomSeed(int p_72843_1_, int p_72843_2_, int p_72843_3_) {
+        long i = (long) p_72843_1_ * 341873128712L + (long) p_72843_2_ * 132897987541L + CCServer.getMinecraftServer().worlds[0].getWorldInfo().getSeed() + (long) p_72843_3_;
         rand.setSeed(i);
         return rand;
     }
 
     public static void loadBots(MinecraftServer server) {
-        try
-        {
+        try {
             File settings_file = server.getActiveAnvilConverter().getFile(server.getFolderName(), "bot.conf");
             BufferedReader b = new BufferedReader(new FileReader(settings_file));
             String line = "";
             boolean temp = CarpetSettings.removeFakePlayerSkins;
             CarpetSettings.removeFakePlayerSkins = true;
-            while ((line = b.readLine()) != null)
-            {
+            while ((line = b.readLine()) != null) {
                 EntityPlayerMPFake.create(line, server);
             }
             b.close();
             CarpetSettings.removeFakePlayerSkins = temp;
-        }
-        catch(FileNotFoundException e)
-        {
-            System.out.println(e);
-        }
-        catch (IOException e)
-        {
-            System.out.println(e);
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
-    public static void writeConf(MinecraftServer server, ArrayList<String> names)
-    {
-        try
-        {
+    public static void writeConf(MinecraftServer server, ArrayList<String> names) {
+        try {
             File settings_file = server.getActiveAnvilConverter().getFile(server.getFolderName(), "bot.conf");
-            if(names != null) {
+            if (names != null) {
                 FileWriter fw = new FileWriter(settings_file);
                 for (String name : names) {
-                    fw.write(name +"\n");
+                    fw.write(name + "\n");
                 }
                 fw.close();
             } else {
                 settings_file.delete();
             }
-        }
-        catch (IOException e)
-        {
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }

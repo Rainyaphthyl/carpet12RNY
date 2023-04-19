@@ -317,7 +317,7 @@ public class CarpetSettings
     public static boolean redstoneMultimeterLegacy = false;
 
     @Rule(desc = "Enables integration with the new Redstone Multimeter mod", category = {CREATIVE, SURVIVAL, COMMANDS}, extra = {
-    		"To use, the new Redstone Multimeter mod must be installed client-side as well"
+            "To use, the new Redstone Multimeter mod must be installed client-side as well"
     })
     public static boolean redstoneMultimeter = false;
 
@@ -381,7 +381,7 @@ public class CarpetSettings
     @CreativeDefault("500000")
     public static int fillLimit = 32768;
 
-    @Rule(desc = "Sets the horizontal random angle on TNT for debugging of TNT contraptions", category = TNT, options = "-1", validator = "validateHardcodeTNTangle", extra = {
+    @Rule(desc = "Sets the horizontal random angle on TNT for debugging of TNT contraptions", category = TNT, options = "-1.0", validator = "validateHardcodeTNTangle", extra = {
             "Set to -1 for default behaviour"
     })
     public static double hardcodeTNTangle = -1;
@@ -389,7 +389,7 @@ public class CarpetSettings
         return value == -1 || (value >= 0 && value < 360);
     }
 
-    @Rule(desc = "Sets the tnt random explosion range to a fixed value", category = TNT, options = "-1", validator = "validateTntRandomRange", extra = {
+    @Rule(desc = "Sets the tnt random explosion range to a fixed value", category = TNT, options = "-1.0", validator = "validateTntRandomRange", extra = {
             "Set to -1 for default behaviour"
     })
     public static double tntRandomRange = -1;
@@ -1049,6 +1049,40 @@ public class CarpetSettings
     })
     public static boolean commandLifeTime = true;
 
+    @Rule(desc = "Item Logger will not report the items killed by cactus when the Cactus Counter is on, etc.",
+            category = {CREATIVE, NAFTALLUVIA})
+    public static boolean itemLoggerIgnoringCounters = true;
+
+    // TISCM ported from https://github.com/Fallen-Breath/carpetmod112
+    public static final double VANILLA_BLOCK_EVENT_PACKET_RANGE = 64.0D;
+    @Rule(
+            desc = "Set the range where player will receive a block event packet after a block event fires successfully",
+            validator = "validateNonNegative",
+            options = {"0.0", "16.0", "64.0", "128.0"},
+            category = {CREATIVE, NAFTALLUVIA}
+    )
+    public static double blockEventPacketRange = VANILLA_BLOCK_EVENT_PACKET_RANGE;
+
+    // TISCM ported from https://github.com/Fallen-Breath/carpetmod112
+    @Rule(
+            desc = "The maximum horizontal chebyshev distance (in chunks) for the server to sync entities information to the client",
+            options = {"-1", "16", "64"},
+            category = {CREATIVE, NAFTALLUVIA}
+    )
+    public static int entityTrackerDistance = -1;
+
+    // TISCM ported from https://github.com/Fallen-Breath/carpetmod112
+    public static final double VANILLA_EXPLOSION_PACKET_RANGE = 64.0D;  // sqrt(4096)
+
+    // TISCM ported from https://github.com/Fallen-Breath/carpetmod112
+    @Rule(
+            desc = "Set the range where player will receive an explosion packet when an explosion happens",
+            validator = "validateNonNegative",
+            options = {"0.0", "16.0", "64.0", "128.0", "2048.0"},
+            category = {CREATIVE, NAFTALLUVIA}
+    )
+    public static double explosionPacketRange = VANILLA_EXPLOSION_PACKET_RANGE;
+
     // ===== API ===== //
 
     /**
@@ -1129,6 +1163,10 @@ public class CarpetSettings
     }
 
     private static boolean validateNonNegative(int value) {
+        return value >= 0;
+    }
+
+    private static boolean validateNonNegative(double value) {
         return value >= 0;
     }
 

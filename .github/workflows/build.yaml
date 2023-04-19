@@ -1,6 +1,7 @@
-name: Build on Pull Request
+name: Build on Push & Pull Request
 
 on:
+  - push
   - pull_request
 
 jobs:
