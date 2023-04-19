@@ -6,9 +6,10 @@ import carpet.helpers.ItemWithMeta;
 import carpet.utils.Messenger;
 import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommandSender;
+import net.minecraft.command.NumberInvalidException;
 import net.minecraft.command.WrongUsageException;
-import net.minecraft.init.Items;
 import net.minecraft.item.EnumDyeColor;
+import net.minecraft.item.Item;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.math.BlockPos;
 
@@ -21,6 +22,18 @@ import java.util.List;
 import java.util.Locale;
 
 public class CommandCounter extends CommandCarpetBase {
+    @Nullable
+    @ParametersAreNonnullByDefault
+    public static ItemWithMeta parseItemWithMeta(ICommandSender sender, String[] args, int ordinal) throws NumberInvalidException {
+        if (ordinal >= args.length) {
+            return null;
+        }
+        Item item = getItemByText(sender, args[ordinal]);
+        ++ordinal;
+        int metadata = ordinal < args.length ? parseInt(args[ordinal]) : 0;
+        return new ItemWithMeta(item, metadata);
+    }
+
     /**
      * Gets the name of the command
      */
@@ -65,8 +78,7 @@ public class CommandCounter extends CommandCarpetBase {
                         "All counters have stopped and will restart on triggered.");
                 return;
             case "distribution":
-                Messenger.print_server_message(server,
-                        "Command \"counter [<color>] distribution\" is a work in progress.");
+                Messenger.send(sender, HopperCounter.formatAllDistribution(parseItemWithMeta(sender, args, 1)));
                 return;
         }
         HopperCounter counter = HopperCounter.getCounter(args[0]);
@@ -92,10 +104,7 @@ public class CommandCounter extends CommandCarpetBase {
                         "%s counter has stopped and will restart on triggered.", args[0]));
                 return;
             case "distribution":
-                // TODO: 2023/4/19,0019 Remove the hard coded debugger!
-                Messenger.send(sender, counter.formatDistribution(new ItemWithMeta(Items.GUNPOWDER, 0)));
-                Messenger.print_server_message(server,
-                        "Command \"counter [<color>] distribution\" is a work in progress.");
+                Messenger.send(sender, counter.formatDistribution(parseItemWithMeta(sender, args, 2)));
                 return;
         }
         throw new WrongUsageException(getUsage(sender));
@@ -125,8 +134,13 @@ public class CommandCounter extends CommandCarpetBase {
             stockArr = lst.toArray(stockArr);
             return getListOfStringsMatchingLastWord(args, stockArr);
         }
-        if (args.length == 2) {
-            return getListOfStringsMatchingLastWord(args, "reset", "realtime", "stop", "raw", "distribution");
+        if (args.length >= 2) {
+            if ("distribution".equalsIgnoreCase(args[args.length - 2])) {
+                return getListOfStringsMatchingLastWord(args, Item.REGISTRY.getKeys());
+            }
+            if (args.length == 2) {
+                return getListOfStringsMatchingLastWord(args, "reset", "realtime", "stop", "raw", "distribution");
+            }
         }
         return Collections.emptyList();
     }

@@ -40,15 +40,13 @@ Modified command, with effect different from the old command with same name.
 - Usage: `/counter [<color>]`
 - Effect: Displays the reliable data with error analysis and appropriate rounding of significant figures.
 
-[//]: # (### 1.2.4. Counter Distribution)
+### 1.2.4. Counter Distribution
 
-[//]: # ()
-[//]: # (New command.)
+New command.
 
-[//]: # ()
-[//]: # (- Usage: `/counter [<color>] distribution [&#40;<item_id>|<item_name>&#41; [<metadata>]]`)
+- Usage: `/counter [<color>] distribution [<item> [<metadata>]]`
 
-[//]: # (- Effect: Displays the frequency distribution of instant item rates &#40;items per game-tick&#41;.)
+- Effect: Displays the frequency distribution of instant item rates (items per game-tick).
 
 ## 1.3. Statistics and Error Analysis
 
@@ -68,8 +66,6 @@ To implement the distribution recording and the variance calculation, item count
 
 - The first is called by hoppers and items (for the cactus counter), adding items into a temporary map instantly;
 - The second runs at the phase `CarperServer.tick()`, collecting the temporary data into long-term maps.
-
-*The estimation algorithm needs further optimization.*
 
 # 2. Better Item Logger
 

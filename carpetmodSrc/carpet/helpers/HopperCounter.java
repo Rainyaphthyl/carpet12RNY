@@ -82,6 +82,30 @@ public class HopperCounter {
         return text;
     }
 
+    public static List<ITextComponent> formatAllDistribution(ItemWithMeta item) {
+        List<ITextComponent> text = new ArrayList<>();
+        for (HopperCounter counter : COUNTERS.values()) {
+            List<ITextComponent> temp = counter.formatDistribution(item);
+            if (temp.size() > 1) {
+                text.addAll(temp);
+            }
+        }
+        if (text.isEmpty()) {
+            String itemName;
+            String itemID;
+            if (item == null) {
+                itemName = "All Items";
+                itemID = "#null";
+            } else {
+                itemName = item.getDisplayName();
+                itemID = item.getDisplayID();
+            }
+            text.add(Messenger.m(null, "w No items of ",
+                    "q " + itemName + " (" + itemID + ')', "w  have been counted yet."));
+        }
+        return text;
+    }
+
     @Nullable
     public static HopperCounter getCounter(String color) {
         try {
@@ -305,7 +329,7 @@ public class HopperCounter {
             itemName = item.getDisplayName();
             itemID = item.getDisplayID();
             distribution = new Long2LongRBTreeMap();
-            final long[] zeroCount = {count};
+            final long[] zeroCount = {actualTicks};
             if (histogramMaps.containsKey(item)) {
                 histogramMaps.get(item).long2LongEntrySet().forEach(entry -> {
                     long rate = entry.getLongKey();
@@ -315,9 +339,9 @@ public class HopperCounter {
                         zeroCount[0] -= frequency;
                     }
                 });
-            }
-            if (zeroCount[0] != 0) {
-                distribution.put(0, zeroCount[0]);
+                if (zeroCount[0] != 0) {
+                    distribution.put(0, zeroCount[0]);
+                }
             }
         }
         List<ITextComponent> list = new ArrayList<>();
@@ -326,15 +350,16 @@ public class HopperCounter {
             colorFullName.append('i');
         }
         colorFullName.append(' ').append(name);
-        list.add(Messenger.c("w Counter ", colorFullName, "w  for ", "q " + itemName + " (" + itemID + ')'));
         if (distribution.isEmpty()) {
-            list.add(Messenger.s(null, "No such item yet"));
+            list.add(Messenger.m(null, "w No items of ",
+                    "q " + itemName + " (" + itemID + ')', "w  for ", colorFullName, "w  counter yet."));
         } else {
+            list.add(Messenger.c("w Counter ", colorFullName, "w  for ", "q " + itemName + " (" + itemID + ')'));
             list.add(Messenger.c("w Total " + count + " items in " + actualTicks + " ticks, Map View:"));
-            list.add(Messenger.c("wb key", "w : rate (items per tick)"));
-            list.add(Messenger.c("wb value", "w : ticks matching the rate"));
             distribution.long2LongEntrySet().forEach(entry -> list.add(Messenger.m(null,
                     "g - rate: ", "w " + entry.getLongKey(), "g , frequency: ", "w " + entry.getLongValue())));
+            list.add(Messenger.c("gb key", "g : rate (items per tick)"));
+            list.add(Messenger.c("gb value", "g : ticks matching the rate"));
         }
         return list;
     }
