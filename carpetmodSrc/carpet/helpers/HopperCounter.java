@@ -7,6 +7,8 @@ import carpet.utils.StatsBundle;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.longs.Long2LongMap;
 import it.unimi.dsi.fastutil.longs.Long2LongOpenHashMap;
+import it.unimi.dsi.fastutil.longs.Long2LongRBTreeMap;
+import it.unimi.dsi.fastutil.longs.Long2LongSortedMap;
 import it.unimi.dsi.fastutil.objects.Object2LongLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import net.minecraft.item.EnumDyeColor;
@@ -286,6 +288,53 @@ public class HopperCounter {
                     String.format("%s (%s)", "w", rounded.error),
                     String.format("%sb %s", "w", rounded.unit), String.format("%s /h", "w"),
                     String.format("%s , E: ", "g"), String.format("%s %s%%", colorStats, percentDisplay)));
+        }
+        return list;
+    }
+
+    public List<ITextComponent> formatDistribution(ItemWithMeta item) {
+        String itemName;
+        String itemID;
+        Long2LongSortedMap distribution;
+        long count = linearPartials.getLong(item);
+        if (item == null) {
+            itemName = "All Items";
+            itemID = "#null";
+            distribution = new Long2LongRBTreeMap();
+        } else {
+            itemName = item.getDisplayName();
+            itemID = item.getDisplayID();
+            distribution = new Long2LongRBTreeMap();
+            final long[] zeroCount = {count};
+            if (histogramMaps.containsKey(item)) {
+                histogramMaps.get(item).long2LongEntrySet().forEach(entry -> {
+                    long rate = entry.getLongKey();
+                    long frequency = entry.getLongValue();
+                    distribution.put(rate, frequency);
+                    if (rate != 0) {
+                        zeroCount[0] -= frequency;
+                    }
+                });
+            }
+            if (zeroCount[0] != 0) {
+                distribution.put(0, zeroCount[0]);
+            }
+        }
+        List<ITextComponent> list = new ArrayList<>();
+        StringBuilder colorFullName = new StringBuilder("w").append('b');
+        if ("cactus".equalsIgnoreCase(name) || "all".equalsIgnoreCase(name)) {
+            colorFullName.append('i');
+        }
+        colorFullName.append(' ').append(name);
+        list.add(Messenger.c("w Counter ", colorFullName, "w  for ", "q " + itemName + " (" + itemID + ')'));
+        if (distribution.isEmpty()) {
+            list.add(Messenger.s(null, "No such item yet"));
+        } else {
+            list.add(Messenger.c("w Total " + count + " items in " + actualTicks + " ticks, Map View:"));
+            list.add(Messenger.c("wb key", "w : rate (items per tick)"));
+            list.add(Messenger.c("wb value", "w : ticks matching the rate"));
+            distribution.long2LongEntrySet().forEach(entry -> list.add(Messenger.m(null,
+                    "g - rate: ", "w " + entry.getLongKey(), "g , frequency: ", "w " + entry.getLongValue())));
         }
         return list;
     }

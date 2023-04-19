@@ -40,6 +40,16 @@ Modified command, with effect different from the old command with same name.
 - Usage: `/counter [<color>]`
 - Effect: Displays the reliable data with error analysis and appropriate rounding of significant figures.
 
+[//]: # (### 1.2.4. Counter Distribution)
+
+[//]: # ()
+[//]: # (New command.)
+
+[//]: # ()
+[//]: # (- Usage: `/counter [<color>] distribution [&#40;<item_id>|<item_name>&#41; [<metadata>]]`)
+
+[//]: # (- Effect: Displays the frequency distribution of instant item rates &#40;items per game-tick&#41;.)
+
 ## 1.3. Statistics and Error Analysis
 
 ### 1.3.1. Functions

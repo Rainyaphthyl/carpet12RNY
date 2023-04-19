@@ -2,10 +2,12 @@ package carpet.commands;
 
 import carpet.CarpetSettings;
 import carpet.helpers.HopperCounter;
+import carpet.helpers.ItemWithMeta;
 import carpet.utils.Messenger;
 import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.command.WrongUsageException;
+import net.minecraft.init.Items;
 import net.minecraft.item.EnumDyeColor;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.math.BlockPos;
@@ -60,7 +62,7 @@ public class CommandCounter extends CommandCarpetBase {
             case "stop":
                 HopperCounter.resetAll(false);
                 notifyCommandListener(sender, this,
-                        "All counters have stopped and will restart on triggering.");
+                        "All counters have stopped and will restart on triggered.");
                 return;
             case "distribution":
                 Messenger.print_server_message(server,
@@ -87,9 +89,11 @@ public class CommandCounter extends CommandCarpetBase {
             case "stop":
                 counter.reset(false);
                 notifyCommandListener(sender, this, String.format(
-                        "%s counter has stopped and will restart on triggering.", args[0]));
+                        "%s counter has stopped and will restart on triggered.", args[0]));
                 return;
             case "distribution":
+                // TODO: 2023/4/19,0019 Remove the hard coded debugger!
+                Messenger.send(sender, counter.formatDistribution(new ItemWithMeta(Items.GUNPOWDER, 0)));
                 Messenger.print_server_message(server,
                         "Command \"counter [<color>] distribution\" is a work in progress.");
                 return;
