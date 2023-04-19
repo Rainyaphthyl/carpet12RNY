@@ -57,7 +57,7 @@ public class CarpetSettings
      *     version name starts with "RNY"
      * </p>
      */
-    public static final String carpetVersion = "RNY-dev-20230407-0119";
+    public static final String carpetVersion = "RNY-dev-20230419-2221";
     public static final String minecraftVersion = "1.12.2";
     public static final String mcpMappings = "39-1.12";
 
