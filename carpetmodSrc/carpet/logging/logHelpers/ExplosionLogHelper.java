@@ -6,30 +6,56 @@ import net.minecraft.entity.Entity;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.text.ITextComponent;
 
+import java.util.Objects;
+
 public class ExplosionLogHelper {
 
     // CARPET-SYLKOS
     // Some code yeeted from lntricarpet and gnembon 1.16+ fabric carpet
 
-    public final Vec3d pos;
-    public final Entity entity;
+    public static Vec3d previousPosition = null;
+    public static long startTime = 0;
+    public static boolean tickHasCompact = false;
     private static boolean affectBlocks = false; // will be used later when I add in the full explosion logger
     private static long lastGametime = 0;
     private static long explosionCountInCurrentGT = 0;
     private static long explosionCountInCurrentPos = 0;
-    public static Vec3d previousPosition = null;
-    public static long startTime = 0;
-
-    public static boolean tickHasCompact = false;
+    public final Vec3d pos;
+    public final Entity entity;
 
     public ExplosionLogHelper(Entity entity, double x, double y, double z, float power, boolean createFire) { // blocks removed
         this.entity = entity;
         this.pos = new Vec3d(x, y, z);
     }
 
+    public static void logLastExplosion() {
+        if (LoggerRegistry.__explosions) {
+            if (tickHasCompact) {
+                tickHasCompact = false;
+                LoggerRegistry.getLogger("explosions").log((option) -> {
+                    ITextComponent[] msg = null;
+                    if ("compact".equals(option)) {
+                        if (previousPosition != null) {
+                            msg = new ITextComponent[]{Messenger.m(null,
+                                    "d #" + (explosionCountInCurrentGT),
+                                    "gb ->",
+                                    "d " + explosionCountInCurrentPos + "x ",
+                                    Messenger.dblt("l", previousPosition.x, previousPosition.y, previousPosition.z),
+                                    (affectBlocks) ? "m (affects blocks)" : "m  (doesn't affect blocks)",
+                                    "g (", "d " + (System.currentTimeMillis() - startTime), "g ms)"
+                            )};
+                        }
+                        startTime = 0;
+                    }
+                    return msg;
+                });
+            }
+        }
+    }
+
     public void onExplosionDone() {
-        int gametime = entity.getServer().getTickCounter();
-        if(lastGametime != gametime) {
+        int gametime = Objects.requireNonNull(entity.getServer()).getTickCounter();
+        if (lastGametime != gametime) {
             explosionCountInCurrentGT = 1;
             explosionCountInCurrentPos = 0;
             previousPosition = pos;
@@ -48,8 +74,8 @@ public class ExplosionLogHelper {
                             "d #" + explosionCountInCurrentGT,
                             "gb ->",
                             Messenger.dblt("l", pos.x, pos.y, pos.z),
-                            (affectBlocks)?"m (affects blocks)":"m  (doesn't affect blocks)"
-                            )};
+                            (affectBlocks) ? "m (affects blocks)" : "m  (doesn't affect blocks)"
+                    )};
                     explosionCountInCurrentGT++;
                     break;
 
@@ -57,15 +83,15 @@ public class ExplosionLogHelper {
 
                 case "compact":
                     tickHasCompact = true;
-                    if(previousPosition != null && !pos.equals(previousPosition))  {
+                    if (previousPosition != null && !pos.equals(previousPosition)) {
                         msg = new ITextComponent[]{Messenger.m(null,
                                 "d #" + explosionCountInCurrentGT,
                                 "gb ->",
                                 "d " + explosionCountInCurrentPos + "x ",
                                 Messenger.dblt("l", previousPosition.x, previousPosition.y, previousPosition.z),
-                                (affectBlocks)?"m (affects blocks)":"m  (doesn't affect blocks)",
-                                "g (", "d " + (System.currentTimeMillis()-startTime), "g ms)"
-                                )};
+                                (affectBlocks) ? "m (affects blocks)" : "m  (doesn't affect blocks)",
+                                "g (", "d " + (System.currentTimeMillis() - startTime), "g ms)"
+                        )};
                         explosionCountInCurrentGT += explosionCountInCurrentPos;
                         explosionCountInCurrentPos = 0;
                         previousPosition = pos;
@@ -76,30 +102,5 @@ public class ExplosionLogHelper {
             }
             return msg;
         });
-    }
-
-    public static void logLastExplosion() {
-        if(LoggerRegistry.__explosions) {
-            if (tickHasCompact) {
-                tickHasCompact = false;
-                LoggerRegistry.getLogger("explosions").log((option) -> {
-                    ITextComponent[] msg = null;
-                    if ("compact".equals(option)) {
-                        if (previousPosition != null) {
-                            msg = new ITextComponent[]{Messenger.m(null,
-                                    "d #" + (explosionCountInCurrentGT),
-                                    "gb ->",
-                                    "d " + explosionCountInCurrentPos + "x ",
-                                    Messenger.dblt("l", previousPosition.x, previousPosition.y, previousPosition.z),
-                                    (affectBlocks) ? "m (affects blocks)" : "m  (doesn't affect blocks)",
-                                    "g (", "d " + (System.currentTimeMillis()-startTime), "g ms)"
-                                    )};
-                        }
-                        startTime = 0;
-                    }
-                    return msg;
-                });
-            }
-        }
     }
 }
