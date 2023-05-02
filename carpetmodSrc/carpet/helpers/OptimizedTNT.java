@@ -4,13 +4,11 @@ package carpet.helpers;
 import java.math.RoundingMode;
 import java.text.NumberFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import carpet.logging.LoggerRegistry;
 import carpet.utils.Messenger;
 import net.minecraft.entity.item.EntityMinecartTNT;
-import net.minecraft.util.text.ITextComponent;
 import org.apache.commons.lang3.tuple.MutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -256,7 +254,7 @@ public class OptimizedTNT
         }
 
         if(LoggerRegistry.__explosions) {
-            e.logHelper.onExplosionDone(e.world.getWorldTime());
+            e.logHelper.onExplosionDone();
         }
     }
 

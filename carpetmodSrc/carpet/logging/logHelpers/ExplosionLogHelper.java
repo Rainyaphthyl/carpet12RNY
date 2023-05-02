@@ -27,7 +27,8 @@ public class ExplosionLogHelper {
         this.pos = new Vec3d(x, y, z);
     }
 
-    public void onExplosionDone(long gametime) {
+    public void onExplosionDone() {
+        int gametime = entity.getServer().getTickCounter();
         if(lastGametime != gametime) {
             explosionCountInCurrentGT = 1;
             explosionCountInCurrentPos = 0;
