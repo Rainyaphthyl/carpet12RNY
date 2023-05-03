@@ -2,7 +2,6 @@ package carpet.helpers;
 //Author: xcom & masa
 
 import carpet.CarpetSettings;
-import carpet.logging.LoggerRegistry;
 import carpet.utils.Messenger;
 import it.unimi.dsi.fastutil.objects.Object2DoubleOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
@@ -159,6 +158,11 @@ public class OptimizedTNT {
                                 e.playerKnockbackMap.put(entityplayer, new Vec3d(d5 * d10, d7 * d10, d9 * d10));
                             }
                         }
+
+                        // carpet12RNY - explosion logger
+                        if (e.logHelper != null) {
+                            e.logHelper.onEntityImpacted(entity, new Vec3d(d5 * d11, d7 * d11, d9 * d11));
+                        }
                     }
                 }
             }
@@ -236,7 +240,7 @@ public class OptimizedTNT {
             }
         }
 
-        if (LoggerRegistry.__explosions) {
+        if (e.logHelper != null) {
             e.logHelper.onExplosionDone(world.getTotalWorldTime());
         }
     }
