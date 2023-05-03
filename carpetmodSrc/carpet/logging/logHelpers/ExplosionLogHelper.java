@@ -1,6 +1,5 @@
 package carpet.logging.logHelpers;
 
-import carpet.CarpetServer;
 import carpet.logging.LoggerRegistry;
 import carpet.utils.Messenger;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
@@ -65,41 +64,34 @@ public class ExplosionLogHelper {
                     break;
                 case "compact":
                 case "full":
-                    try {
-                        messages.add(Messenger.c("d #" + explosionCountInCurrentGT, "gb ->",
-                                Messenger.dblt("l", pos.x, pos.y, pos.z)));
-                        messages.add(Messenger.c("w   affects blocks: ", "m " + affectBlocks));
-                        messages.add(Messenger.c("w   creates fire: ", "m " + createFire));
-                        messages.add(Messenger.c("w   power: ", "c " + power));
-                        if (impactedEntities.isEmpty()) {
-                            messages.add(Messenger.c("w   affected entities: ", "m None"));
-                        } else {
-                            messages.add(Messenger.c("w   affected entities:"));
-                            impactedEntities.forEach((k, v) -> {
-                                StringBuilder nameBuilder = new StringBuilder();
-                                Entity entity = k.entity;
-                                if (entity.hasCustomName() || entity instanceof EntityPlayerMP) {
-                                    nameBuilder.append("c ");
-                                } else if (entity instanceof EntityItem) {
-                                    nameBuilder.append("r ");
-                                } else {
-                                    nameBuilder.append("w ");
-                                }
-                                nameBuilder.append(' ').append(entity.getName());
-                                messages.add(Messenger.c(
-                                        k.pos.equals(pos) ? "r   - TNT" : "w   - ",
-                                        Messenger.dblt(k.pos.equals(pos) ? "r" : "y", k.pos.x, k.pos.y, k.pos.z),
-                                        "w  dV",
-                                        Messenger.dblt("d", k.accel.x, k.accel.y, k.accel.z),
-                                        nameBuilder.toString(),
-                                        "l " + (v > 1 ? ("(" + v + ")") : "")));
-                            });
-                        }
-
-                    } catch (Exception e) {
-                        e.printStackTrace(System.err);
-                        Messenger.print_server_message(CarpetServer.minecraft_server,
-                                "The server should have crashed!");
+                    messages.add(Messenger.c("d #" + explosionCountInCurrentGT, "gb ->",
+                            Messenger.dblt("l", pos.x, pos.y, pos.z)));
+                    messages.add(Messenger.c("w   affects blocks: ", "m " + affectBlocks));
+                    messages.add(Messenger.c("w   creates fire: ", "m " + createFire));
+                    messages.add(Messenger.c("w   power: ", "c " + power));
+                    if (impactedEntities.isEmpty()) {
+                        messages.add(Messenger.c("w   affected entities: ", "m None"));
+                    } else {
+                        messages.add(Messenger.c("w   affected entities:"));
+                        impactedEntities.forEach((k, v) -> {
+                            StringBuilder nameBuilder = new StringBuilder();
+                            Entity entity = k.entity;
+                            if (entity.hasCustomName() || entity instanceof EntityPlayerMP) {
+                                nameBuilder.append("c ");
+                            } else if (entity instanceof EntityItem) {
+                                nameBuilder.append("r ");
+                            } else {
+                                nameBuilder.append("w ");
+                            }
+                            nameBuilder.append(' ').append(entity.getName());
+                            messages.add(Messenger.c(
+                                    k.pos.equals(pos) ? "r   - TNT" : "w   - ",
+                                    Messenger.dblt(k.pos.equals(pos) ? "r" : "y", k.pos.x, k.pos.y, k.pos.z),
+                                    "w  dV",
+                                    Messenger.dblt("d", k.accel.x, k.accel.y, k.accel.z),
+                                    nameBuilder.toString(),
+                                    "l " + (v > 1 ? ("(" + v + ")") : "")));
+                        });
                     }
                     break;
             }
