@@ -237,7 +237,7 @@ public class OptimizedTNT {
         }
 
         if (LoggerRegistry.__explosions) {
-            e.logHelper.onExplosionDone();
+            e.logHelper.onExplosionDone(world.getTotalWorldTime());
         }
     }
 

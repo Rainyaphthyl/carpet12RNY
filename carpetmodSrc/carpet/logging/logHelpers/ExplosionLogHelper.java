@@ -6,8 +6,6 @@ import net.minecraft.entity.Entity;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.text.ITextComponent;
 
-import java.util.Objects;
-
 public class ExplosionLogHelper {
 
     // CARPET-SYLKOS
@@ -16,6 +14,7 @@ public class ExplosionLogHelper {
     public static Vec3d previousPosition = null;
     public static long startTime = 0;
     public static boolean tickHasCompact = false;
+    // TODO: 2023/5/3,0003 To log the blocks with dropping rates
     private static boolean affectBlocks = false; // will be used later when I add in the full explosion logger
     private static long lastGametime = 0;
     private static long explosionCountInCurrentGT = 0;
@@ -53,8 +52,7 @@ public class ExplosionLogHelper {
         }
     }
 
-    public void onExplosionDone() {
-        int gametime = Objects.requireNonNull(entity.getServer()).getTickCounter();
+    public void onExplosionDone(long gametime) {
         if (lastGametime != gametime) {
             explosionCountInCurrentGT = 1;
             explosionCountInCurrentPos = 0;

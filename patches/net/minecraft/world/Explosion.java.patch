@@ -111,7 +111,7 @@
 +
 +        // Logs explosion CARPET-SYLKOS
 +        if(LoggerRegistry.__explosions) {
-+            this.logHelper.onExplosionDone();
++            this.logHelper.onExplosionDone(field_77287_j.func_82737_E());
 +        }
      }
  
