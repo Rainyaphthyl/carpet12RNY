@@ -55,7 +55,7 @@
          this.field_82755_b = p_i45754_11_;
 +
 +        if (LoggerRegistry.__explosions) {
-+            this.logHelper = new ExplosionLogHelper(p_i45754_2_, p_i45754_3_, p_i45754_5_, p_i45754_7_, p_i45754_9_, p_i45754_10_);
++            this.logHelper = new ExplosionLogHelper(p_i45754_3_, p_i45754_5_, p_i45754_7_, p_i45754_9_, p_i45754_10_);
 +        }
      }
  
@@ -82,8 +82,8 @@
 +        if(!CarpetSettings.explosionNoBlockDamage) this.field_77281_g.addAll(set);
 +
 +        // carpet12RNY
-+        if (LoggerRegistry.__explosions) {
-+            logHelper.setAffectBlocks(!set.isEmpty());
++        if (logHelper != null && !set.isEmpty()) {
++            logHelper.setAffectBlocks(true);
 +        }
 +
 +        // CARPET-SYLKOS
@@ -94,7 +94,19 @@
          float f3 = this.field_77280_f * 2.0F;
          int k1 = MathHelper.func_76128_c(this.field_77284_b - (double)f3 - 1.0D);
          int l1 = MathHelper.func_76128_c(this.field_77284_b + (double)f3 + 1.0D);
-@@ -164,6 +200,14 @@
+@@ -156,6 +192,11 @@
+                                 this.field_77288_k.put(entityplayer, new Vec3d(d5 * d10, d7 * d10, d9 * d10));
+                             }
+                         }
++
++                        // carpet12RNY - explosion logger
++                        if (logHelper != null) {
++                            logHelper.onEntityImpacted(entity, new Vec3d(d5 * d11, d7 * d11, d9 * d11));
++                        }
+                     }
+                 }
+             }
+@@ -164,6 +205,14 @@
  
      public void func_77279_a(boolean p_77279_1_)
      {
@@ -109,13 +121,14 @@
          this.field_77287_j.func_184148_a((EntityPlayer)null, this.field_77284_b, this.field_77285_c, this.field_77282_d, SoundEvents.field_187539_bB, SoundCategory.BLOCKS, 4.0F, (1.0F + (this.field_77287_j.field_73012_v.nextFloat() - this.field_77287_j.field_73012_v.nextFloat()) * 0.2F) * 0.7F);
  
          if (this.field_77280_f >= 2.0F && this.field_82755_b)
-@@ -226,6 +270,11 @@
+@@ -226,6 +275,12 @@
                  }
              }
          }
 +
 +        // Logs explosion CARPET-SYLKOS
-+        if(LoggerRegistry.__explosions) {
++        // carpet12RNY
++        if (logHelper != null) {
 +            this.logHelper.onExplosionDone(field_77287_j.func_82737_E());
 +        }
      }
