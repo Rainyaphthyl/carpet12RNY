@@ -29,9 +29,14 @@ public class ExplosionLogHelper {
     private final Vec3d pos;
     private final float power;
     private final boolean createFire;
-    private final Object2IntMap<EntityImpact> impactedEntities = new Object2IntOpenHashMap<>();
+    private final Object2IntMap<ImpactOnEntity> impactedEntities;
     //TODO: 2023/5/3,0003 To log the blocks with dropping rates
     private boolean affectBlocks = false;
+
+    {
+        impactedEntities = new Object2IntOpenHashMap<>();
+        impactedEntities.defaultReturnValue(0);
+    }
 
     public ExplosionLogHelper(double x, double y, double z, float power, boolean createFire) {
         this.pos = new Vec3d(x, y, z);
@@ -111,22 +116,38 @@ public class ExplosionLogHelper {
         });
     }
 
-    public void onEntityImpacted(Entity entity, Vec3d accel, float damage) {
-        EntityImpact impact = new EntityImpact(entity, accel, damage);
-        impactedEntities.put(impact, impactedEntities.getOrDefault(impact, 0) + 1);
+    public void onEntityImpacted(@Nonnull Entity entity, Vec3d accel, float damage) {
+        ImpactOnEntity impactOnEntity = new ImpactOnEntity(entity, accel, damage);
+        impactedEntities.put(impactOnEntity, impactedEntities.getInt(impactOnEntity) + 1);
     }
 
-    public static final class EntityImpact {
+    public static final class ImpactOnEntity {
         public final Entity entity;
         public final Vec3d pos;
         public final Vec3d accel;
         public final float damage;
 
-        public EntityImpact(@Nonnull Entity entity, Vec3d accel, float damage) {
+        public ImpactOnEntity(@Nonnull Entity entity, Vec3d accel, float damage) {
             this.entity = entity;
             pos = entity.getPositionVector();
             this.accel = accel;
             this.damage = damage;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj == this) {
+                return true;
+            } else if (obj instanceof ImpactOnEntity) {
+                return entity == ((ImpactOnEntity) obj).entity;
+            } else {
+                return false;
+            }
+        }
+
+        @Override
+        public int hashCode() {
+            return pos.hashCode() ^ accel.hashCode();
         }
     }
 }
