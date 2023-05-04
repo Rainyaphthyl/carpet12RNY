@@ -138,8 +138,11 @@ public class OptimizedTNT {
                         }
 
                         double d10 = (1.0D - d12) * density;
-                        entity.attackEntityFrom(DamageSource.causeExplosionDamage(e),
-                                (float) ((int) ((d10 * d10 + d10) / 2.0D * 7.0D * (double) f3 + 1.0D)));
+                        // carpet12RNY - explosion logger
+                        float damage = (float) ((int) ((d10 * d10 + d10) / 2.0D * 7.0D * (double) f3 + 1.0D));
+                        /*entity.attackEntityFrom(DamageSource.causeExplosionDamage(e),
+                                (float) ((int) ((d10 * d10 + d10) / 2.0D * 7.0D * (double) f3 + 1.0D)));*/
+                        entity.attackEntityFrom(DamageSource.causeExplosionDamage(e), damage);
                         double d11 = d10;
 
                         if (entity instanceof EntityLivingBase) {
@@ -161,7 +164,7 @@ public class OptimizedTNT {
 
                         // carpet12RNY - explosion logger
                         if (e.logHelper != null) {
-                            e.logHelper.onEntityImpacted(entity, new Vec3d(d5 * d11, d7 * d11, d9 * d11));
+                            e.logHelper.onEntityImpacted(entity, new Vec3d(d5 * d11, d7 * d11, d9 * d11), damage);
                         }
                     }
                 }

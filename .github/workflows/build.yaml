@@ -1,7 +1,7 @@
 name: Build on Push & Pull Request
 
 on:
-  - push
+#  - push
   - pull_request
 
 jobs:
