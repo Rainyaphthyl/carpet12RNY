@@ -2,7 +2,12 @@ package carpet.logging.logHelpers;
 
 import carpet.logging.LoggerRegistry;
 import carpet.utils.Messenger;
-import it.unimi.dsi.fastutil.objects.*;
+import it.unimi.dsi.fastutil.floats.Float2ObjectAVLTreeMap;
+import it.unimi.dsi.fastutil.floats.Float2ObjectSortedMap;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.block.Block;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.item.EntityItem;
@@ -31,13 +36,14 @@ public class ExplosionLogHelper {
     private final float power;
     private final boolean createFire;
     private final Object2IntMap<ImpactOnEntity> impactedEntities;
-    private final Object2ObjectMap<Block, Object2DoubleMap<BlockPos>> blockDroppingChance = new Object2ObjectOpenHashMap<>();
-    //TODO: 2023/5/3,0003 To log the blocks with dropping rates
+    private final Float2ObjectSortedMap<Object2ObjectMap<Block, List<BlockPos>>> blockDroppingChances;
     private boolean affectBlocks = false;
 
     {
         impactedEntities = new Object2IntOpenHashMap<>();
         impactedEntities.defaultReturnValue(0);
+        blockDroppingChances = new Float2ObjectAVLTreeMap<>();
+        blockDroppingChances.defaultReturnValue(null);
     }
 
     public ExplosionLogHelper(double x, double y, double z, float power, boolean createFire) {
@@ -126,6 +132,16 @@ public class ExplosionLogHelper {
      * @param chance set to {@code -1} for TNT
      */
     public void onBlockDestroyed(BlockPos pos, Block block, float chance) {
+        Object2ObjectMap<Block, List<BlockPos>> blockClasses = blockDroppingChances.get(chance);
+        if (blockClasses == null) {
+            blockClasses = new Object2ObjectOpenHashMap<>();
+            blockClasses.defaultReturnValue(null);
+        }
+        List<BlockPos> blockPositions = blockClasses.get(block);
+        if (blockPositions == null) {
+            blockPositions = new ArrayList<>();
+        }
+        blockPositions.add(pos);
     }
 
     public static final class ImpactOnEntity {
