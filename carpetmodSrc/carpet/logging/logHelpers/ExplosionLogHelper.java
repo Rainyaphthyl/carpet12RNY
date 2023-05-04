@@ -2,12 +2,13 @@ package carpet.logging.logHelpers;
 
 import carpet.logging.LoggerRegistry;
 import carpet.utils.Messenger;
-import it.unimi.dsi.fastutil.objects.Object2IntMap;
-import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import it.unimi.dsi.fastutil.objects.*;
+import net.minecraft.block.Block;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.entity.projectile.EntityThrowable;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.text.ITextComponent;
 
@@ -30,6 +31,7 @@ public class ExplosionLogHelper {
     private final float power;
     private final boolean createFire;
     private final Object2IntMap<ImpactOnEntity> impactedEntities;
+    private final Object2ObjectMap<Block, Object2DoubleMap<BlockPos>> blockDroppingChance = new Object2ObjectOpenHashMap<>();
     //TODO: 2023/5/3,0003 To log the blocks with dropping rates
     private boolean affectBlocks = false;
 
@@ -65,8 +67,7 @@ public class ExplosionLogHelper {
                 case "brief":
                     messages.add(Messenger.c("d #" + explosionCountInCurrentGT, "gb ->",
                             Messenger.dblt("l", pos.x, pos.y, pos.z),
-                            (affectBlocks ? "m (affects blocks)" : "m  (doesn't affect blocks)")
-                    ));
+                            (affectBlocks ? "m (affects blocks)" : "m (doesn't affect blocks)")));
                     break;
                 case "compact":
                 case "full":
@@ -91,7 +92,7 @@ public class ExplosionLogHelper {
                             } else {
                                 nameBuilder.append("l ");
                             }
-                            if (!(entity instanceof EntityThrowable) && k.accel.length() == 0.0) {
+                            if (!showingDamage && !(entity instanceof EntityThrowable) && k.accel.length() == 0.0) {
                                 showingDamage = true;
                             }
                             nameBuilder.append(entity.getName());
@@ -119,6 +120,12 @@ public class ExplosionLogHelper {
     public void onEntityImpacted(@Nonnull Entity entity, Vec3d accel, float damage) {
         ImpactOnEntity impactOnEntity = new ImpactOnEntity(entity, accel, damage);
         impactedEntities.put(impactOnEntity, impactedEntities.getInt(impactOnEntity) + 1);
+    }
+
+    /**
+     * @param chance set to {@code -1} for TNT
+     */
+    public void onBlockDestroyed(BlockPos pos, Block block, float chance) {
     }
 
     public static final class ImpactOnEntity {
