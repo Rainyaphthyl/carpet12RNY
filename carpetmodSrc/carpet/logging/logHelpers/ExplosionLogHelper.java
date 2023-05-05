@@ -13,6 +13,7 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.entity.projectile.EntityThrowable;
+import net.minecraft.init.Blocks;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.text.ITextComponent;
@@ -82,6 +83,35 @@ public class ExplosionLogHelper {
                     messages.add(Messenger.c("w   affects blocks: ", "m " + affectBlocks));
                     messages.add(Messenger.c("w   creates fire: ", "m " + createFire));
                     messages.add(Messenger.c("w   power: ", "c " + power));
+                    // blocks
+                    if (blockDroppingChances.isEmpty()) {
+                        messages.add(Messenger.c("w   affected blocks: ", "m None"));
+                    } else {
+                        messages.add(Messenger.c("w   affected blocks:"));
+                        blockDroppingChances.float2ObjectEntrySet().forEach(object2ObjectMapEntry -> {
+                            float chance = object2ObjectMapEntry.getFloatKey();
+                            Object2ObjectMap<Block, List<BlockPos>> blockPosMap = object2ObjectMapEntry.getValue();
+                            double percent = chance * 100.0;
+                            blockPosMap.forEach((block, posList) -> {
+                                StringBuilder titleBuilder = new StringBuilder();
+                                String style;
+                                if (block == Blocks.TNT) {
+                                    style = "y";
+                                } else if (chance == 1.0F) {
+                                    style = "l";
+                                } else {
+                                    style = "r";
+                                }
+                                String name = Block.REGISTRY.getNameForObject(block).getPath();
+                                titleBuilder.append(style).append("   - ").append(name);
+                                String title = titleBuilder.toString();
+                                posList.forEach(pos -> messages.add(Messenger.c(title,
+                                        String.format("%s  [ %d, %d, %d ] %.1f%%", style,
+                                                pos.getX(), pos.getY(), pos.getZ(), percent))));
+                            });
+                        });
+                    }
+                    // entities
                     if (impactedEntities.isEmpty()) {
                         messages.add(Messenger.c("w   affected entities: ", "m None"));
                     } else {
@@ -136,10 +166,12 @@ public class ExplosionLogHelper {
         if (blockClasses == null) {
             blockClasses = new Object2ObjectOpenHashMap<>();
             blockClasses.defaultReturnValue(null);
+            blockDroppingChances.put(chance, blockClasses);
         }
         List<BlockPos> blockPositions = blockClasses.get(block);
         if (blockPositions == null) {
             blockPositions = new ArrayList<>();
+            blockClasses.put(block, blockPositions);
         }
         blockPositions.add(pos);
     }
