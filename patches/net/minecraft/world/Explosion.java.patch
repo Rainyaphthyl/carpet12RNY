@@ -157,7 +157,7 @@
                      this.field_77287_j.func_180501_a(blockpos, Blocks.field_150350_a.func_176223_P(), 3);
                      block.func_180652_a(this.field_77287_j, blockpos, this);
 +                    // CM start
-+                    logHelper.onBlockDestroyed(blockpos, block, chance);
++                    logHelper.onBlockDestroyed(blockpos, iblockstate, chance);
 +                    // CM end
                  }
              }

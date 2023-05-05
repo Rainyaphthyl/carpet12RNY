@@ -1,19 +1,20 @@
 package carpet.logging.logHelpers;
 
+import carpet.helpers.ItemWithMeta;
 import carpet.logging.LoggerRegistry;
 import carpet.utils.Messenger;
-import it.unimi.dsi.fastutil.floats.Float2ObjectAVLTreeMap;
-import it.unimi.dsi.fastutil.floats.Float2ObjectSortedMap;
+import it.unimi.dsi.fastutil.objects.Object2IntLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
-import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.block.Block;
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.entity.projectile.EntityThrowable;
 import net.minecraft.init.Blocks;
+import net.minecraft.item.Item;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.text.ITextComponent;
@@ -21,6 +22,7 @@ import net.minecraft.util.text.ITextComponent;
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class ExplosionLogHelper {
 
@@ -37,14 +39,14 @@ public class ExplosionLogHelper {
     private final float power;
     private final boolean createFire;
     private final Object2IntMap<ImpactOnEntity> impactedEntities;
-    private final Float2ObjectSortedMap<Object2ObjectMap<Block, List<BlockPos>>> blockDroppingChances;
+    private final Object2ObjectMap<BlockPos, BlockWithDrop> destroyedBlocks;
     private boolean affectBlocks = false;
 
     {
-        impactedEntities = new Object2IntOpenHashMap<>();
+        impactedEntities = new Object2IntLinkedOpenHashMap<>();
         impactedEntities.defaultReturnValue(0);
-        blockDroppingChances = new Float2ObjectAVLTreeMap<>();
-        blockDroppingChances.defaultReturnValue(null);
+        destroyedBlocks = new Object2ObjectLinkedOpenHashMap<>();
+        destroyedBlocks.defaultReturnValue(null);
     }
 
     public ExplosionLogHelper(double x, double y, double z, float power, boolean createFire) {
@@ -84,41 +86,44 @@ public class ExplosionLogHelper {
                     messages.add(Messenger.c("w   creates fire: ", "m " + createFire));
                     messages.add(Messenger.c("w   power: ", "c " + power));
                     // blocks
-                    if (blockDroppingChances.isEmpty()) {
+                    if (destroyedBlocks.isEmpty()) {
                         messages.add(Messenger.c("w   affected blocks: ", "m None"));
                     } else {
-                        messages.add(Messenger.c("w   affected blocks:"));
-                        blockDroppingChances.float2ObjectEntrySet().forEach(object2ObjectMapEntry -> {
-                            float chance = object2ObjectMapEntry.getFloatKey();
-                            Object2ObjectMap<Block, List<BlockPos>> blockPosMap = object2ObjectMapEntry.getValue();
-                            double percent = chance * 100.0;
-                            blockPosMap.forEach((block, posList) -> {
-                                StringBuilder titleBuilder = new StringBuilder();
-                                String style;
-                                if (block == Blocks.TNT) {
-                                    style = "y";
-                                } else if (chance == 1.0F) {
-                                    style = "l";
-                                } else {
-                                    style = "r";
-                                }
-                                String name = Block.REGISTRY.getNameForObject(block).getPath();
-                                titleBuilder.append(style).append("   - ").append(name);
-                                String title = titleBuilder.toString();
-                                posList.forEach(pos -> messages.add(Messenger.c(title,
-                                        String.format("%s  [ %d, %d, %d ] %.1f%%", style,
-                                                pos.getX(), pos.getY(), pos.getZ(), percent))));
-                            });
+                        messages.add(Messenger.c("w   affected " + destroyedBlocks.size() + " blocks:"));
+                        destroyedBlocks.forEach((pos, dropping) -> {
+                            boolean isTNT = dropping.iBlockState.getBlock() == Blocks.TNT;
+                            boolean isMovingPiston = dropping.iBlockState.getBlock() == Blocks.PISTON_EXTENSION;
+                            boolean isHarvested = dropping.chance == 1.0F;
+                            String title = isTNT ? "r   - " : "w   - ";
+                            String harvestStyle = isTNT ? "r" : (isMovingPiston ? "l" : "d");
+                            String chanceStyle = isTNT ? "r" : (isHarvested ? "l" : "d");
+                            Block block = dropping.iBlockState.getBlock();
+                            int meta = block.getMetaFromState(dropping.iBlockState);
+                            //String name = block.getLocalizedName();
+                            // TODO: 2023/5/6,0006 Check the block names, especially moving piston 
+                            ItemWithMeta itemWithMeta = new ItemWithMeta(Item.getItemFromBlock(block), meta);
+                            String idMeta = itemWithMeta.getDisplayID();
+                            String name = itemWithMeta.getDisplayName();
+                            String positionStr = (isTNT ? "r" : "y") +
+                                    " [ " + pos.getX() + ", " + pos.getY() + ", " + pos.getZ() + " ]";
+                            float percent = dropping.chance * 100;
+                            messages.add(Messenger.c(title,
+                                    harvestStyle + ' ' + name, "w  ", positionStr, "w  ",
+                                    String.format("%s %.1f%%", chanceStyle, percent), "^w " + percent));
                         });
                     }
                     // entities
                     if (impactedEntities.isEmpty()) {
                         messages.add(Messenger.c("w   affected entities: ", "m None"));
                     } else {
-                        messages.add(Messenger.c("w   affected entities:"));
-                        impactedEntities.forEach((k, v) -> {
+                        AtomicInteger entityCount = new AtomicInteger();
+                        impactedEntities.object2IntEntrySet().forEach(entry -> entityCount.addAndGet(entry.getIntValue()));
+                        messages.add(Messenger.c("w   affected " + entityCount.get() + " entities:"));
+                        impactedEntities.object2IntEntrySet().forEach(entry -> {
                             StringBuilder nameBuilder = new StringBuilder();
-                            Entity entity = k.entity;
+                            ImpactOnEntity impact = entry.getKey();
+                            int count = entry.getIntValue();
+                            Entity entity = impact.entity;
                             boolean showingDamage = false;
                             if (entity instanceof EntityItem) {
                                 nameBuilder.append("r ");
@@ -128,22 +133,22 @@ public class ExplosionLogHelper {
                             } else {
                                 nameBuilder.append("l ");
                             }
-                            if (!showingDamage && !(entity instanceof EntityThrowable) && k.accel.length() == 0.0) {
+                            if (!showingDamage && !(entity instanceof EntityThrowable) && impact.accel.length() == 0.0) {
                                 showingDamage = true;
                             }
                             nameBuilder.append(entity.getName());
-                            String title = k.pos.equals(pos) ? "r   - TNT" : "w   - ";
-                            String posStyle = k.pos.equals(pos) ? "r" : "y";
+                            String title = impact.pos.equals(pos) ? "r   - TNT" : "w   - ";
+                            String posStyle = impact.pos.equals(pos) ? "r" : "y";
                             if (showingDamage) {
                                 messages.add(Messenger.c(title, nameBuilder.toString(), "w  ",
-                                        Messenger.dblt(posStyle, k.pos.x, k.pos.y, k.pos.z),
-                                        "w  damage: ", "r " + k.damage,
-                                        "l " + (v > 1 ? ("(" + v + ")") : "")));
+                                        Messenger.dblt(posStyle, impact.pos.x, impact.pos.y, impact.pos.z),
+                                        "w  damage: ", "r " + impact.damage,
+                                        "l " + (count > 1 ? ("(" + count + ")") : "")));
                             } else {
                                 messages.add(Messenger.c(title, nameBuilder.toString(), "w  ",
-                                        Messenger.dblt(posStyle, k.pos.x, k.pos.y, k.pos.z),
-                                        "w  +", Messenger.dblt("d", k.accel.x, k.accel.y, k.accel.z),
-                                        "l " + (v > 1 ? ("(" + v + ")") : "")));
+                                        Messenger.dblt(posStyle, impact.pos.x, impact.pos.y, impact.pos.z),
+                                        "w  +", Messenger.dblt("d", impact.accel.x, impact.accel.y, impact.accel.z),
+                                        "l " + (count > 1 ? ("(" + count + ")") : "")));
                             }
                         });
                     }
@@ -161,19 +166,9 @@ public class ExplosionLogHelper {
     /**
      * @param chance set to {@code -1} for TNT
      */
-    public void onBlockDestroyed(BlockPos pos, Block block, float chance) {
-        Object2ObjectMap<Block, List<BlockPos>> blockClasses = blockDroppingChances.get(chance);
-        if (blockClasses == null) {
-            blockClasses = new Object2ObjectOpenHashMap<>();
-            blockClasses.defaultReturnValue(null);
-            blockDroppingChances.put(chance, blockClasses);
-        }
-        List<BlockPos> blockPositions = blockClasses.get(block);
-        if (blockPositions == null) {
-            blockPositions = new ArrayList<>();
-            blockClasses.put(block, blockPositions);
-        }
-        blockPositions.add(pos);
+    public void onBlockDestroyed(BlockPos pos, IBlockState blockState, float chance) {
+        BlockWithDrop blockWithDrop = new BlockWithDrop(blockState, chance);
+        destroyedBlocks.put(pos, blockWithDrop);
     }
 
     public static final class ImpactOnEntity {
@@ -203,6 +198,16 @@ public class ExplosionLogHelper {
         @Override
         public int hashCode() {
             return pos.hashCode() ^ accel.hashCode();
+        }
+    }
+
+    public static final class BlockWithDrop {
+        public final IBlockState iBlockState;
+        public final float chance;
+
+        public BlockWithDrop(IBlockState iBlockState, float chance) {
+            this.iBlockState = iBlockState;
+            this.chance = chance;
         }
     }
 }
