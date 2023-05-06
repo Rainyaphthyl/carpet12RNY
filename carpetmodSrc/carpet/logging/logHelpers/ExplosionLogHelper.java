@@ -77,9 +77,39 @@ public class ExplosionLogHelper {
                 case "brief":
                     messages.add(Messenger.c("d #" + explosionCountInCurrentGT, "gb ->",
                             Messenger.dblt("l", pos.x, pos.y, pos.z),
-                            (affectBlocks ? "m (affects blocks)" : "m (doesn't affect blocks)")));
+                            (affectBlocks ? "m  (affects blocks)" : "m  (doesn't affect blocks)")));
                     break;
-                case "compact":
+                case "harvest":
+                    messages.add(Messenger.c("d #" + explosionCountInCurrentGT, "gb ->",
+                            Messenger.dblt("l", pos.x, pos.y, pos.z),
+                            (createFire ? "d  (creates fire)" : "d  (doesn't create fire)")));
+                    AtomicInteger numBlockDestroy = new AtomicInteger();
+                    AtomicInteger numBlockHarvest = new AtomicInteger();
+                    destroyedBlocks.forEach((pos, dropping) -> {
+                        if (dropping.iBlockState.getBlock() != Blocks.TNT) {
+                            if (dropping.chance < 1.0F) {
+                                numBlockDestroy.incrementAndGet();
+                            } else {
+                                numBlockHarvest.incrementAndGet();
+                            }
+                        }
+                    });
+                    AtomicInteger numEntityDamage = new AtomicInteger();
+                    impactedEntities.object2IntEntrySet().forEach(entry -> {
+                        if (entry.getKey().entity instanceof EntityItem) {
+                            numEntityDamage.addAndGet(entry.getIntValue());
+                        }
+                    });
+                    char[] styles = new char[]{
+                            numBlockHarvest.get() == 0 ? 'e' : 'l',
+                            numBlockDestroy.get() == 0 ? 'p' : 'm',
+                            numEntityDamage.get() == 0 ? 'n' : 'r'
+                    };
+                    messages.add(Messenger.c("w blocks ",
+                            styles[0] + " harvested: " + numBlockHarvest.get(), "w  / ",
+                            styles[1] + " destroyed: " + numBlockDestroy.get(), "w  ; ",
+                            styles[2] + " item stacks damaged: " + numEntityDamage.get()));
+                    break;
                 case "full":
                     messages.add(Messenger.c("d #" + explosionCountInCurrentGT, "gb ->",
                             Messenger.dblt("l", pos.x, pos.y, pos.z)));

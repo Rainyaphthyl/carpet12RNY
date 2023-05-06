@@ -8,5 +8,6 @@ Carpet 1.12 with [RNY](https://github.com/Rainyaphthyl)'s Addition
 
 1. The logger uses the tick counter with the same output of the command `time query gametime` when displaying the "tick", instead of the wrong one.
 2. The "affects blocks" info can be displayed correctly.
-3. Option "compact" is modified.
+3. Option "compact" is removed.
 4. Option "full" is completed.
+5. New option: "harvest".
