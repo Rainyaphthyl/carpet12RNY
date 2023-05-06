@@ -11,19 +11,21 @@ import net.minecraft.server.MinecraftServer;
 import java.io.*;
 import java.net.URL;
 import java.net.URLConnection;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Enumeration;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
 public class CarpetUpdater {
-    static private String serverURL = "https://launcher.mojang.com/mc/game/1.12.2/server/886945bfb2b978778c3a0288fd7fab09d315b25f/server.jar";
-    // static private String githubURL = "https://api.github.com/repos/gnembon/carpetmod112/releases/latest";
-    static private String githubURL = "https://api.github.com/repos/Rainyaphthyl/carpet12RNY/releases/latest";
-    static private String vanillaJar = "update/MinecraftServer.1.12.2.jar";
-    // private static String carpetFileName = "update/Carpet.";
-    private static String carpetFileName = "update/carpet12";
     private static final byte[] BUFFER = new byte[4096 * 1024];
+    private static final String serverURL = "https://launcher.mojang.com/mc/game/1.12.2/server/886945bfb2b978778c3a0288fd7fab09d315b25f/server.jar";
+    // static private String githubURL = "https://api.github.com/repos/gnembon/carpetmod112/releases/latest";
+    private static final String githubURL = "https://api.github.com/repos/Rainyaphthyl/carpet12RNY/releases/latest";
+    private static final String vanillaJar = "update/MinecraftServer.1.12.2.jar";
+    // private static String carpetFileName = "update/Carpet.";
+    private static final String carpetFileName = "update/carpet12";
 
     public static void updateCarpet(MinecraftServer server) {
         try {
@@ -52,7 +54,7 @@ public class CarpetUpdater {
 
     private static void copy(InputStream input, OutputStream output) throws IOException {
         int bytesRead;
-        while ((bytesRead = input.read(BUFFER))!= -1) {
+        while ((bytesRead = input.read(BUFFER)) != -1) {
             output.write(BUFFER, 0, bytesRead);
         }
     }
@@ -60,14 +62,14 @@ public class CarpetUpdater {
     private static void patch(String path) throws Exception {
         ZipFile carpetZip = new ZipFile(path + ".zip");
         ZipFile originalJar = new ZipFile(vanillaJar);
-        ZipOutputStream moddedJar = new ZipOutputStream(new FileOutputStream(path + ".jar"));
+        ZipOutputStream moddedJar = new ZipOutputStream(Files.newOutputStream(Paths.get(path + ".jar")));
 
         Enumeration<? extends ZipEntry> entries = originalJar.entries();
         while (entries.hasMoreElements()) {
             ZipEntry e = entries.nextElement();
 
             String name = e.getName();
-            if(carpetZip.getEntry(name) == null) {
+            if (carpetZip.getEntry(name) == null) {
                 moddedJar.putNextEntry(e);
                 if (!e.isDirectory()) {
                     copy(originalJar.getInputStream(e), moddedJar);
