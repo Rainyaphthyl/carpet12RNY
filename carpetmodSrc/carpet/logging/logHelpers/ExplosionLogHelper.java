@@ -100,13 +100,13 @@ public class ExplosionLogHelper {
                             numEntityDamage.addAndGet(entry.getIntValue());
                         }
                     });
-                    char[] styles = new char[]{
-                            numBlockHarvest.get() == 0 ? 'e' : 'l',
-                            numBlockDestroy.get() == 0 ? 'p' : 'm',
-                            numEntityDamage.get() == 0 ? 'n' : 'r'
+                    String[] styles = new String[]{
+                            numBlockHarvest.get() == 0 ? "e" : "l",
+                            numBlockDestroy.get() == 0 ? "p" : "m",
+                            numEntityDamage.get() == 0 ? "n" : "r"
                     };
                     messages.add(Messenger.c("w blocks ",
-                            styles[0] + " harvested: " + numBlockHarvest.get(), "w  / ",
+                            styles[0] + " harvested: " + numBlockHarvest.get(), "w  , ",
                             styles[1] + " destroyed: " + numBlockDestroy.get(), "w  ; ",
                             styles[2] + " item stacks damaged: " + numEntityDamage.get()));
                     break;
