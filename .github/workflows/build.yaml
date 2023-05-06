@@ -32,4 +32,4 @@ jobs:
       - uses: actions/upload-artifact@v2
         with:
           name: carpet-dev-${{ github.event.number }}
-          path: build/distributions/Carpetmod_dev.zip
+          path: build/distributions/carpet12${project.version}.zip
