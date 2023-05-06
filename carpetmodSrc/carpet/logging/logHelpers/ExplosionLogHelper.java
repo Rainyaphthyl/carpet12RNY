@@ -14,6 +14,7 @@ import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.entity.projectile.EntityThrowable;
 import net.minecraft.init.Blocks;
+import net.minecraft.init.Items;
 import net.minecraft.item.Item;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
@@ -96,20 +97,25 @@ public class ExplosionLogHelper {
                             boolean isHarvested = dropping.chance == 1.0F;
                             String title = isTNT ? "r   - " : "w   - ";
                             String harvestStyle = isTNT ? "r" : (isMovingPiston ? "l" : "d");
-                            String chanceStyle = isTNT ? "r" : (isHarvested ? "l" : "d");
+                            String chanceStyle = isTNT ? "r" : (isHarvested ? "l" : "r");
                             Block block = dropping.iBlockState.getBlock();
                             int meta = block.getMetaFromState(dropping.iBlockState);
-                            //String name = block.getLocalizedName();
-                            // TODO: 2023/5/6,0006 Check the block names, especially moving piston 
-                            ItemWithMeta itemWithMeta = new ItemWithMeta(Item.getItemFromBlock(block), meta);
-                            String idMeta = itemWithMeta.getDisplayID();
-                            String name = itemWithMeta.getDisplayName();
+                            String name, idMetaStr;
+                            Item item = Item.getItemFromBlock(block);
+                            if (item == Items.AIR) {
+                                name = Block.REGISTRY.getNameForObject(block).getPath() + ':' + meta;
+                                idMetaStr = "c (" + ItemWithMeta.get_display_ID(Block.getIdFromBlock(block), meta) + ')';
+                            } else {
+                                ItemWithMeta itemWithMeta = new ItemWithMeta(item, meta);
+                                name = itemWithMeta.getDisplayName();
+                                idMetaStr = (isTNT ? "r (" : "q (") + itemWithMeta.getDisplayID() + ')';
+                            }
                             String positionStr = (isTNT ? "r" : "y") +
                                     " [ " + pos.getX() + ", " + pos.getY() + ", " + pos.getZ() + " ]";
                             float percent = dropping.chance * 100;
-                            messages.add(Messenger.c(title,
-                                    harvestStyle + ' ' + name, "w  ", positionStr, "w  ",
-                                    String.format("%s %.1f%%", chanceStyle, percent), "^w " + percent));
+                            messages.add(Messenger.c(title, idMetaStr,
+                                    harvestStyle + "  " + name, "w  ", positionStr, "w  ",
+                                    String.format("%s %.1f%%", chanceStyle, percent), "^w " + percent + '%'));
                         });
                     }
                     // entities
@@ -137,7 +143,7 @@ public class ExplosionLogHelper {
                                 showingDamage = true;
                             }
                             nameBuilder.append(entity.getName());
-                            String title = impact.pos.equals(pos) ? "r   - TNT" : "w   - ";
+                            String title = impact.pos.equals(pos) ? "r   - " : "w   - ";
                             String posStyle = impact.pos.equals(pos) ? "r" : "y";
                             if (showingDamage) {
                                 messages.add(Messenger.c(title, nameBuilder.toString(), "w  ",
