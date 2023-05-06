@@ -35,9 +35,6 @@ apply plugin: "com.dorongold.task-tree" // For debug purposes
 
 import com.google.common.io.Resources
 import de.undercouch.gradle.tasks.download.Download
-import groovy.io.FileType
-import java.text.SimpleDateFormat
-import java.util.zip.ZipFile
 import net.minecraftforge.gradle.common.Constants
 import net.minecraftforge.gradle.patcher.PatcherConstants
 import net.minecraftforge.gradle.patcher.TaskReobfuscate
@@ -46,6 +43,7 @@ import net.minecraftforge.gradle.util.json.version.OS
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.IOUtils
 
+import java.util.zip.ZipFile
 
 // ===== PROPERTIES =====
 
@@ -88,13 +86,13 @@ minecraft
 	workspaceDir = 'projects'
 	// versionJson is used to download assets because ForgeGradle insists
 	versionJson = "jsons/${minecraft.version}-dev.json"
-	
+
 	def common = {
 		patchPrefixOriginal = '../src-base/minecraft'
 		patchPrefixChanged = '../src-work/minecraft'
 		mainClassServer = 'net.minecraft.server.MinecraftServer'
 	}
-	
+
 	project(project.name)
 	{
 		rootDir '.'
@@ -144,7 +142,7 @@ gradle.taskGraph.whenReady
 void warnOverwrite()
 {
 	if (System.getenv("SKIP_PROMPT") != null)
-		return 
+		return
 	ant.input(message: 'WARNING: this will overwrite your working changes. Continue? (y/n)', addproperty: 'answer', defaultValue: 'y')
 	def answer = ant.properties.answer.toLowerCase()
 	if (answer != 'y' && answer != 'yes')
@@ -220,7 +218,7 @@ if (gradle.useAstyle)
 				commandLine(['astyle'] + extra_args)
 				break
 		}
-		
+
 		dependsOn extractSrcForAstyle
 		if (OS.CURRENT == OS.WINDOWS || OS.CURRENT == OS.OSX)
 			dependsOn extractAstyle
@@ -228,12 +226,12 @@ if (gradle.useAstyle)
 	task(zipAstyledSrc, type: Zip) {
 		from('build/localCache/astyle')
 		exclude '**/*.orig'
-		
+
 		def destFile = file(patcher_plugin.delayedFile(PatcherConstants.JAR_DECOMP_POST))
 		destinationDir = destFile.getParentFile()
 		archiveName = destFile.getName()
 		includeEmptyDirs = false
-		
+
 		dependsOn runAstyle
 	}
 	remapCleanJar.dependsOn zipAstyledSrc
@@ -290,11 +288,11 @@ task(project.name + 'OutputJar', type: Zip)
 			}
 		}
 	}
-	
-	archiveName = "${capitalizedName}_${project.version}.zip"
+
+	archiveName = "carpet12${project.version}.zip"
 	destinationDir = outputJar.destinationDir
 	includeEmptyDirs = false
-	
+
 	dependsOn reobfClean, reobfuscate
 }
 
@@ -374,7 +372,7 @@ clean {
 if (gradle.useJavadocs)
 {
 	def retromap = tasks.getByName('retromapMc' + capitalizedName)
-	
+
 	task(stripJavadoc, type: Zip) {
 		from(zipTree('build/localCache/retromapped/retromapped.zip')) {
 			include '**/*.java'
@@ -391,7 +389,7 @@ if (gradle.useJavadocs)
 		destinationDir = file(retromap.out).getParentFile()
 		dependsOn retromap
 	}
-	
+
 	retromap.out = 'build/localCache/retromapped/retromapped.zip'
 	project.afterEvaluate { tasks.getByName('gen' + capitalizedName + 'Patches').dependsOn stripJavadoc }
 }
