@@ -110,6 +110,10 @@ public class ExplosionLogHelper {
                             styles[1] + " destroyed: " + numBlockDestroy.get(), "w  ; ",
                             styles[2] + " item stacks damaged: " + numEntityDamage.get()));
                     break;
+                case "injure":
+                    // TODO: 2023/5/7,0007 EntityLivingBase
+                case "motion":
+                    // TODO: 2023/5/7,0007 EntityThrowable | EntityArrow | ...
                 case "full":
                     messages.add(Messenger.c("d #" + explosionCountInCurrentGT, "gb ->",
                             Messenger.dblt("l", pos.x, pos.y, pos.z)));
