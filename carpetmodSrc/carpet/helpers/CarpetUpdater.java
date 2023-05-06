@@ -34,8 +34,13 @@ public class CarpetUpdater {
             }
             String name = getCarpetFiles(server);
 
-            if (name == null) {
+            if ("@RUNNING".equals(name)) {
                 Messenger.print_server_message(server, "Already running latest version");
+                return;
+            }
+
+            if ("@EXISTING".equals(name)) {
+                Messenger.print_server_message(server, "Update has already completed (carpet server file found in /update/ folder)");
                 return;
             }
 
@@ -99,7 +104,7 @@ public class CarpetUpdater {
     }
 
     private static String getCarpetFiles(MinecraftServer server) throws Exception {
-        String name = null;
+        String name;
         URL url = new URL(githubURL);
         URLConnection request = url.openConnection();
         request.connect();
@@ -111,8 +116,9 @@ public class CarpetUpdater {
 
         name = carpetFileName + tag;
 
-        if (checkVersion(tag)) return null;
+        if (checkVersion(tag)) return "@RUNNING";
         if (checkFile(name + ".zip")) return name;
+        if (checkFile(name + ".jar")) return "@EXISTING";
 
         JsonArray array = rootobj.get("assets").getAsJsonArray();
         JsonElement arrayElement = array.get(0);
