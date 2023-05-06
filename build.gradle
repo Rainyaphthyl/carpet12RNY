@@ -292,7 +292,7 @@ task(project.name + 'OutputJar', type: Zip)
 	}
 	
 	// archiveName = "${capitalizedName}_${project.version}.zip"
-	archiveName = "${project.name}-${project.version}.zip"
+	archiveName = "carpet12${project.version}.zip"
 	destinationDir = outputJar.destinationDir
 	includeEmptyDirs = false
 	

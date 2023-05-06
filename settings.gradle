@@ -1,12 +1,12 @@
 import java.text.SimpleDateFormat
 
 // The project name, starts with lower case letter, should obey Java variable naming rules
-rootProject.name = 'carpet12RNY'
+rootProject.name = 'carpetmod'
 
 // TODO: Replace the mod version
 // The version of the mod
 //gradle.ext.modVersion = 'dev' //new java.text.SimpleDateFormat('yy_MM_dd').format(new Date())
-gradle.ext.modVersion = 'dev-' + (new SimpleDateFormat('yyyyMMdd-HHmm')).format(new Date())
+gradle.ext.modVersion = 'RNY-dev-' + (new SimpleDateFormat('yyyyMMdd-HHmm')).format(new Date())
 
 // Set to 'client' to make a client-only jar mod, 'server' to make it server-only and 'both' to make it both
 // Only 'server' is fully supported currently
