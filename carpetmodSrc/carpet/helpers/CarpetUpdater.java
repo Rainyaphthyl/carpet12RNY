@@ -13,12 +13,16 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Enumeration;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
 public class CarpetUpdater {
+    public static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd-HHmm");
     private static final byte[] BUFFER = new byte[4096 * 1024];
     private static final String serverURL = "https://launcher.mojang.com/mc/game/1.12.2/server/886945bfb2b978778c3a0288fd7fab09d315b25f/server.jar";
     // static private String githubURL = "https://api.github.com/repos/gnembon/carpetmod112/releases/latest";
@@ -26,6 +30,14 @@ public class CarpetUpdater {
     private static final String vanillaJar = "update/MinecraftServer.1.12.2.jar";
     // private static String carpetFileName = "update/Carpet.";
     private static final String carpetFileName = "update/carpet12";
+
+    public static boolean isDevVersion(String version) {
+        return version != null && version.startsWith("RNY-dev-");
+    }
+
+    public static boolean isCurrDevVersion() {
+        return isDevVersion(CarpetSettings.carpetVersion);
+    }
 
     public static void updateCarpet(MinecraftServer server) {
         try {
@@ -132,7 +144,16 @@ public class CarpetUpdater {
     }
 
     private static boolean checkVersion(String tag) {
-        return CarpetSettings.carpetVersion.equals(tag);
+        boolean shouldUpdate = !CarpetSettings.carpetVersion.equals(tag);
+        if (shouldUpdate && isCurrDevVersion() && isDevVersion(tag)) {
+            try {
+                Date currentDate = dateFormat.parse(CarpetSettings.carpetVersion.substring(8));
+                Date targetDate = dateFormat.parse(tag.substring(8));
+                shouldUpdate = currentDate.before(targetDate);
+            } catch (ParseException | NullPointerException | IndexOutOfBoundsException ignored) {
+            }
+        }
+        return !shouldUpdate;
     }
 
     private static void downloadUsingStream(String urlStr, String file) throws IOException {
