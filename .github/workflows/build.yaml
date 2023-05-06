@@ -2,7 +2,7 @@ name: Build on Push & Pull Request
 
 on:
   - push
-#  - pull_request
+  - pull_request
 
 jobs:
   build:
@@ -32,4 +32,4 @@ jobs:
       - uses: actions/upload-artifact@v2
         with:
           name: carpet-dev-${{ github.event.number }}
-          path: build/distributions/carpet12${project.version}.zip
+          path: build/distributions/carpet12RNY-*.zip
