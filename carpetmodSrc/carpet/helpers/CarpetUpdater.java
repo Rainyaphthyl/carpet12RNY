@@ -39,6 +39,14 @@ public class CarpetUpdater {
         return isDevVersion(CarpetSettings.carpetVersion);
     }
 
+    public static boolean isUndefinedVersion(String version) {
+        return "RNY-current-undefined".equals(version);
+    }
+
+    public static boolean isCurrUndefinedVersion() {
+        return isUndefinedVersion(CarpetSettings.carpetVersion);
+    }
+
     public static void updateCarpet(MinecraftServer server) {
         try {
             if (!checkFile("update/")) {
@@ -144,7 +152,7 @@ public class CarpetUpdater {
     }
 
     private static boolean checkVersion(String tag) {
-        boolean shouldUpdate = !CarpetSettings.carpetVersion.equals(tag);
+        boolean shouldUpdate = !CarpetSettings.carpetVersion.equals(tag) || isCurrUndefinedVersion();
         if (shouldUpdate && isCurrDevVersion() && isDevVersion(tag)) {
             try {
                 Date currentDate = dateFormat.parse(CarpetSettings.carpetVersion.substring(8));
@@ -161,7 +169,7 @@ public class CarpetUpdater {
         BufferedInputStream bis = new BufferedInputStream(url.openStream());
         FileOutputStream fis = new FileOutputStream(file);
         byte[] buffer = new byte[1024];
-        int count = 0;
+        int count;
         while ((count = bis.read(buffer, 0, 1024)) != -1) {
             fis.write(buffer, 0, count);
         }

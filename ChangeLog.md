@@ -42,5 +42,6 @@ If `<count_i> == 0`, the respective info will be marked with a dark color.
 
 - Add checks for existing jar file in Carpet Updater.
 - Fix the bug that lifetime tracker reports 0-gt when game rule `doMobSpawning` is `false`.
+- Updates carpet server on `RNY-current-undefined` versions
 
 [//]: # (TODO: Consider whether to use "build" \(instead of "dev"\) versions for releases)
