@@ -34,12 +34,13 @@ If `<count_i> == 0`, the respective info will be marked with a dark color.
 - The logger uses the tick counter with the same output of the command `time query gametime` when displaying the "tick", instead of the wrong one.
 - The "affects blocks" info can be displayed correctly.
 
+# Ported Features
+
+[//]: # (TODO: Port rule `playerCheckLightDisabled` and logger `playerCheckLight` from TISCarpet113)
+
 # Miscellaneous
 
-## New Features
-
 - Add checks for existing jar file in Carpet Updater.
+- Fix the bug that lifetime tracker reports 0-gt when game rule `doMobSpawning` is `false`.
 
-## Modified Features
-
-- Fix the bug that lifetime tracker reports 0-gt when doMobSpawning is false. (Spawn Stage Counter of the Lifetime Tracker is able to run even if game rule "doMobSpawning" is set to false.)
+[//]: # (TODO: Consider whether to use "build" \(instead of "dev"\) versions for releases)
