@@ -6,8 +6,8 @@ Carpet 1.12 with [RNY](https://github.com/Rainyaphthyl)'s Addition
 
 ## Option Modifications
 
-- Removed option `compact`;
-- Added option `full` and `harvest`;
+- Remove option `compact`;
+- Add option `full` and `harvest`;
 - Other options to add (pending): `injure`, `motion`, etc;
 
 Command usage: `log explosions (brief|full|harvest)`
@@ -36,4 +36,10 @@ If `<count_i> == 0`, the respective info will be marked with a dark color.
 
 # Miscellaneous
 
+## New Features
+
 - Add checks for existing jar file in Carpet Updater.
+
+## Modified Features
+
+- Fix the bug that lifetime tracker reports 0-gt when doMobSpawning is false. (Spawn Stage Counter of the Lifetime Tracker is able to run even if game rule "doMobSpawning" is set to false.)
