@@ -219,13 +219,20 @@ public class OptimizedTNT {
                 }
 
                 if (iblockstate.getMaterial() != Material.AIR) {
+                    // carpet12RNY - explosion logger
+                    float chance = 0.0F;
                     if (block.canDropFromExplosion(e)) {
                         // CARPET-MASA: use the state from above instead of getting it again from the world
-                        block.dropBlockAsItemWithChance(world, blockpos, iblockstate, 1.0F / e.size, 0);
+                        chance = 1.0F / e.size;
+                        block.dropBlockAsItemWithChance(world, blockpos, iblockstate, chance, 0);
+                        if (block == Blocks.PISTON_EXTENSION) {
+                            chance = 1.0F;
+                        }
                     }
 
                     world.setBlockState(blockpos, Blocks.AIR.getDefaultState(), 3);
                     block.onExplosionDestroy(world, blockpos, e);
+                    e.logHelper.onBlockDestroyed(blockpos, iblockstate, chance);
                 }
             }
         }
