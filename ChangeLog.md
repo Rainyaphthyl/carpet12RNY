@@ -36,8 +36,6 @@ If `<count_i> == 0`, the respective info will be marked with a dark color.
 
 # Ported Features
 
-[//]: # (TODO: Port rule `playerCheckLightDisabled` and logger `playerCheckLight` from TISCarpet113)
-
 ## New Rules
 
 ### Disable Player Light Check
@@ -52,9 +50,16 @@ Disable random light checks nearby players.
 
 ## New Loggers
 
+Ported from [TISCarpet113](https://github.com/TISUnion/TISCarpet113), with some modifications.
+
 ### Player Light Check Logger
 
 Ported from [TISCarpet113](https://github.com/TISUnion/TISCarpet113). (WIP)
+
+- Log Handler: `CHAT`
+- Log Options:
+    - `update`: Outputs logs only when light values changing.
+    - `check`: Outputs logs of every random light check.
 
 # Miscellaneous
 
