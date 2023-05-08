@@ -1083,6 +1083,13 @@ public class CarpetSettings
     )
     public static double explosionPacketRange = VANILLA_EXPLOSION_PACKET_RANGE;
 
+    // ported from https://github.com/TISUnion/TISCarpet113
+    @Rule(
+            desc = "Disable random light checks nearby players",
+            category = {CREATIVE, NAFTALLUVIA}
+    )
+    public static boolean disablePlayerLightCheck = false;
+
     // ===== API ===== //
 
     /**

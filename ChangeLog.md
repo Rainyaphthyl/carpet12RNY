@@ -38,6 +38,24 @@ If `<count_i> == 0`, the respective info will be marked with a dark color.
 
 [//]: # (TODO: Port rule `playerCheckLightDisabled` and logger `playerCheckLight` from TISCarpet113)
 
+## New Rules
+
+### Disable Player Light Check
+
+Ported from [TISCarpet113](https://github.com/TISUnion/TISCarpet113).
+
+Disable random light checks nearby players.
+
+- Name: `disablePlayerLightCheck`
+- Type: `boolean`
+- Default: `false`
+
+## New Loggers
+
+### Player Light Check Logger
+
+Ported from [TISCarpet113](https://github.com/TISUnion/TISCarpet113). (WIP)
+
 # Miscellaneous
 
 - Add checks for existing jar file in Carpet Updater.
