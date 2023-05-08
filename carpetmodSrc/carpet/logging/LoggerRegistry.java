@@ -40,6 +40,7 @@ public class LoggerRegistry {
     public static boolean __carefulBreak;
     public static boolean __normalCameraVision;
     public static boolean __rngManip;
+    public static boolean __lightCheck;
     // Map from logger names to loggers.
     private static Map<String, Logger> loggerRegistry = new HashMap<>();
     // List of default subscriptions
@@ -60,7 +61,7 @@ public class LoggerRegistry {
         registerLogger("items", new Logger(server, "items", "brief", new String[]{"brief", "full"}, LogHandler.CHAT));
         registerLogger("rng", new Logger(server, "rng", null, null, LogHandler.CHAT));
         registerLogger("explosions", new Logger(server, "explosions", "brief", new String[]{"brief", "full", "harvest"}, LogHandler.CHAT));
-        registerLogger("playerLightCheck", new Logger(server, "playerLightCheck", "update", new String[]{"update", "check"}, LogHandler.CHAT));
+        registerLogger("lightCheck", new Logger(server, "lightCheck", "update", new String[]{"update", "check"}, LogHandler.CHAT));
 
         registerLogger("autosave", new Logger(server, "autosave", null, null, LogHandler.HUD));
         registerLogger("tps", new Logger(server, "tps", null, null, LogHandler.HUD));
