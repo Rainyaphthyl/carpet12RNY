@@ -58,8 +58,14 @@ Ported from [TISCarpet113](https://github.com/TISUnion/TISCarpet113). (WIP)
 
 # Miscellaneous
 
+## Features
+
 - Add checks for existing jar file in Carpet Updater.
 - Fix the bug that lifetime tracker reports 0-gt when game rule `doMobSpawning` is `false`.
-- Updates carpet server on `RNY-current-undefined` versions
+- Add command `logMenu` to instantly display the updated interactive logger menu.
+
+## Codes and Details
+
+- Updates carpet server on `RNY-current-undefined` versions.
 
 [//]: # (TODO: Consider whether to use "build" \(instead of "dev"\) versions for releases)
