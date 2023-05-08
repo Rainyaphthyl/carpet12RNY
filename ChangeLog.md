@@ -68,9 +68,11 @@ Ported from [TISCarpet113](https://github.com/TISUnion/TISCarpet113). (WIP)
 - Add checks for existing jar file in Carpet Updater.
 - Fix the bug that lifetime tracker reports 0-gt when game rule `doMobSpawning` is `false`.
 - Add command `logMenu` to instantly display the updated interactive logger menu.
+- (TO-DO) Fix the bug that command `blockinfo` can load chunks.
 
 ## Codes and Details
 
 - Updates carpet server on `RNY-current-undefined` versions.
+- Add class `SilentChunkReader`, with codes from `PortalSilentSearcher`.
 
 [//]: # (TODO: Consider whether to use "build" \(instead of "dev"\) versions for releases)
