@@ -349,7 +349,7 @@
      {
          return this.func_72863_F().func_73149_a(p_175680_1_, p_175680_2_);
      }
-@@ -311,15 +505,46 @@
+@@ -311,15 +505,84 @@
      protected void func_184162_i()
      {
          this.field_72984_F.func_76320_a("playerCheckLight");
@@ -357,12 +357,49 @@
 +        if (LoggerRegistry.__rngManip) {
 +            rngMonitor.tryUpdateSeeds(RNGMonitor.RNGAppType.lightCheck);
 +        }
++        if (CarpetSettings.playerLightCheck != CarpetSettings.PlayerLightCheck.vanilla) {
++            if (CarpetSettings.playerLightCheck == CarpetSettings.PlayerLightCheck.flood) {
++                int playerListSize = this.field_73010_i.size();
++                for (int i = 0; i < playerListSize; ++i) {
++                    EntityPlayer entityplayer = this.field_73010_i.get(i);
++                    int xSource = MathHelper.func_76128_c(entityplayer.field_70165_t);
++                    int ySource = MathHelper.func_76128_c(entityplayer.field_70163_u);
++                    int zSource = MathHelper.func_76128_c(entityplayer.field_70161_v);
++                    for (int dz = -5; dz <= 5; ++dz) {
++                        int l = zSource + dz;
++                        for (int dx = -5; dx <= 5; ++dx) {
++                            int j = xSource + dx;
++                            for (int dy = -5; dy <= 5; ++dy) {
++                                int k = ySource + dy;
++                                BlockPos pos = new BlockPos(j, k, l);
++                                boolean loggingLightCheck = LoggerRegistry.__lightCheck && func_175697_a(pos, 0);
++                                int skyOld = -1, blockOld = -1;
++                                if (loggingLightCheck) {
++                                    skyOld = silentChunkReader.getLightValue(EnumSkyBlock.SKY, pos);
++                                    blockOld = silentChunkReader.getLightValue(EnumSkyBlock.BLOCK, pos);
++                                }
++                                this.func_175664_x(pos);
++                                if (loggingLightCheck) {
++                                    int skyNew = silentChunkReader.getLightValue(EnumSkyBlock.SKY, pos);
++                                    int blockNew = silentChunkReader.getLightValue(EnumSkyBlock.BLOCK, pos);
++                                    if (skyNew != skyOld) {
++                                        LightCheckReporter.report_light_update(EnumSkyBlock.SKY, skyOld, skyNew, pos, entityplayer, i, playerListSize);
++                                    }
++                                    if (blockNew != blockOld) {
++                                        LightCheckReporter.report_light_update(EnumSkyBlock.BLOCK, blockOld, blockNew, pos, entityplayer, i, playerListSize);
++                                    }
++                                }
++                            }
++                        }
++                    }
++                }
++            }
++            field_72984_F.func_76319_b();
++            return;
++        }
 +        // CM end
  
--        if (!this.field_73010_i.isEmpty())
-+        // carpet12RNY
-+        /*if (!this.playerEntities.isEmpty())*/
-+        if (CarpetSettings.playerLightCheck != CarpetSettings.PlayerLightCheck.suppress && !this.field_73010_i.isEmpty())
+         if (!this.field_73010_i.isEmpty())
          {
 -            int i = this.field_73012_v.nextInt(this.field_73010_i.size());
 +            // CM start
@@ -399,7 +436,7 @@
          }
  
          this.field_72984_F.func_76319_b();
-@@ -344,7 +569,13 @@
+@@ -344,7 +607,13 @@
              boolean flag = this.func_72896_J();
              boolean flag1 = this.func_72911_I();
              this.field_72984_F.func_76320_a("pollingChunks");
@@ -413,7 +450,7 @@
              for (Iterator<Chunk> iterator = this.field_73063_M.func_187300_b(); iterator.hasNext(); this.field_72984_F.func_76319_b())
              {
                  this.field_72984_F.func_76320_a("getChunk");
-@@ -354,10 +585,18 @@
+@@ -354,10 +623,18 @@
                  this.field_72984_F.func_76318_c("checkNextLight");
                  chunk.func_76594_o();
                  this.field_72984_F.func_76318_c("tickChunk");
@@ -433,7 +470,7 @@
                  {
                      this.field_73005_l = this.field_73005_l * 3 + 1013904223;
                      int l = this.field_73005_l >> 2;
-@@ -384,8 +623,9 @@
+@@ -384,8 +661,9 @@
                  }
  
                  this.field_72984_F.func_76318_c("iceandsnow");
@@ -444,7 +481,7 @@
                  {
                      this.field_73005_l = this.field_73005_l * 3 + 1013904223;
                      int j2 = this.field_73005_l >> 2;
-@@ -409,6 +649,7 @@
+@@ -409,6 +687,7 @@
                  }
  
                  this.field_72984_F.func_76318_c("tickBlocks");
@@ -452,7 +489,7 @@
  
                  if (i > 0)
                  {
-@@ -429,7 +670,15 @@
+@@ -429,7 +708,15 @@
  
                                  if (block.func_149653_t())
                                  {
@@ -469,7 +506,7 @@
                                  }
  
                                  this.field_72984_F.func_76319_b();
-@@ -437,13 +686,15 @@
+@@ -437,13 +724,15 @@
                          }
                      }
                  }
@@ -486,7 +523,7 @@
      {
          BlockPos blockpos = this.func_175725_q(p_175736_1_);
          AxisAlignedBB axisalignedbb = (new AxisAlignedBB(blockpos, new BlockPos(blockpos.func_177958_n(), this.func_72800_K(), blockpos.func_177952_p()))).func_186662_g(3.0D);
-@@ -472,13 +723,25 @@
+@@ -472,13 +761,25 @@
  
      public boolean func_175691_a(BlockPos p_175691_1_, Block p_175691_2_)
      {
@@ -514,7 +551,7 @@
          return this.field_73064_N.contains(nextticklistentry);
      }
  
-@@ -501,17 +764,29 @@
+@@ -501,17 +802,29 @@
  
                      if (iblockstate.func_185904_a() != Material.field_151579_a && iblockstate.func_177230_c() == p_175654_2_)
                      {
@@ -546,7 +583,7 @@
  
          if (this.func_175667_e(p_175654_1_))
          {
-@@ -531,7 +806,13 @@
+@@ -531,7 +844,13 @@
  
      public void func_180497_b(BlockPos p_180497_1_, Block p_180497_2_, int p_180497_3_, int p_180497_4_)
      {
@@ -561,7 +598,7 @@
          nextticklistentry.func_82753_a(p_180497_4_);
          Material material = p_180497_2_.func_176223_P().func_185904_a();
  
-@@ -549,7 +830,8 @@
+@@ -549,7 +868,8 @@
  
      public void func_72939_s()
      {
@@ -571,7 +608,7 @@
          {
              if (this.field_80004_Q++ >= 300)
              {
-@@ -567,6 +849,8 @@
+@@ -567,6 +887,8 @@
  
      protected void func_184147_l()
      {
@@ -580,7 +617,7 @@
          super.func_184147_l();
          this.field_72984_F.func_76318_c("players");
  
-@@ -621,6 +905,8 @@
+@@ -621,6 +943,8 @@
  
              this.field_72984_F.func_76319_b();
          }
@@ -589,7 +626,7 @@
      }
  
      public void func_82742_i()
-@@ -644,9 +930,18 @@
+@@ -644,9 +968,18 @@
              }
              else
              {
@@ -610,7 +647,7 @@
                  }
  
                  this.field_72984_F.func_76320_a("cleaning");
-@@ -677,12 +972,15 @@
+@@ -677,12 +1010,15 @@
  
                      if (this.func_175707_a(nextticklistentry1.field_180282_a.func_177982_a(0, 0, 0), nextticklistentry1.field_180282_a.func_177982_a(0, 0, 0)))
                      {
@@ -626,7 +663,7 @@
                                  iblockstate.func_177230_c().func_180650_b(this, nextticklistentry1.field_180282_a, iblockstate, this.field_73012_v);
                              }
                              catch (Throwable throwable)
-@@ -699,6 +997,7 @@
+@@ -699,6 +1035,7 @@
                          this.func_175684_a(nextticklistentry1.field_180282_a, nextticklistentry1.func_151351_a(), 0);
                      }
                  }
@@ -634,7 +671,7 @@
  
                  this.field_72984_F.func_76319_b();
                  this.field_94579_S.clear();
-@@ -950,11 +1249,18 @@
+@@ -950,11 +1287,18 @@
  
              chunkproviderserver.func_186027_a(p_73044_1_);
  
@@ -654,7 +691,7 @@
                  }
              }
          }
-@@ -1033,9 +1339,15 @@
+@@ -1033,9 +1377,15 @@
                  }
                  else
                  {
@@ -670,7 +707,7 @@
                          return false;
                      }
  
-@@ -1055,6 +1367,7 @@
+@@ -1055,6 +1405,7 @@
          this.field_175729_l.func_76038_a(p_72923_1_.func_145782_y(), p_72923_1_);
          this.field_175741_N.put(p_72923_1_.func_110124_au(), p_72923_1_);
          Entity[] aentity = p_72923_1_.func_70021_al();
@@ -678,7 +715,7 @@
  
          if (aentity != null)
          {
-@@ -1117,7 +1430,10 @@
+@@ -1117,7 +1468,10 @@
  
          for (EntityPlayer entityplayer : this.field_73010_i)
          {
@@ -690,7 +727,7 @@
              {
                  ((EntityPlayerMP)entityplayer).field_71135_a.func_147359_a(new SPacketExplosion(p_72885_2_, p_72885_4_, p_72885_6_, p_72885_8_, explosion.func_180343_e(), (Vec3d)explosion.func_77277_b().get(entityplayer)));
              }
-@@ -1139,10 +1455,15 @@
+@@ -1139,10 +1493,15 @@
          }
  
          this.field_147490_S[this.field_147489_T].add(blockeventdata);
@@ -706,7 +743,7 @@
          while (!this.field_147490_S[this.field_147489_T].isEmpty())
          {
              int i = this.field_147489_T;
-@@ -1150,19 +1471,40 @@
+@@ -1150,19 +1509,40 @@
  
              for (BlockEventData blockeventdata : this.field_147490_S[i])
              {
@@ -748,7 +785,7 @@
          return iblockstate.func_177230_c() == p_147485_1_.func_151337_f() ? iblockstate.func_189547_a(this, p_147485_1_.func_180328_a(), p_147485_1_.func_151339_d(), p_147485_1_.func_151338_e()) : false;
      }
  
-@@ -1173,6 +1515,8 @@
+@@ -1173,6 +1553,8 @@
  
      protected void func_72979_l()
      {
@@ -757,7 +794,7 @@
          boolean flag = this.func_72896_J();
          super.func_72979_l();
  
-@@ -1200,6 +1544,8 @@
+@@ -1200,6 +1582,8 @@
              this.field_73061_a.func_184103_al().func_148540_a(new SPacketChangeGameState(7, this.field_73004_o));
              this.field_73061_a.func_184103_al().func_148540_a(new SPacketChangeGameState(8, this.field_73017_q));
          }
@@ -766,7 +803,7 @@
      }
  
      @Nullable
-@@ -1299,4 +1645,19 @@
+@@ -1299,4 +1683,19 @@
              {
              }
          }
