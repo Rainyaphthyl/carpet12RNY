@@ -380,7 +380,7 @@
 +            /*this.checkLight(new BlockPos(j, k, l));*/
 +            // CM start
 +            BlockPos pos = new BlockPos(j, k, l);
-+            boolean loggingLightCheck = LoggerRegistry.__lightCheck;
++            boolean loggingLightCheck = LoggerRegistry.__lightCheck && func_175697_a(pos, 0);
 +            int skyOld = -1, blockOld = -1;
 +            if (loggingLightCheck) {
 +                skyOld = silentChunkReader.getLightValue(EnumSkyBlock.SKY, pos);
@@ -391,10 +391,10 @@
 +                int skyNew = silentChunkReader.getLightValue(EnumSkyBlock.SKY, pos);
 +                int blockNew = silentChunkReader.getLightValue(EnumSkyBlock.BLOCK, pos);
 +                if (skyNew != skyOld) {
-+                    LightCheckReporter.on_light_checked(EnumSkyBlock.SKY, skyOld, skyNew, pos, entityplayer, i, playerListSize);
++                    LightCheckReporter.report_light_update(EnumSkyBlock.SKY, skyOld, skyNew, pos, entityplayer, i, playerListSize);
 +                }
 +                if (blockNew != blockOld) {
-+                    LightCheckReporter.on_light_checked(EnumSkyBlock.BLOCK, blockOld, blockNew, pos, entityplayer, i, playerListSize);
++                    LightCheckReporter.report_light_update(EnumSkyBlock.BLOCK, blockOld, blockNew, pos, entityplayer, i, playerListSize);
 +                }
 +            }
 +            // CM end

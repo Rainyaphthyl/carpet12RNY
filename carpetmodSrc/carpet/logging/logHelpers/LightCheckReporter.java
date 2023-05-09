@@ -18,7 +18,7 @@ public class LightCheckReporter {
         return instance;
     }
 
-    public static void on_light_checked(EnumSkyBlock lightType, int oldValue, int newValue, BlockPos pos, EntityPlayer player, int playerIndex, int playerListSize) {
+    public static void report_light_update(EnumSkyBlock lightType, int oldValue, int newValue, BlockPos pos, EntityPlayer player, int playerIndex, int playerListSize) {
         get_instance().log(option -> {
             ITextComponent message = Messenger.c(String.format("w %s light %d->%d at [%d, %d, %d] by %s (%d/%d)",
                     lightType.name(), oldValue, newValue, pos.getX(), pos.getY(), pos.getZ(),

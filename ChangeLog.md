@@ -34,32 +34,33 @@ If `<count_i> == 0`, the respective info will be marked with a dark color.
 - The logger uses the tick counter with the same output of the command `time query gametime` when displaying the "tick", instead of the wrong one.
 - The "affects blocks" info can be displayed correctly.
 
-# Ported Features
-
-## New Rules
-
-### Disable Player Light Check
-
-Ported from [TISCarpet113](https://github.com/TISUnion/TISCarpet113).
-
-Disable random light checks nearby players.
-
-- Name: `disablePlayerLightCheck`
-- Type: `boolean`
-- Default: `false`
-
-## New Loggers
+# Player Light Check
 
 Ported from [TISCarpet113](https://github.com/TISUnion/TISCarpet113), with some modifications.
 
-### Player Light Check Logger
+## New Rules
 
-Ported from [TISCarpet113](https://github.com/TISUnion/TISCarpet113). (WIP)
+### Player Light Check
+
+Disable random light checks near players, or modify the frequency of checks.
+
+- Name: `disablePlayerLightCheck`
+- Type: `Enum`
+- Options & Range: `vanilla`, `suppress`, `flood`
+    - `vanilla`: No modifications.
+    - `suppress`: Player light check disabled.
+    - `flood`: Immediately updating lights at all possible positions.
+- Default: `vanilla`
+
+## New Loggers
+
+### Player Light Check Logger
 
 - Log Handler: `CHAT`
 - Log Options:
-    - `update`: Outputs logs only when light values changing.
-    - `check`: Outputs logs of every random light check.
+    - `raw`: Displays the raw position where the light is updated.
+    - `relative`: Displays the raw position and the relative displacement from the nearby player, maybe useful to debug light suppression by RNG manipulation.
+    - `verbose`: :P
 
 # Miscellaneous
 
