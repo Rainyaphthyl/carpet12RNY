@@ -1085,10 +1085,15 @@ public class CarpetSettings
 
     // ported from https://github.com/TISUnion/TISCarpet113
     @Rule(
-            desc = "Disable random light checks nearby players",
+            desc = "Disable random light checks near players, or modify the frequency of checks",
+            options = {"vanilla", "suppress", "flood"},
             category = {CREATIVE, NAFTALLUVIA}
     )
-    public static boolean disablePlayerLightCheck = false;
+    public static PlayerLightCheck playerLightCheck = PlayerLightCheck.vanilla;
+
+    public enum PlayerLightCheck {
+        vanilla, suppress, flood
+    }
 
     // ===== API ===== //
 

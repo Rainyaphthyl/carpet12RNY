@@ -61,7 +61,7 @@ public class LoggerRegistry {
         registerLogger("items", new Logger(server, "items", "brief", new String[]{"brief", "full"}, LogHandler.CHAT));
         registerLogger("rng", new Logger(server, "rng", null, null, LogHandler.CHAT));
         registerLogger("explosions", new Logger(server, "explosions", "brief", new String[]{"brief", "full", "harvest"}, LogHandler.CHAT));
-        registerLogger("lightCheck", new Logger(server, "lightCheck", "raw", new String[]{"raw", "relative", "verbose"}, LogHandler.CHAT));
+        registerLogger("lightCheck", new Logger(server, "lightCheck", "relative", new String[]{"raw", "relative", "verbose"}, LogHandler.CHAT));
 
         registerLogger("autosave", new Logger(server, "autosave", null, null, LogHandler.HUD));
         registerLogger("tps", new Logger(server, "tps", null, null, LogHandler.HUD));
