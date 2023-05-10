@@ -31,5 +31,5 @@ jobs:
 
       - uses: actions/upload-artifact@v2
         with:
-          name: carpet-dev-${{ github.event.number }}
+          name: carpet-fork-${{ github.event.number }}
           path: build/distributions/carpet12RNY-*.zip
