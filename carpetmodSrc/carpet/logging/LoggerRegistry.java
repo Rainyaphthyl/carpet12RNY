@@ -1,6 +1,7 @@
 package carpet.logging;
 
 import carpet.CarpetSettings;
+import carpet.logging.logHelpers.RNGMonitor;
 import com.google.common.base.Charsets;
 import com.google.gson.*;
 import net.minecraft.entity.player.EntityPlayer;
@@ -68,7 +69,7 @@ public class LoggerRegistry {
         registerLogger("packets", new Logger(server, "packets", null, null, LogHandler.HUD));
         registerLogger("counter", new Logger(server, "counter", "white", new String[]{"all", "cactus", "white", "orange", "magenta", "light_blue", "yellow", "lime", "pink", "gray", "silver", "cyan", "purple", "blue", "brown", "green", "red", "black"}, LogHandler.HUD));
         registerLogger("mobcaps", new Logger(server, "mobcaps", "dynamic", new String[]{"dynamic", "overworld", "nether", "end"}, LogHandler.HUD));
-        registerLogger("rngManip", new Logger(server, "rngManip", "raw", new String[]{"raw", "fortune", "mobSpawn", "ironFarm", "lightSuppress", "chunkTick", "farmer"}, LogHandler.HUD));
+        registerLogger("rngManip", new Logger(server, "rngManip", RNGMonitor.get_default_option(), RNGMonitor.get_logger_options(), LogHandler.HUD));
 
         registerDebugger("recipes", new Logger(server, "recipes", null, null, LogHandler.CHAT));
         registerDebugger("damageDebug", new Logger(server, "damageDebug", null, null, LogHandler.CHAT));

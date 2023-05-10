@@ -19,6 +19,8 @@ import java.util.NoSuchElementException;
 public class RNGMonitor {
     public final static int RNG_SAMPLE_RANGE = 100;
     public final static double FREQUENCY_THRESHOLD = 0.75;
+    private static final String DEFAULT_OPTION = RNGAppType.raw.name();
+    private static String[] logger_options = null;
     private final WorldServer worldServerIn;
     private final MinecraftServer minecraftServer;
     private final DimensionType dimension;
@@ -42,6 +44,22 @@ public class RNGMonitor {
 
     public static int getRngTrackingRange() {
         return CarpetSettings.rngTrackingRange == 0 ? CarpetSettings.HUDUpdateInterval : CarpetSettings.rngTrackingRange;
+    }
+
+    public static String[] get_logger_options() {
+        if (logger_options == null) {
+            RNGAppType[] apps = RNGAppType.values();
+            String[] strArr = new String[apps.length];
+            for (int i = 0; i < apps.length; ++i) {
+                strArr[i] = apps[i].name();
+            }
+            logger_options = strArr;
+        }
+        return logger_options;
+    }
+
+    public static String get_default_option() {
+        return DEFAULT_OPTION;
     }
 
     public boolean isValid() {
