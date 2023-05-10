@@ -1,6 +1,7 @@
 package carpet.logging;
 
 import carpet.CarpetSettings;
+import carpet.logging.logHelpers.LightCheckReporter;
 import carpet.logging.logHelpers.RNGMonitor;
 import com.google.common.base.Charsets;
 import com.google.gson.*;
@@ -62,14 +63,14 @@ public class LoggerRegistry {
         registerLogger("items", new Logger(server, "items", "brief", new String[]{"brief", "full"}, LogHandler.CHAT));
         registerLogger("rng", new Logger(server, "rng", null, null, LogHandler.CHAT));
         registerLogger("explosions", new Logger(server, "explosions", "brief", new String[]{"brief", "full", "harvest"}, LogHandler.CHAT));
-        registerLogger("lightCheck", new Logger(server, "lightCheck", "relative", new String[]{"raw", "relative", "verbose"}, LogHandler.CHAT));
+        registerLogger("lightCheck", new Logger(server, "lightCheck", LightCheckReporter.DEFAULT_OPTION, LightCheckReporter.LOGGER_OPTIONS, LogHandler.CHAT));
 
         registerLogger("autosave", new Logger(server, "autosave", null, null, LogHandler.HUD));
         registerLogger("tps", new Logger(server, "tps", null, null, LogHandler.HUD));
         registerLogger("packets", new Logger(server, "packets", null, null, LogHandler.HUD));
         registerLogger("counter", new Logger(server, "counter", "white", new String[]{"all", "cactus", "white", "orange", "magenta", "light_blue", "yellow", "lime", "pink", "gray", "silver", "cyan", "purple", "blue", "brown", "green", "red", "black"}, LogHandler.HUD));
         registerLogger("mobcaps", new Logger(server, "mobcaps", "dynamic", new String[]{"dynamic", "overworld", "nether", "end"}, LogHandler.HUD));
-        registerLogger("rngManip", new Logger(server, "rngManip", RNGMonitor.get_default_option(), RNGMonitor.get_logger_options(), LogHandler.HUD));
+        registerLogger("rngManip", new Logger(server, "rngManip", RNGMonitor.DEFAULT_OPTION, RNGMonitor.LOGGER_OPTIONS, LogHandler.HUD));
 
         registerDebugger("recipes", new Logger(server, "recipes", null, null, LogHandler.CHAT));
         registerDebugger("damageDebug", new Logger(server, "damageDebug", null, null, LogHandler.CHAT));
