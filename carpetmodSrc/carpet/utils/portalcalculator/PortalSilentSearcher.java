@@ -69,7 +69,7 @@ public class PortalSilentSearcher implements Runnable {
      */
     @Nullable
     private PortalPattern getParentPattern(BlockPos blockPos) {
-        IBlockState blockState = reader.getBlockState(blockPos);
+        IBlockState blockState = reader.getBlockState(blockPos, true);
         if (blockState == null) {
             return null;
         }
@@ -139,12 +139,12 @@ public class PortalSilentSearcher implements Runnable {
                 int zDetect = posOrigin.getZ() + bz;
                 posPortal.setPos(xDetect, 0, zDetect);
                 for (int yDetect = actualLimit; yDetect >= 0; --yDetect) {
-                    IBlockState stateToDetect = reader.getBlockState(xDetect, yDetect, zDetect);
+                    IBlockState stateToDetect = reader.getBlockState(xDetect, yDetect, zDetect, true);
                     if (stateToDetect.getBlock() == Blocks.PORTAL) {
                         Messenger.print_server_message(server, String.format("Detected PORTAL block at %s", new BlockPos(xDetect, yDetect, zDetect)));
                         // find the lowest portal block in current portal pattern to detect
                         int yBottom = yDetect - 1;
-                        while (reader.getBlockState(xDetect, yBottom, zDetect).getBlock() == Blocks.PORTAL) {
+                        while (reader.getBlockState(xDetect, yBottom, zDetect, true).getBlock() == Blocks.PORTAL) {
                             Messenger.print_server_message(server, String.format("Detected PORTAL block at %s", new BlockPos(xDetect, yBottom, zDetect)));
                             --yBottom;
                         }

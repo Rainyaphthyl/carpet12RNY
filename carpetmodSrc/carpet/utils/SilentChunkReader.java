@@ -37,26 +37,31 @@ public class SilentChunkReader {
         this.world = world;
     }
 
-    public IBlockState getBlockState(BlockPos pos) {
+    public IBlockState getBlockState(BlockPos pos, boolean allowRemote) {
         try {
-            return getBlockState(pos.getX(), pos.getY(), pos.getZ());
+            return getBlockState(pos.getX(), pos.getY(), pos.getZ(), allowRemote);
         } catch (NullPointerException e) {
             return null;
         }
     }
 
     @Nonnull
-    public IBlockState getBlockState(int x, int y, int z) throws NullPointerException {
+    public IBlockState getBlockState(int x, int y, int z, boolean allowRemote) throws NullPointerException {
         if (y < 0 || y >= 256) {
             return Objects.requireNonNull(Blocks.AIR).getDefaultState();
         } else {
-            Chunk chunk = getChunk(x >> 4, z >> 4);
+            Chunk chunk = getChunk(x >> 4, z >> 4, allowRemote);
             return Objects.requireNonNull(chunk).getBlockState(x, y, z);
         }
     }
 
+    public boolean isChunkValid(int x, int z, boolean allowRemote) {
+        ChunkProviderServer provider = world.getChunkProvider();
+        return provider.chunkExists(x, z) || (allowRemote && provider.chunkLoader.isChunkGeneratedAt(x, z));
+    }
+
     @Nullable
-    private Chunk getChunk(int x, int z) {
+    private Chunk getChunk(int x, int z, boolean allowRemote) {
         long index = ChunkPos.asLong(x, z);
         Chunk chunk = null;
         ChunkProviderServer provider = world.getChunkProvider();
@@ -65,7 +70,7 @@ public class SilentChunkReader {
             if (chunkCache.containsKey(index)) {
                 chunkCache.remove(index);
             }
-        } else if (provider.chunkLoader.isChunkGeneratedAt(x, z)) {
+        } else if (allowRemote && provider.chunkLoader.isChunkGeneratedAt(x, z)) {
             chunk = chunkCache.get(index);
             if (chunk == null) {
                 try {
@@ -81,12 +86,82 @@ public class SilentChunkReader {
     }
 
     @ParametersAreNonnullByDefault
-    public int getLightValue(EnumSkyBlock lightType, BlockPos pos) {
-        Chunk chunk = getChunk(pos.getX() >> 4, pos.getZ() >> 4);
+    private Chunk getChunk(BlockPos pos, boolean allowRemote) {
+        return getChunk(pos.getX() >> 4, pos.getZ() >> 4, allowRemote);
+    }
+
+    @ParametersAreNonnullByDefault
+    public int getLightFor(EnumSkyBlock lightType, BlockPos pos, boolean allowRemote) {
+        Chunk chunk = getChunk(pos.getX() >> 4, pos.getZ() >> 4, allowRemote);
         if (chunk == null) {
             return lightType.defaultLightValue;
         }
         return chunk.getLightFor(lightType, pos);
+    }
+
+    @ParametersAreNonnullByDefault
+    public int getLight(BlockPos pos, boolean allowRemote) {
+        if (pos.getY() < 0) {
+            return 0;
+        } else {
+            if (pos.getY() >= 256) {
+                pos = new BlockPos(pos.getX(), 255, pos.getZ());
+            }
+            Chunk chunk = getChunk(pos.getX() >> 4, pos.getZ() >> 4, allowRemote);
+            if (chunk == null) {
+                return 0;
+            }
+            return chunk.getLightSubtracted(pos, 0);
+        }
+    }
+
+    public float getLightBrightness(BlockPos pos, boolean allowRemote) {
+        return world.provider.getLightBrightnessTable()[getLightFromNeighbors(pos, true, allowRemote)];
+    }
+
+    @ParametersAreNonnullByDefault
+    public int getLightFromNeighbors(BlockPos pos, boolean checkNeighbors, boolean allowRemote) {
+        final int UNLOADED = 15;
+        final int INVALID = 0;
+        if (pos.getX() >= -30000000 && pos.getZ() >= -30000000 && pos.getX() < 30000000 && pos.getZ() < 30000000) {
+            IBlockState state = getBlockState(pos, allowRemote);
+            if (state == null) {
+                return UNLOADED;
+            }
+            if (checkNeighbors && state.useNeighborBrightness()) {
+                int lightUp = getLightFromNeighbors(pos.up(), false, allowRemote);
+                int lightEast = getLightFromNeighbors(pos.east(), false, allowRemote);
+                int lightWest = getLightFromNeighbors(pos.west(), false, allowRemote);
+                int lightSouth = getLightFromNeighbors(pos.south(), false, allowRemote);
+                int lightNorth = getLightFromNeighbors(pos.north(), false, allowRemote);
+                if (lightEast > lightUp) {
+                    lightUp = lightEast;
+                }
+                if (lightWest > lightUp) {
+                    lightUp = lightWest;
+                }
+                if (lightSouth > lightUp) {
+                    lightUp = lightSouth;
+                }
+                if (lightNorth > lightUp) {
+                    lightUp = lightNorth;
+                }
+                return lightUp;
+            } else if (pos.getY() < 0) {
+                return INVALID;
+            } else {
+                if (pos.getY() >= 256) {
+                    pos = new BlockPos(pos.getX(), 255, pos.getZ());
+                }
+                Chunk chunk = getChunk(pos, allowRemote);
+                if (chunk == null) {
+                    return UNLOADED;
+                }
+                return chunk.getLightSubtracted(pos, world.getSkylightSubtracted());
+            }
+        } else {
+            return UNLOADED;
+        }
     }
 
 }

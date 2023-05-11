@@ -19,6 +19,7 @@ import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.World;
+import net.minecraft.world.WorldServer;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -142,7 +143,18 @@ public class BlockInfo
 
     public static List<ITextComponent> blockInfo(BlockPos pos, World world)
     {
-        IBlockState state = world.getBlockState(pos);
+        List<ITextComponent> lst = new ArrayList<>();
+        SilentChunkReader reader = null;
+        if (world instanceof WorldServer) {
+            reader = ((WorldServer) world).silentChunkReader;
+        } else {
+            return lst;
+        }
+        IBlockState state = reader.getBlockState(pos, true);
+        if (state == null) {
+            lst.add(Messenger.s(null, "The position is not loaded or not generated", "r"));
+            return lst;
+        }
         Material material = state.getMaterial();
         Block block = state.getBlock();
         String metastring = "";
@@ -159,13 +171,18 @@ public class BlockInfo
             first = false;
             stateInfo.appendSibling(formatBlockProperty((IProperty) entry.getKey(), (Comparable) entry.getValue()));
         }
-        List<ITextComponent> lst = new ArrayList<>();
+        boolean reallyLoaded = reader.isChunkValid(pos.getX() >> 4, pos.getZ() >> 4, false);
+        World validWorld = reallyLoaded ? world : null;
         lst.add(Messenger.s(null, ""));
         lst.add(Messenger.s(null, "====================================="));
         lst.add(Messenger.s(null, String.format("Block info for %s%s (id %d%s):",Block.REGISTRY.getNameForObject(block),metastring, Block.getIdFromBlock(block), metastring )));
         lst.add(Messenger.m(null, "w  - State: ", stateInfo));
         lst.add(Messenger.s(null, String.format(" - Material: %s", getMaterialName(material))));
-        lst.add(Messenger.s(null, String.format(" - Map colour: %s", getMapColourName(state.getMapColor(world, pos)))));
+        try {
+            lst.add(Messenger.s(null, String.format(" - Map colour: %s", getMapColourName(state.getMapColor(validWorld, pos)))));
+        } catch (NullPointerException e) {
+            lst.add(Messenger.s(null, " - Map colour: NOT LOADED"));
+        }
         lst.add(Messenger.s(null, String.format(" - Sound type: %s", getSoundName(block.getSoundType()))));
         lst.add(Messenger.s(null, ""));
         lst.add(Messenger.m(null, "w  - Full block: ", formatBoolean(state.isFullBlock())));
@@ -175,8 +192,8 @@ public class BlockInfo
         lst.add(Messenger.m(null, "w  - Is liquid: ", formatBoolean(material.isLiquid())));
         lst.add(Messenger.m(null, "w  - Is solid: ", formatBoolean(material.isSolid())));
         lst.add(Messenger.s(null, ""));
-        lst.add(Messenger.s(null, String.format(" - Light in: %d, above: %d", world.getLight(pos), world.getLight(pos.up()))));
-        lst.add(Messenger.s(null, String.format(" - Brightness in: %.2f, above: %.2f", world.getLightBrightness(pos), world.getLightBrightness(pos.up()))));
+        lst.add(Messenger.s(null, String.format(" - Light in: %d, above: %d", reader.getLight(pos, true), reader.getLight(pos.up(), true))));
+        lst.add(Messenger.s(null, String.format(" - Brightness in: %.2f, above: %.2f", reader.getLightBrightness(pos, true), reader.getLightBrightness(pos.up(), true))));
         lst.add(Messenger.m(null, "w  - Is opaque: ", formatBoolean(material.isOpaque())));
         lst.add(Messenger.s(null, String.format(" - Light opacity: %d", state.getLightOpacity())));
         lst.add(Messenger.m(null, "w  - Blocks light: ", formatBoolean(material.blocksLight())));
@@ -184,16 +201,32 @@ public class BlockInfo
         lst.add(Messenger.m(null, "w  - Picks neighbour light value: ", formatBoolean(state.useNeighborBrightness())));
         lst.add(Messenger.s(null, ""));
         lst.add(Messenger.m(null, "w  - Causes suffocation: ", formatBoolean(state.causesSuffocation())));
-        lst.add(Messenger.m(null, "w  - Blocks movement: ", formatBoolean(!block.isPassable(world, pos))));
+        try {
+            lst.add(Messenger.m(null, "w  - Blocks movement: ", formatBoolean(!block.isPassable(validWorld, pos))));
+        } catch (NullPointerException e) {
+            lst.add(Messenger.m(null, "w  - Blocks movement: NOT LOADED"));
+        }
         lst.add(Messenger.m(null, "w  - Can burn: ", formatBoolean(material.getCanBurn())));
         lst.add(Messenger.m(null, "w  - Requires a tool: ", formatBoolean(!material.isToolNotRequired())));
-        lst.add(Messenger.s(null, String.format(" - Hardness: %.2f", state.getBlockHardness(world, pos))));
+        try {
+            lst.add(Messenger.s(null, String.format(" - Hardness: %.2f", state.getBlockHardness(validWorld, pos))));
+        } catch (NullPointerException e) {
+            lst.add(Messenger.s(null, " - Hardness: NOT LOADED"));
+        }
         lst.add(Messenger.s(null, String.format(" - Blast resistance: %.2f", block.getExplosionResistance(null))));
         lst.add(Messenger.m(null, "w  - Ticks randomly: ", formatBoolean(block.getTickRandomly())));
         lst.add(Messenger.s(null, ""));
         lst.add(Messenger.m(null, "w  - Can provide power: ", formatBoolean(state.canProvidePower())));
-        lst.add(Messenger.s(null, String.format(" - Strong power level: %d", world.getStrongPower(pos))));
-        lst.add(Messenger.s(null, String.format(" - Redstone power level: %d", world.getRedstonePowerFromNeighbors(pos))));
+        try {
+            lst.add(Messenger.s(null, String.format(" - Strong power level: %d", validWorld.getStrongPower(pos))));
+        } catch (NullPointerException e) {
+            lst.add(Messenger.s(null, " - Strong power level: NOT LOADED"));
+        }
+        try {
+            lst.add(Messenger.s(null, String.format(" - Redstone power level: %d", validWorld.getRedstonePowerFromNeighbors(pos))));
+        } catch (NullPointerException e) {
+            lst.add(Messenger.s(null, " - Redstone power level: NOT LOADED"));
+        }
         lst.add(Messenger.s(null, ""));
         lst.add(wander_chances(pos.up(), world));
 
