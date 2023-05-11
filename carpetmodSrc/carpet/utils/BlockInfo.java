@@ -25,112 +25,109 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class BlockInfo
-{
-    public static String getSoundName(SoundType stype)
-    {
-        if (stype == SoundType.WOOD   ) { return "WOOD"  ;   }
-        if (stype == SoundType.GROUND ) { return "GRAVEL";   }
-        if (stype == SoundType.PLANT  ) { return "GRASS" ;   }
-        if (stype == SoundType.STONE  ) { return "STONE" ;   }
-        if (stype == SoundType.METAL  ) { return "METAL" ;   }
-        if (stype == SoundType.GLASS  ) { return "GLASS" ;   }
-        if (stype == SoundType.CLOTH  ) { return "WOOL"  ;   }
-        if (stype == SoundType.SAND   ) { return "SAND"  ;   }
-        if (stype == SoundType.SNOW   ) { return "SNOW"  ;   }
-        if (stype == SoundType.LADDER ) { return "LADDER";   }
-        if (stype == SoundType.ANVIL  ) { return "ANVIL" ;   }
-        if (stype == SoundType.SLIME  ) { return "SLIME" ;   }
+public class BlockInfo {
+    public static String getSoundName(SoundType stype) {
+        if (stype == SoundType.WOOD) return "WOOD";
+        if (stype == SoundType.GROUND) return "GRAVEL";
+        if (stype == SoundType.PLANT) return "GRASS";
+        if (stype == SoundType.STONE) return "STONE";
+        if (stype == SoundType.METAL) return "METAL";
+        if (stype == SoundType.GLASS) return "GLASS";
+        if (stype == SoundType.CLOTH) return "WOOL";
+        if (stype == SoundType.SAND) return "SAND";
+        if (stype == SoundType.SNOW) return "SNOW";
+        if (stype == SoundType.LADDER) return "LADDER";
+        if (stype == SoundType.ANVIL) return "ANVIL";
+        if (stype == SoundType.SLIME) return "SLIME";
         return "Something new";
     }
 
-    private static String getMapColourName(MapColor colour)
-    {
-        if (colour == MapColor.AIR        ) { return "AIR"        ; }
-        if (colour == MapColor.GRASS      ) { return "GRASS"      ; }
-        if (colour == MapColor.SAND       ) { return "SAND"       ; }
-        if (colour == MapColor.CLOTH      ) { return "WOOL"       ; }
-        if (colour == MapColor.TNT        ) { return "TNT"        ; }
-        if (colour == MapColor.ICE        ) { return "ICE"        ; }
-        if (colour == MapColor.IRON       ) { return "IRON"       ; }
-        if (colour == MapColor.FOLIAGE    ) { return "FOLIAGE"    ; }
-        if (colour == MapColor.SNOW       ) { return "SNOW"       ; }
-        if (colour == MapColor.CLAY       ) { return "CLAY"       ; }
-        if (colour == MapColor.DIRT       ) { return "DIRT"       ; }
-        if (colour == MapColor.STONE      ) { return "STONE"      ; }
-        if (colour == MapColor.WATER      ) { return "WATER"      ; }
-        if (colour == MapColor.WOOD       ) { return "WOOD"       ; }
-        if (colour == MapColor.QUARTZ     ) { return "QUARTZ"     ; }
-        if (colour == MapColor.ADOBE      ) { return "ADOBE"      ; }
-        if (colour == MapColor.MAGENTA    ) { return "MAGENTA"    ; }
-        if (colour == MapColor.LIGHT_BLUE ) { return "LIGHT_BLUE" ; }
-        if (colour == MapColor.YELLOW     ) { return "YELLOW"     ; }
-        if (colour == MapColor.LIME       ) { return "LIME"       ; }
-        if (colour == MapColor.PINK       ) { return "PINK"       ; }
-        if (colour == MapColor.GRAY       ) { return "GRAY"       ; }
-        if (colour == MapColor.SILVER     ) { return "SILVER"     ; }
-        if (colour == MapColor.CYAN       ) { return "CYAN"       ; }
-        if (colour == MapColor.PURPLE     ) { return "PURPLE"     ; }
-        if (colour == MapColor.BLUE       ) { return "BLUE"       ; }
-        if (colour == MapColor.BROWN      ) { return "BROWN"      ; }
-        if (colour == MapColor.GREEN      ) { return "GREEN"      ; }
-        if (colour == MapColor.RED        ) { return "RED"        ; }
-        if (colour == MapColor.BLACK      ) { return "BLACK"      ; }
-        if (colour == MapColor.GOLD       ) { return "GOLD"       ; }
-        if (colour == MapColor.DIAMOND    ) { return "DIAMOND"    ; }
-        if (colour == MapColor.LAPIS      ) { return "LAPIS"      ; }
-        if (colour == MapColor.EMERALD    ) { return "EMERALD"    ; }
-        if (colour == MapColor.OBSIDIAN   ) { return "OBSIDIAN"   ; }
-        if (colour == MapColor.NETHERRACK ) { return "NETHERRACK" ; }
+    private static String getMapColourName(MapColor colour) {
+        if (colour == MapColor.AIR) return "AIR";
+        if (colour == MapColor.GRASS) return "GRASS";
+        if (colour == MapColor.SAND) return "SAND";
+        if (colour == MapColor.CLOTH) return "WOOL";
+        if (colour == MapColor.TNT) return "TNT";
+        if (colour == MapColor.ICE) return "ICE";
+        if (colour == MapColor.IRON) return "IRON";
+        if (colour == MapColor.FOLIAGE) return "FOLIAGE";
+        if (colour == MapColor.SNOW) return "SNOW";
+        if (colour == MapColor.CLAY) return "CLAY";
+        if (colour == MapColor.DIRT) return "DIRT";
+        if (colour == MapColor.STONE) return "STONE";
+        if (colour == MapColor.WATER) return "WATER";
+        if (colour == MapColor.WOOD) return "WOOD";
+        if (colour == MapColor.QUARTZ) return "QUARTZ";
+        if (colour == MapColor.ADOBE) return "ADOBE";
+        if (colour == MapColor.MAGENTA) return "MAGENTA";
+        if (colour == MapColor.LIGHT_BLUE) return "LIGHT_BLUE";
+        if (colour == MapColor.YELLOW) return "YELLOW";
+        if (colour == MapColor.LIME) return "LIME";
+        if (colour == MapColor.PINK) return "PINK";
+        if (colour == MapColor.GRAY) return "GRAY";
+        if (colour == MapColor.SILVER) return "SILVER";
+        if (colour == MapColor.CYAN) return "CYAN";
+        if (colour == MapColor.PURPLE) return "PURPLE";
+        if (colour == MapColor.BLUE) return "BLUE";
+        if (colour == MapColor.BROWN) return "BROWN";
+        if (colour == MapColor.GREEN) return "GREEN";
+        if (colour == MapColor.RED) return "RED";
+        if (colour == MapColor.BLACK) return "BLACK";
+        if (colour == MapColor.GOLD) return "GOLD";
+        if (colour == MapColor.DIAMOND) return "DIAMOND";
+        if (colour == MapColor.LAPIS) return "LAPIS";
+        if (colour == MapColor.EMERALD) return "EMERALD";
+        if (colour == MapColor.OBSIDIAN) return "OBSIDIAN";
+        if (colour == MapColor.NETHERRACK) return "NETHERRACK";
         return "Something new";
     }
 
-    private static String getMaterialName(Material material)
-    {
-        if (material == Material.AIR             ) { return "AIR"            ; }
-        if (material == Material.GRASS           ) { return "GRASS"          ; }
-        if (material == Material.GROUND          ) { return "DIRT"           ; }
-        if (material == Material.WOOD            ) { return "WOOD"           ; }
-        if (material == Material.ROCK            ) { return "STONE"          ; }
-        if (material == Material.IRON            ) { return "IRON"           ; }
-        if (material == Material.ANVIL           ) { return "ANVIL"          ; }
-        if (material == Material.WATER           ) { return "WATER"          ; }
-        if (material == Material.LAVA            ) { return "LAVA"           ; }
-        if (material == Material.LEAVES          ) { return "LEAVES"         ; }
-        if (material == Material.PLANTS          ) { return "PLANTS"         ; }
-        if (material == Material.VINE            ) { return "VINE"           ; }
-        if (material == Material.SPONGE          ) { return "SPONGE"         ; }
-        if (material == Material.CLOTH           ) { return "WOOL"           ; }
-        if (material == Material.FIRE            ) { return "FIRE"           ; }
-        if (material == Material.SAND            ) { return "SAND"           ; }
-        if (material == Material.CIRCUITS        ) { return "REDSTONE_COMPONENT"; }
-        if (material == Material.CARPET          ) { return "CARPET"         ; }
-        if (material == Material.GLASS           ) { return "GLASS"          ; }
-        if (material == Material.REDSTONE_LIGHT  ) { return "REDSTONE_LAMP"  ; }
-        if (material == Material.TNT             ) { return "TNT"            ; }
-        if (material == Material.CORAL           ) { return "CORAL"          ; }
-        if (material == Material.ICE             ) { return "ICE"            ; }
-        if (material == Material.PACKED_ICE      ) { return "PACKED_ICE"     ; }
-        if (material == Material.SNOW            ) { return "SNOW_LAYER"     ; }
-        if (material == Material.CRAFTED_SNOW    ) { return "SNOW"           ; }
-        if (material == Material.CACTUS          ) { return "CACTUS"         ; }
-        if (material == Material.CLAY            ) { return "CLAY"           ; }
-        if (material == Material.GOURD           ) { return "GOURD"          ; }
-        if (material == Material.DRAGON_EGG      ) { return "DRAGON_EGG"     ; }
-        if (material == Material.PORTAL          ) { return "PORTAL"         ; }
-        if (material == Material.CAKE            ) { return "CAKE"           ; }
-        if (material == Material.WEB             ) { return "COBWEB"         ; }
-        if (material == Material.PISTON          ) { return "PISTON"         ; }
-        if (material == Material.BARRIER         ) { return "BARRIER"        ; }
-        if (material == Material.STRUCTURE_VOID  ) { return "STRUCTURE"      ; }
+    private static String getMaterialName(Material material) {
+        if (material == Material.AIR) return "AIR";
+        if (material == Material.GRASS) return "GRASS";
+        if (material == Material.GROUND) return "DIRT";
+        if (material == Material.WOOD) return "WOOD";
+        if (material == Material.ROCK) return "STONE";
+        if (material == Material.IRON) return "IRON";
+        if (material == Material.ANVIL) return "ANVIL";
+        if (material == Material.WATER) return "WATER";
+        if (material == Material.LAVA) return "LAVA";
+        if (material == Material.LEAVES) return "LEAVES";
+        if (material == Material.PLANTS) return "PLANTS";
+        if (material == Material.VINE) return "VINE";
+        if (material == Material.SPONGE) return "SPONGE";
+        if (material == Material.CLOTH) return "WOOL";
+        if (material == Material.FIRE) return "FIRE";
+        if (material == Material.SAND) return "SAND";
+        if (material == Material.CIRCUITS) return "REDSTONE_COMPONENT";
+        if (material == Material.CARPET) return "CARPET";
+        if (material == Material.GLASS) return "GLASS";
+        if (material == Material.REDSTONE_LIGHT) return "REDSTONE_LAMP";
+        if (material == Material.TNT) return "TNT";
+        if (material == Material.CORAL) return "CORAL";
+        if (material == Material.ICE) return "ICE";
+        if (material == Material.PACKED_ICE) return "PACKED_ICE";
+        if (material == Material.SNOW) return "SNOW_LAYER";
+        if (material == Material.CRAFTED_SNOW) return "SNOW";
+        if (material == Material.CACTUS) return "CACTUS";
+        if (material == Material.CLAY) return "CLAY";
+        if (material == Material.GOURD) return "GOURD";
+        if (material == Material.DRAGON_EGG) return "DRAGON_EGG";
+        if (material == Material.PORTAL) return "PORTAL";
+        if (material == Material.CAKE) return "CAKE";
+        if (material == Material.WEB) return "COBWEB";
+        if (material == Material.PISTON) return "PISTON";
+        if (material == Material.BARRIER) return "BARRIER";
+        if (material == Material.STRUCTURE_VOID) return "STRUCTURE";
         return "Something new";
     }
 
     public static <T extends Comparable<T>> ITextComponent formatBlockProperty(IProperty<T> prop, T value) {
-        ITextComponent name = new TextComponentString( prop.getName()+ "=");
+        ITextComponent name = new TextComponentString(prop.getName() + "=");
         ITextComponent valueText = new TextComponentString(prop.getName(value));
         if (prop instanceof PropertyDirection) valueText.getStyle().setColor(TextFormatting.GOLD);
-        else if (prop instanceof PropertyBool) valueText.getStyle().setColor((Boolean) value ? TextFormatting.GREEN : TextFormatting.RED);
+        else if (prop instanceof PropertyBool)
+            valueText.getStyle().setColor((Boolean) value ? TextFormatting.GREEN : TextFormatting.RED);
         else if (prop instanceof PropertyInteger) valueText.getStyle().setColor(TextFormatting.GREEN);
         return name.appendSibling(valueText);
     }
@@ -141,8 +138,7 @@ public class BlockInfo
         return component;
     }
 
-    public static List<ITextComponent> blockInfo(BlockPos pos, World world)
-    {
+    public static List<ITextComponent> blockInfo(BlockPos pos, World world) {
         List<ITextComponent> lst = new ArrayList<>();
         SilentChunkReader reader = null;
         if (world instanceof WorldServer) {
@@ -158,9 +154,8 @@ public class BlockInfo
         Material material = state.getMaterial();
         Block block = state.getBlock();
         String metastring = "";
-        if (block.getMetaFromState(state) != 0)
-        {
-            metastring = ":"+block.getMetaFromState(state);
+        if (block.getMetaFromState(state) != 0) {
+            metastring = ":" + block.getMetaFromState(state);
         }
         ITextComponent stateInfo = new TextComponentString("");
         boolean first = true;
@@ -175,7 +170,7 @@ public class BlockInfo
         World validWorld = reallyLoaded ? world : null;
         lst.add(Messenger.s(null, ""));
         lst.add(Messenger.s(null, "====================================="));
-        lst.add(Messenger.s(null, String.format("Block info for %s%s (id %d%s):",Block.REGISTRY.getNameForObject(block),metastring, Block.getIdFromBlock(block), metastring )));
+        lst.add(Messenger.s(null, String.format("Block info for %s%s (id %d%s):", Block.REGISTRY.getNameForObject(block), metastring, Block.getIdFromBlock(block), metastring)));
         lst.add(Messenger.m(null, "w  - State: ", stateInfo));
         lst.add(Messenger.s(null, String.format(" - Material: %s", getMaterialName(material))));
         try {
@@ -217,6 +212,7 @@ public class BlockInfo
         lst.add(Messenger.m(null, "w  - Ticks randomly: ", formatBoolean(block.getTickRandomly())));
         lst.add(Messenger.s(null, ""));
         lst.add(Messenger.m(null, "w  - Can provide power: ", formatBoolean(state.canProvidePower())));
+        // TODO: 2023/5/11,0011 Implement silent getStrongPower and getRedstonePowerFromNeighbors
         try {
             lst.add(Messenger.s(null, String.format(" - Strong power level: %d", validWorld.getStrongPower(pos))));
         } catch (NullPointerException e) {
@@ -233,41 +229,36 @@ public class BlockInfo
         return lst;
     }
 
-    private static ITextComponent wander_chances(BlockPos pos, World worldIn)
-    {
+    private static ITextComponent wander_chances(BlockPos pos, World worldIn) {
         EntityCreature creature = new EntityPigZombie(worldIn);
         creature.onInitialSpawn(worldIn.getDifficultyForLocation(pos), null);
-        creature.setLocationAndAngles(pos.getX()+0.5F, pos.getY(), pos.getZ()+0.5F, 0.0F, 0.0F);
+        creature.setLocationAndAngles(pos.getX() + 0.5F, pos.getY(), pos.getZ() + 0.5F, 0.0F, 0.0F);
         EntityAIWander wander = new EntityAIWander(creature, 0.8D);
         int success = 0;
-        for (int i=0; i<1000; i++)
-        {
+        for (int i = 0; i < 1000; i++) {
 
             Vec3d vec = RandomPositionGenerator.findRandomTarget(creature, 10, 7);
-            if (vec == null)
-            {
+            if (vec == null) {
                 continue;
             }
             success++;
         }
         long total_ticks = 0;
-        for (int trie=0; trie<1000; trie++)
-        {
+        for (int trie = 0; trie < 1000; trie++) {
             int i;
-            for (i=1;i<30*20*60; i++) //*60 used to be 5 hours, limited to 30 mins
+            for (i = 1; i < 30 * 20 * 60; i++) //*60 used to be 5 hours, limited to 30 mins
             {
-                if (wander.shouldExecute())
-                {
+                if (wander.shouldExecute()) {
                     break;
                 }
             }
-            total_ticks += 3*i;
+            total_ticks += 3 * i;
         }
         creature.setDead();
-        long total_time = (total_ticks)/1000/20;
+        long total_time = (total_ticks) / 1000 / 20;
         return Messenger.s(null, String.format(" - Wander chance above: %.1f%%\n - Average standby above: %s",
-                (100.0F*success)/1000,
-                ((total_time>5000)?"INFINITY":(total_time + " s"))
+                (100.0F * success) / 1000,
+                ((total_time > 5000) ? "INFINITY" : (total_time + " s"))
         ));
     }
 }
