@@ -59,8 +59,9 @@ Disable random light checks near players, or modify the frequency of checks.
 - Log Handler: `CHAT`
 - Log Options:
     - `raw`: Displays the raw position where the light is updated.
-    - `relative`: Displays the raw position and the relative displacement from the nearby player, maybe useful to debug light suppression by RNG manipulation.
-    - `verbose`: :P
+    - `relative`: Displays the relative displacement from the nearby player, maybe useful to debug light suppression by RNG manipulation.
+    - `verbose`: Combines `raw` and `relative`, displaying with 2 lines per log.
+- Default Option: `raw`
 
 # Miscellaneous
 

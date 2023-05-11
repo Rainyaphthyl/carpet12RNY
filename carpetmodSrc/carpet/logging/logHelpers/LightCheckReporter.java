@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class LightCheckReporter {
-    public static final String[] LOGGER_OPTIONS = new String[]{"relative", "raw", "verbose"};
+    public static final String[] LOGGER_OPTIONS = new String[]{"raw", "relative", "verbose"};
     public static final String DEFAULT_OPTION = LOGGER_OPTIONS[0];
     private static Logger instance = null;
 

@@ -29,7 +29,7 @@ import java.util.Objects;
  * Loads the chunks without side effects on entities or other data.
  */
 public class SilentChunkReader implements IBlockAccess {
-    // TODO: 2023/5/11,0011 implements IBlockAccess
+    // TODO: 2023/5/12,0012 Use Task ChunkReader instead of Permanent ChunkReader
     private final Long2ObjectMap<Chunk> chunkCache;
     private final WorldServer world;
 
