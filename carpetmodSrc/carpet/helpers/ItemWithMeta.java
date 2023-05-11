@@ -3,6 +3,8 @@ package carpet.helpers;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 
+import javax.annotation.Nonnull;
+
 public class ItemWithMeta {
     public final Item item;
     public final int metadata;
@@ -14,6 +16,11 @@ public class ItemWithMeta {
     public ItemWithMeta(Item item, int metadata) {
         this.item = item;
         this.metadata = item.getHasSubtypes() ? metadata : 0;
+    }
+
+    @Nonnull
+    public static String get_display_ID(int id, int meta) {
+        return '#' + String.format("%04d", id) + '/' + meta;
     }
 
     public String getDisplayName() {

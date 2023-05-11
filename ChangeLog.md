@@ -1,131 +1,80 @@
 Carpet 1.12 with [RNY](https://github.com/Rainyaphthyl)'s Addition
 
-[version](src/carpet/CarpetSettings.java): `RNY-dev-20230419-2221`
+[version](src/carpet/CarpetSettings.java): `RNY-current-undefined`
 
-# 1. Better Item Counter
+# Explosion Logger
 
-## 1.1. Fancier Display
+## Option Modifications
 
-The `/counter` command uses better reporting format with features:
+- Remove option `compact`;
+- Add option `full` and `harvest`;
+- Other options to add (pending): `injure`, `motion`, etc;
 
-- Displaying the total duration of item counting.
-- Displaying the total and average of all items.
-- Using bold or italic style on some important information.
-- Displaying IDs and metadata (if having subtypes) of items, to help distinguish different items with same name.
+Command usage: `log explosions (brief|full|harvest)`
 
-The dark red button `[X]` in the reports uses command `counter stop` instead of `counter reset`.
+- Option `brief` is kept same as the old one.
 
-## 1.2. Command Modifications
+### Logger: "Full"
 
-### 1.2.1. Counter Stop
+The explosion logger for all blocks and all entities, where the entity part is ported from fabric carpet with some modifications, and the block part is newly added.
 
-New command, partially different from `/counter [<color>] reset`.
+### Logger: "Harvest"
 
-- Usage: `/counter [<color>] stop`
-- Effect: Stops the item counter, and set it to the initial state with `tick = 0`, waiting for items to start counting.
+The explosion logger for blocks and item entities, where Moving Pistons (block-36) and blocks with 100% dropping chance are specially marked as "harvested". TNT activations are ignored.
 
-The argument `<color>` includes `cactus`, `all`, and Dye Colors.
+Format:
+> #`<count_tnt>` => `<position>` (creates fire) or (doesn't create fire)
+>
+> blocks harvested: `<count_0>` , destroyed: `<count_1>` ; item stacks damaged: `<count_2>`
 
-### 1.2.2. Counter Raw
+If `<count_i> == 0`, the respective info will be marked with a dark color.
 
-New command.
+## Other Details
 
-- Usage: `/counter [<color>] raw`
-- Effect: Displays the raw data with the format of the old `/counter` command, while the `/counter` command as been modified.
+- The logger uses the tick counter with the same output of the command `time query gametime` when displaying the "tick", instead of the wrong one.
+- The "affects blocks" info can be displayed correctly.
 
-### 1.2.3. Counter
+# Player Light Check
 
-Modified command, with effect different from the old command with same name.
+Ported from [TISCarpet113](https://github.com/TISUnion/TISCarpet113), with some modifications.
 
-- Usage: `/counter [<color>]`
-- Effect: Displays the reliable data with error analysis and appropriate rounding of significant figures.
+## New Rules
 
-### 1.2.4. Counter Distribution
+### Player Light Check
 
-New command.
+Disable random light checks near players, or modify the frequency of checks.
 
-- Usage: `/counter [<color>] distribution [<item> [<metadata>]]`
+- Name: `disablePlayerLightCheck`
+- Type: `Enum`
+- Options & Range: `vanilla`, `suppress`, `flood`
+    - `vanilla`: No modifications.
+    - `suppress`: Player light check disabled.
+    - `flood`: Immediately updating lights at all possible positions.
+- Default: `vanilla`
 
-- Effect: Displays the frequency distribution of instant item rates (items per game-tick).
+## New Loggers
 
-## 1.3. Statistics and Error Analysis
+### Player Light Check Logger
 
-### 1.3.1. Functions
+- Log Handler: `CHAT`
+- Log Options:
+    - `raw`: Displays the raw position where the light is updated.
+    - `relative`: Displays the relative displacement from the nearby player, maybe useful to debug light suppression by RNG manipulation.
+    - `verbose`: Combines `raw` and `relative`, displaying with 2 lines per log.
+- Default Option: `raw`
 
-Item rates will be displayed in the format of `<average>\(<error>\)<unit>, E: <relative-error>`. The unit will be automatically chosen from `(items)/h`, `k/h`, `M/h`, and `G/h`.
+# Miscellaneous
 
-The component `error` is the Standard Error calculated from $\frac{s^2}{n}$ .
+## Features
 
-For example, the raw value of rate of a Mob Farm is `183789.4/h` with standard error `238.1/h`. The relative error is `238.1 / 183789.4 = 0.130%`. The rate will be displayed as `183.79(0.24)k/h`.
+- Add checks for existing jar file in Carpet Updater.
+- Fix the bug that lifetime tracker reports 0-gt when game rule `doMobSpawning` is `false`.
+- Add command `logMenu` to instantly display the updated interactive logger menu.
+- Fix the bug that command `blockinfo` can load chunks.
 
-Text components will be marked with different colors according to the level of relative error.
+## Codes and Details
 
-### 1.3.2. Details
+- Updates carpet server on `RNY-current-undefined` versions.
+- Add class `SilentChunkReader`, with codes from `PortalSilentSearcher`.
 
-To implement the distribution recording and the variance calculation, item counting has been separated into two parts:
-
-- The first is called by hoppers and items (for the cactus counter), adding items into a temporary map instantly;
-- The second runs at the phase `CarperServer.tick()`, collecting the temporary data into long-term maps.
-
-# 2. Better Item Logger
-
-## 2.1. New Rule
-
-### 2.1.1. Item Logger Ignoring Counters
-
-Item Logger will not report the items killed by cactus when the Cactus Counter is on, etc.
-
-- Name: `itemLoggerIgnoringCounters`
-- Options: `true`, `false`
-- Default: `true`
-
-## 2.2. New Features
-
-1. Displays the name, ID, metadata, and stacking size of the logged items.
-2. The option `minimal` of `log items` is removed, and replaced with the `itemLoggerIgnoringCounters` rule.
-3. Merges the records with repeated positions in the `full` logger, to avoid `DespawnTimer` spamming.
-
-# 3. Ported Features
-
-## 3.1. New Rules
-
-All ported from TIS-CM by [Fallen-Breath](https://github.com/Fallen-Breath/carpetmod112).
-
-### 3.1.1. Block Event Packet Range
-
-Set the range where player will receive a block event packet after a block event fires successfully.
-
-- Name: `blockEventPacketRange`
-- Options: `0.0`, `16.0`, `64.0`, `128.0`
-- Default: `64.0`
-
-### 3.1.2. Explosion Packet Range
-
-Set the range where player will receive an explosion packet when an explosion happens.
-
-- Name: `explosionPacketRange`
-- Options: `0.0`, `16.0`, `64.0`, `128.0`, `2048.0`
-- Default: `64.0`
-
-### 3.1.3. Entity Tracker Distance
-
-The maximum horizontal chebyshev distance (in chunks) for the server to sync entities information to the client.
-
-- Name: `entityTrackerDistance`
-- Options: `-1`, `16`, `64`
-- Default: `-1`
-
-# 4. Miscellaneous
-
-## 4.1. Bug-fixes
-
-### 4.1.1. Lifetime Tracker with 0.00-min
-
-Previous feature: Lifetime tracker (`/lifetime`) always reports "tracked 0.00 min" when using mode of in-game timing, if game rule `doDaylightCycle` is `false`.
-
-Fix: The tick counter works correctly even if `doDaylightCycle` is `false`.
-
-## 4.2. Codes and Styles
-
-1. Methods of silent chunk loading have been separated from the vanilla codes, reserving the vanilla method parameters.
-2. Color marks of default values can be displayed correctly on carpet rules with Double type.
+[//]: # (TODO: Consider whether to use "build" \(instead of "dev"\) versions for releases)

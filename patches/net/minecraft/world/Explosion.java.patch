@@ -55,7 +55,7 @@
          this.field_82755_b = p_i45754_11_;
 +
 +        if (LoggerRegistry.__explosions) {
-+            this.logHelper = new ExplosionLogHelper(p_i45754_2_, p_i45754_3_, p_i45754_5_, p_i45754_7_, p_i45754_9_, p_i45754_10_);
++            this.logHelper = new ExplosionLogHelper(p_i45754_3_, p_i45754_5_, p_i45754_7_, p_i45754_9_, p_i45754_10_);
 +        }
      }
  
@@ -74,12 +74,17 @@
          Set<BlockPos> set = Sets.<BlockPos>newHashSet();
          int i = 16;
  
-@@ -102,7 +127,13 @@
+@@ -102,7 +127,18 @@
              }
          }
  
 -        this.field_77281_g.addAll(set);
 +        if(!CarpetSettings.explosionNoBlockDamage) this.field_77281_g.addAll(set);
++
++        // carpet12RNY
++        if (logHelper != null && !set.isEmpty()) {
++            logHelper.setAffectBlocks(true);
++        }
 +
 +        // CARPET-SYLKOS
 +        // TNT shouldn't apply velocity to entities
@@ -89,7 +94,31 @@
          float f3 = this.field_77280_f * 2.0F;
          int k1 = MathHelper.func_76128_c(this.field_77284_b - (double)f3 - 1.0D);
          int l1 = MathHelper.func_76128_c(this.field_77284_b + (double)f3 + 1.0D);
-@@ -164,6 +195,14 @@
+@@ -135,7 +171,10 @@
+                         d9 = d9 / d13;
+                         double d14 = (double)this.field_77287_j.func_72842_a(vec3d, entity.func_174813_aQ());
+                         double d10 = (1.0D - d12) * d14;
+-                        entity.func_70097_a(DamageSource.func_94539_a(this), (float)((int)((d10 * d10 + d10) / 2.0D * 7.0D * (double)f3 + 1.0D)));
++                        // carpet12RNY - explosion logger
++                        float damage = (float)((int)((d10 * d10 + d10) / 2.0D * 7.0D * (double)f3 + 1.0D));
++                        /*entity.attackEntityFrom(DamageSource.causeExplosionDamage(this), (float)((int)((d10 * d10 + d10) / 2.0D * 7.0D * (double)f3 + 1.0D)));*/
++                        entity.func_70097_a(DamageSource.func_94539_a(this), damage);
+                         double d11 = d10;
+ 
+                         if (entity instanceof EntityLivingBase)
+@@ -156,6 +195,11 @@
+                                 this.field_77288_k.put(entityplayer, new Vec3d(d5 * d10, d7 * d10, d9 * d10));
+                             }
+                         }
++
++                        // carpet12RNY - explosion logger
++                        if (logHelper != null) {
++                            logHelper.onEntityImpacted(entity, new Vec3d(d5 * d11, d7 * d11, d9 * d11), damage);
++                        }
+                     }
+                 }
+             }
+@@ -164,6 +208,14 @@
  
      public void func_77279_a(boolean p_77279_1_)
      {
@@ -104,14 +133,46 @@
          this.field_77287_j.func_184148_a((EntityPlayer)null, this.field_77284_b, this.field_77285_c, this.field_77282_d, SoundEvents.field_187539_bB, SoundCategory.BLOCKS, 4.0F, (1.0F + (this.field_77287_j.field_73012_v.nextFloat() - this.field_77287_j.field_73012_v.nextFloat()) * 0.2F) * 0.7F);
  
          if (this.field_77280_f >= 2.0F && this.field_82755_b)
-@@ -226,6 +265,11 @@
+@@ -205,13 +257,29 @@
+ 
+                 if (iblockstate.func_185904_a() != Material.field_151579_a)
+                 {
++                    // carpet12RNY - explosion logger
++                    // CM start
++                    float chance = 0.0F;
++                    // CM end
+                     if (block.func_149659_a(this))
+                     {
+-                        block.func_180653_a(this.field_77287_j, blockpos, this.field_77287_j.func_180495_p(blockpos), 1.0F / this.field_77280_f, 0);
++                        /*block.dropBlockAsItemWithChance(this.world, blockpos, this.world.getBlockState(blockpos), 1.0F / this.size, 0);*/
++                        // CM start
++                        chance = 1.0F / this.field_77280_f;
++                        block.func_180653_a(this.field_77287_j, blockpos, this.field_77287_j.func_180495_p(blockpos), chance, 0);
++                        if (block == Blocks.field_180384_M) {
++                            chance = 1.0F;
++                        }
++                        // CM end
+                     }
+ 
+                     this.field_77287_j.func_180501_a(blockpos, Blocks.field_150350_a.func_176223_P(), 3);
+                     block.func_180652_a(this.field_77287_j, blockpos, this);
++                    // CM start
++                    if (logHelper != null) {
++                        logHelper.onBlockDestroyed(blockpos, iblockstate, chance);
++                    }
++                    // CM end
+                 }
+             }
+         }
+@@ -226,6 +294,12 @@
                  }
              }
          }
 +
 +        // Logs explosion CARPET-SYLKOS
-+        if(LoggerRegistry.__explosions) {
-+            this.logHelper.onExplosionDone(this.field_77287_j.func_72820_D());
++        // carpet12RNY
++        if (logHelper != null) {
++            this.logHelper.onExplosionDone(field_77287_j.func_82737_E());
 +        }
      }
  

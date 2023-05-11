@@ -254,17 +254,24 @@
          if (p_186052_1_.func_72838_d(p_186052_0_) && p_186052_0_.func_184207_aI())
          {
              for (Entity entity : p_186052_0_.func_184188_bt())
-@@ -563,4 +658,80 @@
+@@ -563,4 +658,87 @@
              return entity;
          }
      }
 +
 +    // carpet12RNY Silent Chunk Reader
-+    public Chunk loadChunk_silent(World worldIn, int x, int z) {
++    public Chunk loadChunk_silent(World worldIn, int x, int z) throws IOException {
 +        ChunkPos chunkpos = new ChunkPos(x, z);
 +        //NBTTagCompound nbttagcompound = this.chunksToRemove.get(chunkpos);
 +        NBTTagCompound nbttagcompound = reloadChunkFromRemoveQueues(chunkpos);  // new for MC-119971
-+
++        // nbt_tag_compound can be null
++        if (nbttagcompound == null) {
++            DataInputStream datainputstream = RegionFileCache.func_76549_c(this.field_75825_d, x, z);
++            if (datainputstream == null) {
++                return null;
++            }
++            nbttagcompound = this.field_193416_e.func_188257_a(FixTypes.CHUNK, CompressedStreamTools.func_74794_a(datainputstream));
++        }
 +        return this.checkedReadChunkFromNBT_silent(worldIn, x, z, nbttagcompound);
 +    }
 +

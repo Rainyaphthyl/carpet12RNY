@@ -57,7 +57,7 @@ public class CarpetSettings
      *     version name starts with "RNY"
      * </p>
      */
-    public static final String carpetVersion = "RNY-dev-20230419-2221";
+    public static final String carpetVersion = "RNY-current-undefined";
     public static final String minecraftVersion = "1.12.2";
     public static final String mcpMappings = "39-1.12";
 
@@ -1082,6 +1082,18 @@ public class CarpetSettings
             category = {CREATIVE, NAFTALLUVIA}
     )
     public static double explosionPacketRange = VANILLA_EXPLOSION_PACKET_RANGE;
+
+    // ported from https://github.com/TISUnion/TISCarpet113
+    @Rule(
+            desc = "Disable random light checks near players, or modify the frequency of checks",
+            options = {"vanilla", "suppress", "flood"},
+            category = {CREATIVE, NAFTALLUVIA}
+    )
+    public static PlayerLightCheck playerLightCheck = PlayerLightCheck.vanilla;
+
+    public enum PlayerLightCheck {
+        vanilla, suppress, flood
+    }
 
     // ===== API ===== //
 

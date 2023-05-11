@@ -17,8 +17,20 @@ import java.util.NoSuchElementException;
  * {@code /log rngManip}
  */
 public class RNGMonitor {
-    public final static int RNG_SAMPLE_RANGE = 100;
-    public final static double FREQUENCY_THRESHOLD = 0.75;
+    public static final int RNG_SAMPLE_RANGE = 100;
+    public static final double FREQUENCY_THRESHOLD = 0.75;
+    public static final String DEFAULT_OPTION = RNGAppType.raw.name();
+    public static final String[] LOGGER_OPTIONS;
+
+    static {
+        RNGAppType[] apps = RNGAppType.values();
+        String[] strArr = new String[apps.length];
+        for (int i = 0; i < apps.length; ++i) {
+            strArr[i] = apps[i].name();
+        }
+        LOGGER_OPTIONS = strArr;
+    }
+
     private final WorldServer worldServerIn;
     private final MinecraftServer minecraftServer;
     private final DimensionType dimension;
