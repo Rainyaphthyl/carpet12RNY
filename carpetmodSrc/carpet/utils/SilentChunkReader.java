@@ -75,14 +75,9 @@ public class SilentChunkReader implements IBlockAccess {
     @Nullable
     private Chunk getChunk(int x, int z) {
         long index = ChunkPos.asLong(x, z);
-        Chunk chunk = null;
         ChunkProviderServer provider = world.getChunkProvider();
-        if (provider.chunkExists(x, z)) {
-            chunk = provider.loadedChunks.get(index);
-            if (chunkCache.containsKey(index)) {
-                chunkCache.remove(index);
-            }
-        } else {
+        Chunk chunk = provider.loadedChunks.get(index);
+        if (chunk == null) {
             chunk = chunkCache.get(index);
             if (chunk == null && provider.chunkLoader.isChunkGeneratedAt(x, z)) {
                 try {
@@ -93,6 +88,8 @@ public class SilentChunkReader implements IBlockAccess {
                     chunkCache.put(index, chunk);
                 }
             }
+        } else if (chunkCache.containsKey(index)) {
+            chunkCache.remove(index);
         }
         return chunk;
     }
@@ -102,7 +99,7 @@ public class SilentChunkReader implements IBlockAccess {
     }
 
     public int getLightFor(EnumSkyBlock lightType, @Nonnull BlockPos pos) {
-        Chunk chunk = getChunk(pos.getX() >> 4, pos.getZ() >> 4);
+        Chunk chunk = getChunk(pos);
         if (chunk == null) {
             return lightType.defaultLightValue;
         }
@@ -116,7 +113,7 @@ public class SilentChunkReader implements IBlockAccess {
             if (pos.getY() >= 256) {
                 pos = new BlockPos(pos.getX(), 255, pos.getZ());
             }
-            Chunk chunk = getChunk(pos.getX() >> 4, pos.getZ() >> 4);
+            Chunk chunk = getChunk(pos);
             if (chunk == null) {
                 return 0;
             }

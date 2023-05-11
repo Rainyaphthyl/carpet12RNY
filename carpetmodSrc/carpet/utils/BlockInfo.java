@@ -168,8 +168,7 @@ public class BlockInfo {
             first = false;
             stateInfo.appendSibling(formatBlockProperty((IProperty) entry.getKey(), (Comparable) entry.getValue()));
         }
-        boolean reallyLoaded = reader.isChunkValid(pos, false);
-        World validWorld = reallyLoaded ? world : null;
+        World validWorld = reader.isChunkValid(pos, false) ? world : null;
         lst.add(Messenger.s(null, ""));
         lst.add(Messenger.s(null, "====================================="));
         lst.add(Messenger.s(null, String.format("Block info for %s%s (id %d%s):", Block.REGISTRY.getNameForObject(block), metastring, Block.getIdFromBlock(block), metastring)));
@@ -245,7 +244,7 @@ public class BlockInfo {
                     (100.0F * success) / 1000,
                     ((total_time > 5000) ? "INFINITY" : (total_time + " s"))));
         } catch (NullPointerException e) {
-            return Messenger.s(null, " - Wander chance above: (NOT LOADED)\n - Average standby above: (NOT LOADED)");
+            return Messenger.s(null, " - Wander chance above: (NOT LOADED)\n - Average standby above: (NOT LOADED)", "r");
         }
     }
 }
