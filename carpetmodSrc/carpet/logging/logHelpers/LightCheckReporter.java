@@ -29,7 +29,8 @@ public class LightCheckReporter {
                 BlockPos source = player.getPosition();
                 BlockPos diff = pos.subtract(source);
                 List<Object> msgParts = new ArrayList<>();
-                String style = loggingPlayer.getUniqueID().equals(player.getUniqueID()) ? "y" : "w";
+                boolean warning = loggingPlayer.getUniqueID().equals(player.getUniqueID());
+                String warnStyle = warning ? "y" : "w";
                 String lightStyle;
                 switch (lightType) {
                     case SKY:
@@ -39,36 +40,47 @@ public class LightCheckReporter {
                         lightStyle = "l";
                         break;
                     default:
-                        lightStyle = style;
+                        lightStyle = warnStyle;
                 }
+                boolean verbose = false;
                 msgParts.add(String.format("%s %s light %d -> %d at ", lightStyle, lightType.name(), oldValue, newValue));
                 switch (option) {
+                    case "verbose":
+                        verbose = true;
                     case "raw":
-                        msgParts.add(String.format("%s [%d, %d, %d]", style, pos.getX(), pos.getY(), pos.getZ()));
+                        msgParts.add(String.format("%s [%d, %d, %d]", warnStyle, pos.getX(), pos.getY(), pos.getZ()));
                         msgParts.add(String.format("^g relative: [%+d, %+d, %+d]", diff.getX(), diff.getY(), diff.getZ()));
                         msgParts.add(String.format("/tp %d %d %d", pos.getX(), pos.getY(), pos.getZ()));
-                        msgParts.add(String.format("%s  by ", style));
-                        msgParts.add(String.format("%s %s", style, player.getName()));
+                        msgParts.add(String.format("%s  by ", warnStyle));
+                        msgParts.add(String.format("%s %s", warnStyle, player.getName()));
                         msgParts.add(String.format("^g [%d, %d, %d]", source.getX(), source.getY(), source.getZ()));
                         break;
                     case "relative":
-                    case "verbose":
-                        msgParts.add(String.format("%s [%+d, %+d, %+d]", style, diff.getX(), diff.getY(), diff.getZ()));
+                        msgParts.add(String.format("%s [%+d, %+d, %+d]", warnStyle, diff.getX(), diff.getY(), diff.getZ()));
                         msgParts.add(String.format("^g position: [%d, %d, %d]", pos.getX(), pos.getY(), pos.getZ()));
                         msgParts.add(String.format("/tp %d %d %d", pos.getX(), pos.getY(), pos.getZ()));
-                        msgParts.add(String.format("%s  from ", style));
-                        msgParts.add(String.format("%s [%d, %d, %d]", style, source.getX(), source.getY(), source.getZ()));
+                        msgParts.add(String.format("%s  from ", warnStyle));
+                        msgParts.add(String.format("%s [%d, %d, %d]", warnStyle, source.getX(), source.getY(), source.getZ()));
                         msgParts.add(String.format("^g %s", player.getName()));
                         break;
                 }
                 msgParts.add(String.format("/tp %d %d %d", source.getX(), source.getY(), source.getZ()));
                 msgParts.add("g  ");
-                msgParts.add(String.format("%s (%d/%d)", style, playerIndex, playerListSize));
+                msgParts.add(String.format("%s (%d/%d)", warnStyle, playerIndex, playerListSize));
                 msgParts.add(String.format("^g player %d is chosen from [0, %d] among all %d player(s)",
                         playerIndex, playerListSize - 1, playerListSize));
-                return new ITextComponent[]{
-                        Messenger.c(msgParts.toArray(new Object[0]))
-                };
+                if (verbose) {
+                    ITextComponent[] components = new ITextComponent[2];
+                    components[0] = Messenger.c(msgParts.toArray(new Object[0]));
+                    components[1] = Messenger.c(
+                            String.format("%s   - deviating [%+d, %+d, %+d] from [%d, %d, %d]",
+                                    warning ? "d" : "g",
+                                    diff.getX(), diff.getY(), diff.getZ(),
+                                    source.getX(), source.getY(), source.getZ()));
+                    return components;
+                } else {
+                    return new ITextComponent[]{Messenger.c(msgParts.toArray(new Object[0]))};
+                }
             });
         } catch (Exception ignored) {
         }
