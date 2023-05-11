@@ -199,7 +199,7 @@ public class BlockInfo {
         try {
             lst.add(Messenger.s(null, String.format(" - Hardness: %.2f", state.getBlockHardness(validWorld, pos))));
         } catch (NullPointerException e) {
-            lst.add(Messenger.s(null, " - Hardness: NOT LOADED", "m"));
+            lst.add(Messenger.s(null, " - Hardness: (Not Loaded)", "m"));
         }
         lst.add(Messenger.s(null, String.format(" - Blast resistance: %.2f", block.getExplosionResistance(null))));
         lst.add(Messenger.m(null, "w  - Ticks randomly: ", formatBoolean(block.getTickRandomly())));
@@ -244,7 +244,7 @@ public class BlockInfo {
                     (100.0F * success) / 1000,
                     ((total_time > 5000) ? "INFINITY" : (total_time + " s"))));
         } catch (NullPointerException e) {
-            return Messenger.s(null, " - Wander chance above: (NOT LOADED)\n - Average standby above: (NOT LOADED)", "r");
+            return Messenger.s(null, " - Wander chance above: (Not Loaded)\n - Average standby above: (Not Loaded)", "m");
         }
     }
 }

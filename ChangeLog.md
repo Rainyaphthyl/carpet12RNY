@@ -69,7 +69,7 @@ Disable random light checks near players, or modify the frequency of checks.
 - Add checks for existing jar file in Carpet Updater.
 - Fix the bug that lifetime tracker reports 0-gt when game rule `doMobSpawning` is `false`.
 - Add command `logMenu` to instantly display the updated interactive logger menu.
-- (TO-DO) Fix the bug that command `blockinfo` can load chunks.
+- Fix the bug that command `blockinfo` can load chunks.
 
 ## Codes and Details
 
