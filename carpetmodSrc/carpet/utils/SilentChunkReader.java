@@ -4,9 +4,11 @@ import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.init.Blocks;
+import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.EnumSkyBlock;
+import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.WorldServer;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.gen.ChunkProviderServer;
@@ -25,6 +27,7 @@ import java.util.Objects;
  * Loads the chunks without side effects on entities or other data.
  */
 public class SilentChunkReader {
+    // TODO: 2023/5/11,0011 implements IBlockAccess
     private final Long2ObjectMap<Chunk> chunkCache;
     private final WorldServer world;
 
@@ -53,6 +56,10 @@ public class SilentChunkReader {
             Chunk chunk = getChunk(x >> 4, z >> 4, allowRemote);
             return Objects.requireNonNull(chunk).getBlockState(x, y, z);
         }
+    }
+
+    public boolean isBlockInValidChunk(BlockPos pos, boolean allowRemote) {
+        return pos != null && isChunkValid(pos.getX() >> 4, pos.getZ() >> 4, allowRemote);
     }
 
     public boolean isChunkValid(int x, int z, boolean allowRemote) {
@@ -162,6 +169,34 @@ public class SilentChunkReader {
         } else {
             return UNLOADED;
         }
+    }
+
+    public int getStrongPower(BlockPos pos, EnumFacing direction, boolean allowRemote) throws NullPointerException {
+        // Block Access might be null
+        IBlockState blockState = getBlockState(pos, allowRemote);
+        IBlockAccess blockAccess = isBlockInValidChunk(pos, allowRemote) ? world : null;
+        return blockState.getStrongPower(blockAccess, pos, direction);
+    }
+
+    public int getStrongPower(@Nonnull BlockPos pos, boolean allowRemote) {
+        int currMax = 0;
+        currMax = Math.max(currMax, getStrongPower(pos.down(), EnumFacing.DOWN, allowRemote));
+        if (currMax < 15) {
+            currMax = Math.max(currMax, getStrongPower(pos.up(), EnumFacing.UP, allowRemote));
+            if (currMax < 15) {
+                currMax = Math.max(currMax, getStrongPower(pos.north(), EnumFacing.NORTH, allowRemote));
+                if (currMax < 15) {
+                    currMax = Math.max(currMax, getStrongPower(pos.south(), EnumFacing.SOUTH, allowRemote));
+                    if (currMax < 15) {
+                        currMax = Math.max(currMax, getStrongPower(pos.west(), EnumFacing.WEST, allowRemote));
+                        if (currMax < 15) {
+                            currMax = Math.max(currMax, getStrongPower(pos.east(), EnumFacing.EAST, allowRemote));
+                        }
+                    }
+                }
+            }
+        }
+        return currMax;
     }
 
 }

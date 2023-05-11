@@ -214,7 +214,7 @@ public class BlockInfo {
         lst.add(Messenger.m(null, "w  - Can provide power: ", formatBoolean(state.canProvidePower())));
         // TODO: 2023/5/11,0011 Implement silent getStrongPower and getRedstonePowerFromNeighbors
         try {
-            lst.add(Messenger.s(null, String.format(" - Strong power level: %d", validWorld.getStrongPower(pos))));
+            lst.add(Messenger.s(null, String.format(" - Strong power level: %d", reader.getStrongPower(pos, true))));
         } catch (NullPointerException e) {
             lst.add(Messenger.s(null, " - Strong power level: NOT LOADED"));
         }
@@ -225,7 +225,6 @@ public class BlockInfo {
         }
         lst.add(Messenger.s(null, ""));
         lst.add(wander_chances(pos.up(), world));
-
         return lst;
     }
 
@@ -236,7 +235,6 @@ public class BlockInfo {
         EntityAIWander wander = new EntityAIWander(creature, 0.8D);
         int success = 0;
         for (int i = 0; i < 1000; i++) {
-
             Vec3d vec = RandomPositionGenerator.findRandomTarget(creature, 10, 7);
             if (vec == null) {
                 continue;
