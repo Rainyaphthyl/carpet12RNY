@@ -133,7 +133,7 @@
          this.field_77287_j.func_184148_a((EntityPlayer)null, this.field_77284_b, this.field_77285_c, this.field_77282_d, SoundEvents.field_187539_bB, SoundCategory.BLOCKS, 4.0F, (1.0F + (this.field_77287_j.field_73012_v.nextFloat() - this.field_77287_j.field_73012_v.nextFloat()) * 0.2F) * 0.7F);
  
          if (this.field_77280_f >= 2.0F && this.field_82755_b)
-@@ -205,13 +257,27 @@
+@@ -205,13 +257,29 @@
  
                  if (iblockstate.func_185904_a() != Material.field_151579_a)
                  {
@@ -157,12 +157,14 @@
                      this.field_77287_j.func_180501_a(blockpos, Blocks.field_150350_a.func_176223_P(), 3);
                      block.func_180652_a(this.field_77287_j, blockpos, this);
 +                    // CM start
-+                    logHelper.onBlockDestroyed(blockpos, iblockstate, chance);
++                    if (logHelper != null) {
++                        logHelper.onBlockDestroyed(blockpos, iblockstate, chance);
++                    }
 +                    // CM end
                  }
              }
          }
-@@ -226,6 +292,12 @@
+@@ -226,6 +294,12 @@
                  }
              }
          }

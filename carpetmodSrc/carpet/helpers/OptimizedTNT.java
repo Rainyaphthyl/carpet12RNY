@@ -232,7 +232,9 @@ public class OptimizedTNT {
 
                     world.setBlockState(blockpos, Blocks.AIR.getDefaultState(), 3);
                     block.onExplosionDestroy(world, blockpos, e);
-                    e.logHelper.onBlockDestroyed(blockpos, iblockstate, chance);
+                    if (e.logHelper != null) {
+                        e.logHelper.onBlockDestroyed(blockpos, iblockstate, chance);
+                    }
                 }
             }
         }
