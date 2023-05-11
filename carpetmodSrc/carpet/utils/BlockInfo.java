@@ -21,6 +21,7 @@ import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
 
+import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -144,11 +145,12 @@ public class BlockInfo {
         if (world instanceof WorldServer) {
             reader = ((WorldServer) world).silentChunkReader;
         } else {
+            lst.add(Messenger.s(null, "The world instance is invalid", "r"));
             return lst;
         }
-        IBlockState state = reader.getBlockState(pos, true);
-        if (state == null) {
-            lst.add(Messenger.s(null, "The position is not loaded or not generated", "r"));
+        IBlockState state = reader.getBlockState(pos);
+        if (state == BlockNull.STATE || state == null) {
+            lst.add(Messenger.s(null, "The position is not generated or not loadable", "r"));
             return lst;
         }
         Material material = state.getMaterial();
@@ -166,18 +168,14 @@ public class BlockInfo {
             first = false;
             stateInfo.appendSibling(formatBlockProperty((IProperty) entry.getKey(), (Comparable) entry.getValue()));
         }
-        boolean reallyLoaded = reader.isChunkValid(pos.getX() >> 4, pos.getZ() >> 4, false);
+        boolean reallyLoaded = reader.isChunkValid(pos, false);
         World validWorld = reallyLoaded ? world : null;
         lst.add(Messenger.s(null, ""));
         lst.add(Messenger.s(null, "====================================="));
         lst.add(Messenger.s(null, String.format("Block info for %s%s (id %d%s):", Block.REGISTRY.getNameForObject(block), metastring, Block.getIdFromBlock(block), metastring)));
         lst.add(Messenger.m(null, "w  - State: ", stateInfo));
         lst.add(Messenger.s(null, String.format(" - Material: %s", getMaterialName(material))));
-        try {
-            lst.add(Messenger.s(null, String.format(" - Map colour: %s", getMapColourName(state.getMapColor(validWorld, pos)))));
-        } catch (NullPointerException e) {
-            lst.add(Messenger.s(null, " - Map colour: NOT LOADED"));
-        }
+        lst.add(Messenger.s(null, String.format(" - Map colour: %s", getMapColourName(state.getMapColor(reader, pos)))));
         lst.add(Messenger.s(null, String.format(" - Sound type: %s", getSoundName(block.getSoundType()))));
         lst.add(Messenger.s(null, ""));
         lst.add(Messenger.m(null, "w  - Full block: ", formatBoolean(state.isFullBlock())));
@@ -187,8 +185,8 @@ public class BlockInfo {
         lst.add(Messenger.m(null, "w  - Is liquid: ", formatBoolean(material.isLiquid())));
         lst.add(Messenger.m(null, "w  - Is solid: ", formatBoolean(material.isSolid())));
         lst.add(Messenger.s(null, ""));
-        lst.add(Messenger.s(null, String.format(" - Light in: %d, above: %d", reader.getLight(pos, true), reader.getLight(pos.up(), true))));
-        lst.add(Messenger.s(null, String.format(" - Brightness in: %.2f, above: %.2f", reader.getLightBrightness(pos, true), reader.getLightBrightness(pos.up(), true))));
+        lst.add(Messenger.s(null, String.format(" - Light in: %d, above: %d", reader.getLight(pos), reader.getLight(pos.up()))));
+        lst.add(Messenger.s(null, String.format(" - Brightness in: %.2f, above: %.2f", reader.getLightBrightness(pos), reader.getLightBrightness(pos.up()))));
         lst.add(Messenger.m(null, "w  - Is opaque: ", formatBoolean(material.isOpaque())));
         lst.add(Messenger.s(null, String.format(" - Light opacity: %d", state.getLightOpacity())));
         lst.add(Messenger.m(null, "w  - Blocks light: ", formatBoolean(material.blocksLight())));
@@ -196,67 +194,58 @@ public class BlockInfo {
         lst.add(Messenger.m(null, "w  - Picks neighbour light value: ", formatBoolean(state.useNeighborBrightness())));
         lst.add(Messenger.s(null, ""));
         lst.add(Messenger.m(null, "w  - Causes suffocation: ", formatBoolean(state.causesSuffocation())));
-        try {
-            lst.add(Messenger.m(null, "w  - Blocks movement: ", formatBoolean(!block.isPassable(validWorld, pos))));
-        } catch (NullPointerException e) {
-            lst.add(Messenger.m(null, "w  - Blocks movement: NOT LOADED"));
-        }
+        lst.add(Messenger.m(null, "w  - Blocks movement: ", formatBoolean(!block.isPassable(reader, pos))));
         lst.add(Messenger.m(null, "w  - Can burn: ", formatBoolean(material.getCanBurn())));
         lst.add(Messenger.m(null, "w  - Requires a tool: ", formatBoolean(!material.isToolNotRequired())));
         try {
             lst.add(Messenger.s(null, String.format(" - Hardness: %.2f", state.getBlockHardness(validWorld, pos))));
         } catch (NullPointerException e) {
-            lst.add(Messenger.s(null, " - Hardness: NOT LOADED"));
+            lst.add(Messenger.s(null, " - Hardness: NOT LOADED", "m"));
         }
         lst.add(Messenger.s(null, String.format(" - Blast resistance: %.2f", block.getExplosionResistance(null))));
         lst.add(Messenger.m(null, "w  - Ticks randomly: ", formatBoolean(block.getTickRandomly())));
         lst.add(Messenger.s(null, ""));
         lst.add(Messenger.m(null, "w  - Can provide power: ", formatBoolean(state.canProvidePower())));
-        // TODO: 2023/5/11,0011 Implement silent getStrongPower and getRedstonePowerFromNeighbors
-        try {
-            lst.add(Messenger.s(null, String.format(" - Strong power level: %d", reader.getStrongPower(pos, true))));
-        } catch (NullPointerException e) {
-            lst.add(Messenger.s(null, " - Strong power level: NOT LOADED"));
-        }
-        try {
-            lst.add(Messenger.s(null, String.format(" - Redstone power level: %d", validWorld.getRedstonePowerFromNeighbors(pos))));
-        } catch (NullPointerException e) {
-            lst.add(Messenger.s(null, " - Redstone power level: NOT LOADED"));
-        }
+        lst.add(Messenger.s(null, String.format(" - Strong power level: %d", reader.getStrongPower(pos))));
+        lst.add(Messenger.s(null, String.format(" - Redstone power level: %d", reader.getRedstonePowerFromNeighbors(pos))));
         lst.add(Messenger.s(null, ""));
-        lst.add(wander_chances(pos.up(), world));
+        lst.add(wander_chances(pos.up(), validWorld));
         return lst;
     }
 
+    @Nonnull
     private static ITextComponent wander_chances(BlockPos pos, World worldIn) {
-        EntityCreature creature = new EntityPigZombie(worldIn);
-        creature.onInitialSpawn(worldIn.getDifficultyForLocation(pos), null);
-        creature.setLocationAndAngles(pos.getX() + 0.5F, pos.getY(), pos.getZ() + 0.5F, 0.0F, 0.0F);
-        EntityAIWander wander = new EntityAIWander(creature, 0.8D);
-        int success = 0;
-        for (int i = 0; i < 1000; i++) {
-            Vec3d vec = RandomPositionGenerator.findRandomTarget(creature, 10, 7);
-            if (vec == null) {
-                continue;
-            }
-            success++;
-        }
-        long total_ticks = 0;
-        for (int trie = 0; trie < 1000; trie++) {
-            int i;
-            for (i = 1; i < 30 * 20 * 60; i++) //*60 used to be 5 hours, limited to 30 mins
-            {
-                if (wander.shouldExecute()) {
-                    break;
+        try {
+            EntityCreature creature = new EntityPigZombie(worldIn);
+            creature.onInitialSpawn(worldIn.getDifficultyForLocation(pos), null);
+            creature.setLocationAndAngles(pos.getX() + 0.5F, pos.getY(), pos.getZ() + 0.5F, 0.0F, 0.0F);
+            EntityAIWander wander = new EntityAIWander(creature, 0.8D);
+            int success = 0;
+            for (int i = 0; i < 1000; i++) {
+                Vec3d vec = RandomPositionGenerator.findRandomTarget(creature, 10, 7);
+                if (vec == null) {
+                    continue;
                 }
+                success++;
             }
-            total_ticks += 3 * i;
+            long total_ticks = 0;
+            for (int trie = 0; trie < 1000; trie++) {
+                int i;
+                for (i = 1; i < 30 * 20 * 60; i++) //*60 used to be 5 hours, limited to 30 mins
+                {
+                    if (wander.shouldExecute()) {
+                        break;
+                    }
+                }
+                total_ticks += 3 * i;
+            }
+            creature.setDead();
+            long total_time = (total_ticks) / 1000 / 20;
+            return Messenger.s(null, String.format(" - Wander chance above: %.1f%%\n - Average standby above: %s",
+                    (100.0F * success) / 1000,
+                    ((total_time > 5000) ? "INFINITY" : (total_time + " s"))));
+        } catch (NullPointerException e) {
+            return Messenger.s(null, " - Wander chance above: (NOT LOADED)\n - Average standby above: (NOT LOADED)");
         }
-        creature.setDead();
-        long total_time = (total_ticks) / 1000 / 20;
-        return Messenger.s(null, String.format(" - Wander chance above: %.1f%%\n - Average standby above: %s",
-                (100.0F * success) / 1000,
-                ((total_time > 5000) ? "INFINITY" : (total_time + " s"))
-        ));
     }
 }

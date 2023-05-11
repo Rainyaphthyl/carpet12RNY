@@ -375,13 +375,13 @@
 +                                boolean loggingLightCheck = LoggerRegistry.__lightCheck && func_175697_a(pos, 0);
 +                                int skyOld = -1, blockOld = -1;
 +                                if (loggingLightCheck) {
-+                                    skyOld = silentChunkReader.getLightFor(EnumSkyBlock.SKY, pos, false);
-+                                    blockOld = silentChunkReader.getLightFor(EnumSkyBlock.BLOCK, pos, false);
++                                    skyOld = silentChunkReader.getLightFor(EnumSkyBlock.SKY, pos);
++                                    blockOld = silentChunkReader.getLightFor(EnumSkyBlock.BLOCK, pos);
 +                                }
 +                                this.func_175664_x(pos);
 +                                if (loggingLightCheck) {
-+                                    int skyNew = silentChunkReader.getLightFor(EnumSkyBlock.SKY, pos, false);
-+                                    int blockNew = silentChunkReader.getLightFor(EnumSkyBlock.BLOCK, pos, false);
++                                    int skyNew = silentChunkReader.getLightFor(EnumSkyBlock.SKY, pos);
++                                    int blockNew = silentChunkReader.getLightFor(EnumSkyBlock.BLOCK, pos);
 +                                    if (skyNew != skyOld) {
 +                                        LightCheckReporter.report_light_update(EnumSkyBlock.SKY, skyOld, skyNew, pos, entityplayer, i, playerListSize);
 +                                    }
@@ -418,13 +418,13 @@
 +            boolean loggingLightCheck = LoggerRegistry.__lightCheck && func_175697_a(pos, 0);
 +            int skyOld = -1, blockOld = -1;
 +            if (loggingLightCheck) {
-+                skyOld = silentChunkReader.getLightFor(EnumSkyBlock.SKY, pos, false);
-+                blockOld = silentChunkReader.getLightFor(EnumSkyBlock.BLOCK, pos, false);
++                skyOld = silentChunkReader.getLightFor(EnumSkyBlock.SKY, pos);
++                blockOld = silentChunkReader.getLightFor(EnumSkyBlock.BLOCK, pos);
 +            }
 +            this.func_175664_x(pos);
 +            if (loggingLightCheck) {
-+                int skyNew = silentChunkReader.getLightFor(EnumSkyBlock.SKY, pos, false);
-+                int blockNew = silentChunkReader.getLightFor(EnumSkyBlock.BLOCK, pos, false);
++                int skyNew = silentChunkReader.getLightFor(EnumSkyBlock.SKY, pos);
++                int blockNew = silentChunkReader.getLightFor(EnumSkyBlock.BLOCK, pos);
 +                if (skyNew != skyOld) {
 +                    LightCheckReporter.report_light_update(EnumSkyBlock.SKY, skyOld, skyNew, pos, entityplayer, i, playerListSize);
 +                }

@@ -77,7 +77,7 @@ public class MutablePortalPattern {
 
     public boolean isEmptyBlockAt(int x, int y, int z) {
         try {
-            IBlockState blockState = reader.getBlockState(x, y, z, true);
+            IBlockState blockState = reader.getBlockState(x, y, z);
             return isEmptyBlock(blockState);
         } catch (NullPointerException e) {
             return false;
@@ -86,7 +86,7 @@ public class MutablePortalPattern {
 
     public Block getBlockAt(int x, int y, int z) {
         try {
-            IBlockState blockState = reader.getBlockState(x, y, z, true);
+            IBlockState blockState = reader.getBlockState(x, y, z);
             return blockState.getBlock();
         } catch (NullPointerException e) {
             return null;
