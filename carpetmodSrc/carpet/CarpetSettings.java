@@ -42,8 +42,8 @@ public class CarpetSettings
      *     (example) "RNY-v1.0.0-initial"
      * </p>
      * <p>
-     *     (build) "RNY-build-{@code <count>}"<br>
-     *     (example) "RNY-build-1437"
+     *     (build) "RNY-build-{@code <count>}-{@code <date>}"<br>
+     *     (example) "RNY-build-1437-20140307"
      * </p>
      * <p>
      *     (dev) "RNY-dev-{@code <date>}-{@code <time>}"<br>

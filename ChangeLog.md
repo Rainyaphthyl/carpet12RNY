@@ -76,5 +76,4 @@ Disable random light checks near players, or modify the frequency of checks.
 
 - Updates carpet server on `RNY-current-undefined` versions.
 - Add class `SilentChunkReader`, with codes from `PortalSilentSearcher`.
-
-[//]: # (TODO: Consider whether to use "build" \(instead of "dev"\) versions for releases)
+- Begin to use "build" version numbers with format `RNY-build-<count>-<date>`.

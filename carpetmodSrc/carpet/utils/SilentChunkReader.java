@@ -166,8 +166,13 @@ public class SilentChunkReader implements IBlockAccess {
 
     @Override
     @Nullable
-    public TileEntity getTileEntity(BlockPos pos) {
-        return null;
+    public TileEntity getTileEntity(@Nonnull BlockPos pos) {
+        // get tile entities only from real chunks
+        if (isChunkValid(pos, false)) {
+            return world.getTileEntity(pos);
+        } else {
+            return null;
+        }
     }
 
     @Override
