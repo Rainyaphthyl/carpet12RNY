@@ -13,8 +13,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class PathReporter {
-    public static final String[] LOGGER_OPTIONS = null;
-    public static final String DEFAULT_OPTION = null;
+    public static final String[] LOGGER_OPTIONS = new String[]{"chat", "visual", "all"};
+    public static final String DEFAULT_OPTION = LOGGER_OPTIONS[0];
     public static final String NAME = "pathFinding";
     private static Logger instance = null;
 
@@ -27,14 +27,32 @@ public class PathReporter {
 
     public static void report(Path path) {
         get_instance().log((option, player) -> {
+            boolean visual = false, chat = false;
+            switch (option) {
+                case "chat":
+                    chat = true;
+                    break;
+                case "visual":
+                    visual = true;
+                    break;
+                case "all":
+                    chat = true;
+                    visual = true;
+                    break;
+            }
             List<ITextComponent> list = new ArrayList<>();
-            if (path == null) {
-                list.add(Messenger.s(null, "No Valid Paths!"));
-            } else {
-                for (int i = 0, length = path.getCurrentPathLength(); i < length; ++i) {
-                    PathPoint point = path.getPathPointFromIndex(i);
-                    list.add(Messenger.s(null, String.format("Path %d : [%d, %d, %d] / %d", i, point.x, point.y, point.z, length)));
+            if (chat) {
+                if (path == null) {
+                    list.add(Messenger.s(null, "No Valid Paths!"));
+                } else {
+                    for (int i = 0, length = path.getCurrentPathLength(); i < length; ++i) {
+                        PathPoint point = path.getPathPointFromIndex(i);
+                        list.add(Messenger.s(null, String.format("Path %d : [%d, %d, %d] / %d", i, point.x, point.y, point.z, length)));
+                    }
                 }
+            }
+            if (visual) {
+                // TODO: 2023/5/17,0017 Visualize mob AI path
             }
             return list.toArray(new ITextComponent[0]);
         });
