@@ -16,7 +16,7 @@
              this.field_75513_b.field_72984_F.func_76319_b();
 +            // CM start: Naftalluvia - pathFinding logger
 +            if (LoggerRegistry.__pathFinding) {
-+                PathReporter.report(field_75515_a, new Vec3d((float) field_188564_r.func_177958_n() + 0.5F, (float) field_188564_r.func_177956_o(), (float) field_188564_r.func_177952_p() + 0.5F), 50, field_75514_c);
++                PathReporter.report(field_75515_a, new Vec3d((float) field_188564_r.func_177958_n() + 0.5F, (float) field_188564_r.func_177956_o(), (float) field_188564_r.func_177952_p() + 0.5F), field_75514_c);
 +            }
 +            // CM end
              return path;
@@ -28,21 +28,9 @@
                  this.field_75513_b.field_72984_F.func_76319_b();
 +                // CM start: Naftalluvia - pathFinding logger
 +                if (LoggerRegistry.__pathFinding) {
-+                    PathReporter.report(field_75515_a, p_75494_1_.func_174791_d(), 50, field_75514_c);
++                    PathReporter.report(field_75515_a, p_75494_1_.func_174791_d(), field_75514_c);
 +                }
 +                // CM end
                  return path;
              }
          }
-@@ -266,6 +279,11 @@
-                 break;
-             }
-         }
-+        // CM start: Naftalluvia - pathFinding logger
-+        //if (LoggerRegistry.__pathFinding) {
-+        //    PathReporter.report(entity, new Vec3d(vec3d1.x + 0.5, vec3d1.y, vec3d1.z + 0.5), 50, currentPath);
-+        //}
-+        // CM end
- 
-         this.func_179677_a(vec3d);
-     }

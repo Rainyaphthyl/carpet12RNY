@@ -21,17 +21,6 @@ public class PathReporter {
     public static final String DEFAULT_OPTION = LOGGER_OPTIONS[0];
     public static final String NAME = "pathFinding";
     private static Logger instance = null;
-    //private static IParticleData lvl1;
-    //private static IParticleData lvl2;
-    //private static IParticleData lvl3;
-    //
-    //static {
-    //    failedPath = parseParticle("angry_villager");
-    //    successfulPath = parseParticle("happy_villager");
-    //    lvl1 = parseParticle("dust 1 1 0 1");
-    //    lvl2 = parseParticle("dust 1 0.5 0 1");
-    //    lvl3 = parseParticle("dust 1 0 0 1");
-    //}
 
     public static Logger get_instance() {
         if (instance == null) {
@@ -40,7 +29,7 @@ public class PathReporter {
         return instance;
     }
 
-    public static void report(Entity entity, Vec3d target, float milliseconds, Path path) {
+    public static void report(Entity entity, Vec3d target, Path path) {
         get_instance().log((option, player) -> {
             boolean visual = false, chat = false;
             switch (option) {
@@ -68,14 +57,14 @@ public class PathReporter {
             }
             if (visual) {
                 if (player instanceof EntityPlayerMP) {
-                    drawParticleLine((EntityPlayerMP) player, entity.getPositionVector(), target, 50, path != null);
+                    drawParticleLine((EntityPlayerMP) player, entity.getPositionVector(), target, path != null);
                 }
             }
             return list.toArray(new ITextComponent[0]);
         });
     }
 
-    private static void drawParticleLine(EntityPlayerMP player, Vec3d src, Vec3d dst, float ratio, boolean successful) {
+    private static void drawParticleLine(EntityPlayerMP player, Vec3d src, Vec3d dst, boolean successful) {
         if (player == null) {
             return;
         }
@@ -93,7 +82,7 @@ public class PathReporter {
         double y = dst.y;
         double z = dst.z;
         for (double progress = 0.0, delta; progress <= distance; progress += delta) {
-            delta = intensity * Math.abs(random.nextGaussian());
+            delta = intensity * random.nextDouble();
             x -= delta * increment.x;
             y -= delta * increment.y;
             z -= delta * increment.z;
