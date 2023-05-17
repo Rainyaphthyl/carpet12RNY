@@ -1,0 +1,24 @@
+--- ../src-base/minecraft/net/minecraft/pathfinding/PathNavigate.java
++++ ../src-work/minecraft/net/minecraft/pathfinding/PathNavigate.java
+@@ -1,6 +1,9 @@
+ package net.minecraft.pathfinding;
+ 
+ import javax.annotation.Nullable;
++
++import carpet.logging.LoggerRegistry;
++import carpet.logging.logHelpers.PathReporter;
+ import net.minecraft.block.Block;
+ import net.minecraft.block.state.IBlockState;
+ import net.minecraft.entity.Entity;
+@@ -266,6 +269,11 @@
+                 break;
+             }
+         }
++        // CM start: Naftalluvia - pathFinding logger
++        if (LoggerRegistry.__pathFinding) {
++            PathReporter.report(field_75515_a, vec3d1, 50, field_75514_c);
++        }
++        // CM end
+ 
+         this.func_179677_a(vec3d);
+     }
