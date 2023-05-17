@@ -14,6 +14,7 @@ import net.minecraft.world.WorldServer;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 public class PathReporter {
     public static final String[] LOGGER_OPTIONS = new String[]{"chat", "visual", "all"};
@@ -74,38 +75,35 @@ public class PathReporter {
         });
     }
 
-    public static void drawParticleLine(EntityPlayerMP player, Vec3d src, Vec3d dst, float ratio, boolean successful) {
+    private static void drawParticleLine(EntityPlayerMP player, Vec3d src, Vec3d dst, float ratio, boolean successful) {
         if (player == null) {
             return;
         }
-        EnumParticleTypes accent = successful ? EnumParticleTypes.VILLAGER_HAPPY : EnumParticleTypes.VILLAGER_ANGRY;
-        ((WorldServer) player.world).spawnParticle(player, accent, true, src.x, src.y, src.z,
-                5, 0.5, 0.5, 0.5, 0.0);
-        //IParticleData accent = successful ? successfulPath : failedPath;
-        //IParticleData color = (ratio < 2)? lvl1 : ((ratio < 4)?lvl2:lvl3);
-        //
-        //((WorldServer)player.world).spawnParticle(
-        //        player,
-        //        accent,
-        //        true,
-        //        from.x, from.y, from.z, 5,
-        //        0.5, 0.5, 0.5, 0.0);
-        //
-        //double lineLengthSq = from.squareDistanceTo(to);
-        //if (lineLengthSq == 0) return;
-        //
-        //Vec3d incvec = to.subtract(from).normalize();//    multiply(50/sqrt(lineLengthSq));
-        //int pcount = 0;
-        //for (Vec3d delta = new Vec3d(0.0,0.0,0.0);
-        //     delta.lengthSquared()<lineLengthSq;
-        //     delta = delta.add(incvec.scale(player.world.rand.nextFloat())))
-        //{
-        //    ((WorldServer)player.world).spawnParticle(
-        //            player,
-        //            color,
-        //            true,
-        //            delta.x+from.x, delta.y+from.y, delta.z+from.z, 1,
-        //            0.0, 0.0, 0.0, 0.0);
-        //}
+        if (successful) {
+            ((WorldServer) player.world).spawnParticle(player, EnumParticleTypes.VILLAGER_HAPPY,
+                    true, src.x, src.y, src.z,
+                    5, 0.0, 0.5, 0.0, 0.0);
+        }
+        EnumParticleTypes particleLine = EnumParticleTypes.REDSTONE;
+        double intensity = successful ? 0.5 : 2.0;
+        Vec3d increment = dst.subtract(src).normalize();
+        Random random = new Random();
+        double distance = dst.distanceTo(src);
+        double x = dst.x;
+        double y = dst.y;
+        double z = dst.z;
+        for (double progress = 0.0, delta; progress <= distance; progress += delta) {
+            delta = intensity * Math.abs(random.nextGaussian());
+            x -= delta * increment.x;
+            y -= delta * increment.y;
+            z -= delta * increment.z;
+            ((WorldServer) player.world).spawnParticle(player, particleLine, true, x, y, z,
+                    1, 0.0, 0.0, 0.0, 0.0);
+        }
+        if (successful) {
+            ((WorldServer) player.world).spawnParticle(player, EnumParticleTypes.DRAGON_BREATH,
+                    true, dst.x, dst.y, dst.z,
+                    2, 0.0, 0.5, 0.0, 0.0);
+        }
     }
 }

@@ -10,14 +10,38 @@
  import net.minecraft.block.Block;
  import net.minecraft.block.state.IBlockState;
  import net.minecraft.entity.Entity;
-@@ -266,6 +269,11 @@
+@@ -107,6 +110,11 @@
+             ChunkCache chunkcache = new ChunkCache(this.field_75513_b, blockpos.func_177982_a(-i, -i, -i), blockpos.func_177982_a(i, i, i), 0);
+             Path path = this.field_179681_j.func_186336_a(chunkcache, this.field_75515_a, this.field_188564_r, f);
+             this.field_75513_b.field_72984_F.func_76319_b();
++            // CM start: Naftalluvia - pathFinding logger
++            if (LoggerRegistry.__pathFinding) {
++                PathReporter.report(field_75515_a, new Vec3d((float) field_188564_r.func_177958_n() + 0.5F, (float) field_188564_r.func_177956_o(), (float) field_188564_r.func_177952_p() + 0.5F), 50, field_75514_c);
++            }
++            // CM end
+             return path;
+         }
+     }
+@@ -136,6 +144,11 @@
+                 ChunkCache chunkcache = new ChunkCache(this.field_75513_b, blockpos1.func_177982_a(-i, -i, -i), blockpos1.func_177982_a(i, i, i), 0);
+                 Path path = this.field_179681_j.func_186333_a(chunkcache, this.field_75515_a, p_75494_1_, f);
+                 this.field_75513_b.field_72984_F.func_76319_b();
++                // CM start: Naftalluvia - pathFinding logger
++                if (LoggerRegistry.__pathFinding) {
++                    PathReporter.report(field_75515_a, p_75494_1_.func_174791_d(), 50, field_75514_c);
++                }
++                // CM end
+                 return path;
+             }
+         }
+@@ -266,6 +279,11 @@
                  break;
              }
          }
 +        // CM start: Naftalluvia - pathFinding logger
-+        if (LoggerRegistry.__pathFinding) {
-+            PathReporter.report(field_75515_a, vec3d1, 50, field_75514_c);
-+        }
++        //if (LoggerRegistry.__pathFinding) {
++        //    PathReporter.report(entity, new Vec3d(vec3d1.x + 0.5, vec3d1.y, vec3d1.z + 0.5), 50, currentPath);
++        //}
 +        // CM end
  
          this.func_179677_a(vec3d);
