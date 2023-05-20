@@ -7,5 +7,8 @@ Carpet 1.12 with [RNY](https://github.com/Rainyaphthyl)'s Addition
 - Add command `/log copy <player>` or `/logCopy <player>`, to copy logger configurations from other players.
 - Modify command `/tick warp` with new options: `interrupt`, `status`, etc.
 - Add HUD logger `tickWarp` with options: `bar`, `value`.
+- Add logger field `NAME`.
+- Display the actual option when setting logger with default options.
+  - `Subscribed to <logger> \(<option>\)`
 
 # Features

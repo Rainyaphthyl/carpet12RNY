@@ -3,6 +3,7 @@ package carpet.logging;
 import carpet.CarpetSettings;
 import carpet.logging.logHelpers.LightCheckReporter;
 import carpet.logging.logHelpers.RNGMonitor;
+import carpet.logging.logHelpers.TickWarpLogger;
 import com.google.common.base.Charsets;
 import com.google.gson.*;
 import net.minecraft.entity.player.EntityPlayer;
@@ -43,6 +44,7 @@ public class LoggerRegistry {
     public static boolean __normalCameraVision;
     public static boolean __rngManip;
     public static boolean __lightCheck;
+    public static boolean __tickWarp;
     // Map from logger names to loggers.
     private static Map<String, Logger> loggerRegistry = new HashMap<>();
     // List of default subscriptions
@@ -71,6 +73,7 @@ public class LoggerRegistry {
         registerLogger("counter", new Logger(server, "counter", "white", new String[]{"all", "cactus", "white", "orange", "magenta", "light_blue", "yellow", "lime", "pink", "gray", "silver", "cyan", "purple", "blue", "brown", "green", "red", "black"}, LogHandler.HUD));
         registerLogger("mobcaps", new Logger(server, "mobcaps", "dynamic", new String[]{"dynamic", "overworld", "nether", "end"}, LogHandler.HUD));
         registerLogger("rngManip", new Logger(server, "rngManip", RNGMonitor.DEFAULT_OPTION, RNGMonitor.LOGGER_OPTIONS, LogHandler.HUD));
+        registerLogger(TickWarpLogger.NAME, new Logger(server, TickWarpLogger.NAME, TickWarpLogger.DEFAULT_OPTION, TickWarpLogger.LOGGER_OPTIONS, LogHandler.HUD));
 
         registerDebugger("recipes", new Logger(server, "recipes", null, null, LogHandler.CHAT));
         registerDebugger("damageDebug", new Logger(server, "damageDebug", null, null, LogHandler.CHAT));
