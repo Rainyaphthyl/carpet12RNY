@@ -2,6 +2,7 @@ package carpet.helpers;
 
 import carpet.CarpetServer;
 import carpet.CarpetSettings;
+import carpet.logging.logHelpers.TickWarpLogger;
 import carpet.pubsub.PubSubInfoProvider;
 import carpet.utils.Messenger;
 import net.minecraft.command.ICommandManager;
@@ -10,12 +11,15 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.math.MathHelper;
 
+import javax.annotation.Nonnull;
+import java.util.Objects;
+
 public class TickSpeed
 {
     public static final int PLAYER_GRACE = 2;
     public static float tickrate = 20.0f;
-    public static long mspt = 50l;
-    public static long warp_temp_mspt = 1l;
+    public static long mspt = 50L;
+    public static long warp_temp_mspt = 1L;
     public static long time_bias = 0;
     public static long time_warp_start_time = 0;
     public static long time_warp_scheduled_ticks = 0;
@@ -53,24 +57,33 @@ public class TickSpeed
         mspt = (long)(1000.0/tickrate);
         if (mspt <=0)
         {
-            mspt = 1l;
+            mspt = 1L;
             tickrate = 1000.0f;
         }
         PUBSUB_TICKRATE.publish();
     }
 
-    public static String tickrate_advance(EntityPlayer player, long advance, String callback, ICommandSender icommandsender)
-    {
-        if (0 == advance)
-        {
+    /**
+     * @param advance use {@code 0} to interrupt tick warping; {@code -1} to query tick warping status
+     */
+    @Nonnull
+    public static String tickrate_advance(EntityPlayer player, long advance, String callback, ICommandSender icommandsender) {
+        if (0 == advance) {
             tick_warp_callback = null;
             tick_warp_sender = null;
-            finish_time_warp();
-            return "Warp interrupted";
+            long doneTicks = finish_time_warp();
+            return "Warp interrupted after " + doneTicks + " ticks";
+        } else if (advance < 0) {
+            TickWarpLogger.query_status(player);
+            return "";
         }
-        if (time_bias > 0)
-        {
-            return "Another player is already advancing time at the moment. Try later or talk to them";
+        if (time_bias > 0) {
+            Messenger.m(player, "g Check the status with command ", "gbi /tick warp status", "/tick warp status", "g !");
+            if (time_advancerer == null) {
+                return "The server is already advancing time at the moment. Try later or talk to the admins";
+            } else {
+                return time_advancerer.getName() + " is already advancing time at the moment. Try later or talk to them";
+            }
         }
         time_advancerer = player;
         time_warp_start_time = System.nanoTime();
@@ -78,10 +91,13 @@ public class TickSpeed
         time_bias = advance;
         tick_warp_callback = callback;
         tick_warp_sender = icommandsender;
-        return "Warp speed ....";
+        return "Warp speed for " + advance + " ticks ....";
     }
 
-    public static void finish_time_warp()
+    /**
+     * @return completed ticks
+     */
+    public static long finish_time_warp()
     {
 
         long completed_ticks = time_warp_scheduled_ticks - time_bias;
@@ -92,12 +108,12 @@ public class TickSpeed
         }
         milis_to_complete /= 1000000.0;
         int tps = (int) (1000.0D*completed_ticks/milis_to_complete);
-        double mspt = (1.0*milis_to_complete)/completed_ticks;
+        double mspt = milis_to_complete/completed_ticks;
         time_warp_scheduled_ticks = 0;
         time_warp_start_time = 0;
         if (tick_warp_callback != null)
         {
-            ICommandManager icommandmanager = tick_warp_sender.getServer().getCommandManager();
+            ICommandManager icommandmanager = Objects.requireNonNull(tick_warp_sender.getServer()).getCommandManager();
             try
             {
                 int j = icommandmanager.executeCommand(tick_warp_sender, tick_warp_callback);
@@ -120,17 +136,23 @@ public class TickSpeed
             tick_warp_callback = null;
             tick_warp_sender = null;
         }
-        if (time_advancerer != null)
-        {
-            Messenger.m(time_advancerer, String.format("gi ... Time warp completed with %d tps, or %.2f mspt",tps, mspt ));
+        boolean broadcast = true;
+        if (time_advancerer != null) {
+            MinecraftServer server = time_advancerer.getServer();
+            //noinspection ConstantValue
+            if (server != null && server.getPlayerList().getPlayerByUUID(time_advancerer.getUniqueID()) != null) {
+                broadcast = false;
+                String text = String.format("... Time warp completed with %d tps, or %.2f mspt", tps, mspt);
+                Messenger.s(time_advancerer, text, "wi");
+                Messenger.s(server, text, "gi");
+            }
             time_advancerer = null;
         }
-        else
-        {
-            Messenger.print_server_message(CarpetServer.minecraft_server, String.format("... Time warp completed with %d tps, or %.2f mspt",tps, mspt ));
+        if (broadcast) {
+            Messenger.print_server_message(CarpetServer.minecraft_server, String.format("... Time warp completed with %d tps, or %.2f mspt", tps, mspt));
         }
         time_bias = 0;
-
+        return completed_ticks;
     }
 
     public static boolean continueWarp()

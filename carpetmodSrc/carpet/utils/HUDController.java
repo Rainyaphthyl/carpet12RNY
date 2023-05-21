@@ -5,6 +5,7 @@ import carpet.helpers.HopperCounter;
 import carpet.helpers.TickSpeed;
 import carpet.logging.LoggerRegistry;
 import carpet.logging.logHelpers.PacketCounter;
+import carpet.logging.logHelpers.TickWarpLogger;
 import net.minecraft.entity.EnumCreatureType;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
@@ -71,8 +72,12 @@ public class HUDController
                     "TOTAL_IN", PacketCounter.totalIn,
                     "TOTAL_OUT", PacketCounter.totalOut);
 
-        if (LoggerRegistry.__rngManip){
+        if (LoggerRegistry.__rngManip) {
             server.worlds[0].rngMonitor.updateLogHUD();
+        }
+
+        if (LoggerRegistry.__tickWarp) {
+            TickWarpLogger.update_log_HUD();
         }
 
         for (EntityPlayer player: player_huds.keySet())
@@ -109,7 +114,7 @@ public class HUDController
                 "g  MSPT: ", String.format(Locale.US,"%s %.1f", color, MSPT))};
         LoggerRegistry.getLogger("tps").log(() -> message, "MSPT", MSPT, "TPS", TPS);
     }
-    
+
     private static void log_mobcaps()
     {
         List<Object> commandParams = new ArrayList<>();
@@ -156,7 +161,7 @@ public class HUDController
         components.remove(components.size()-1);
         return new ITextComponent[]{Messenger.m(null, components.toArray(new Object[0]))};
     }
-    
+
     private static void log_counter(MinecraftServer server)
     {
         List<Object> commandParams = new ArrayList<>();
