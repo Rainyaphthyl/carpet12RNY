@@ -21,18 +21,20 @@ public class CommandTick extends CommandCarpetBase
     /**
      * Gets the name of the command
      */
-
     public String getName()
     {
         return "tick";
     }
 
-        /**
+    /**
      * Gets the usage string for the command.
      */
     public String getUsage(ICommandSender sender)
     {
-        return "Usage: tick rate <tickrate in tps> | warp [time in ticks to skip]";
+        return "Usage: tick rate <tps>" +
+                "\n | tick warp (<ticks>|interrupt|status)" +
+                "\n | tick (freeze|step [<steps>])" +
+                "\n | tick superHot [start|stop]";
     }
 
     /**
@@ -170,7 +172,7 @@ public class CommandTick extends CommandCarpetBase
         }
         if (args.length == 2 && "warp".equalsIgnoreCase(args[0]))
         {
-            return getListOfStringsMatchingLastWord(args, "1000","24000","72000");
+            return getListOfStringsMatchingLastWord(args, "status", "interrupt", "1200", "6000", "72000");
         }
         if (args.length == 2 && "health".equalsIgnoreCase(args[0]))
         {
