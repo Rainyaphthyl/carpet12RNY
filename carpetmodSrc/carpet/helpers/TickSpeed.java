@@ -79,7 +79,11 @@ public class TickSpeed
         }
         if (time_bias > 0)
         {
-            return "Another player is already advancing time at the moment. Try later or talk to them";
+            if (time_advancerer == null) {
+                return "The server is already advancing time at the moment. Try later or talk to the admins";
+            } else {
+                return time_advancerer.getName() + " is already advancing time at the moment. Try later or talk to them";
+            }
         }
         time_advancerer = player;
         time_warp_start_time = System.nanoTime();
@@ -129,17 +133,22 @@ public class TickSpeed
             tick_warp_callback = null;
             tick_warp_sender = null;
         }
-        if (time_advancerer != null)
-        {
-            Messenger.m(time_advancerer, String.format("gi ... Time warp completed with %d tps, or %.2f mspt",tps, mspt ));
+        boolean broadcast = true;
+        if (time_advancerer != null) {
+            MinecraftServer server = time_advancerer.getServer();
+            //noinspection ConstantValue
+            if (server != null && server.getPlayerList().getPlayerByUUID(time_advancerer.getUniqueID()) != null) {
+                broadcast = false;
+                String text = String.format("... Time warp completed with %d tps, or %.2f mspt", tps, mspt);
+                Messenger.s(time_advancerer, text, "wi");
+                Messenger.s(server, text, "gi");
+            }
             time_advancerer = null;
         }
-        else
-        {
-            Messenger.print_server_message(CarpetServer.minecraft_server, String.format("... Time warp completed with %d tps, or %.2f mspt",tps, mspt ));
+        if (broadcast) {
+            Messenger.print_server_message(CarpetServer.minecraft_server, String.format("... Time warp completed with %d tps, or %.2f mspt", tps, mspt));
         }
         time_bias = 0;
-
     }
 
     public static boolean continueWarp()

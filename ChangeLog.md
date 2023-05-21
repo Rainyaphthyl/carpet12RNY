@@ -4,8 +4,8 @@ Carpet 1.12 with [RNY](https://github.com/Rainyaphthyl)'s Addition
 
 # TO-DO List
 
-- Add command `/log copy <player>` or `/logCopy <player>`, to copy logger configurations from other players.
-- Modify command `/tick warp` with new options: `interrupt`, `status`, etc.
+- Add command `log copy <player>` or `logCopy <player>`, to copy logger configurations from other players.
+- Modify command `tick warp` with new options: `interrupt`, `status`, etc.
 - Add field `NAME` for all the logHelpers.
 - Display the actual option when setting logger with default options.
     - `Subscribed to <logger> \(<option>\)`
