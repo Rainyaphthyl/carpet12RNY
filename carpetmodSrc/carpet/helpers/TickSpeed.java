@@ -10,12 +10,14 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.math.MathHelper;
 
+import javax.annotation.Nonnull;
+
 public class TickSpeed
 {
     public static final int PLAYER_GRACE = 2;
     public static float tickrate = 20.0f;
-    public static long mspt = 50l;
-    public static long warp_temp_mspt = 1l;
+    public static long mspt = 50L;
+    public static long warp_temp_mspt = 1L;
     public static long time_bias = 0;
     public static long time_warp_start_time = 0;
     public static long time_warp_scheduled_ticks = 0;
@@ -53,12 +55,16 @@ public class TickSpeed
         mspt = (long)(1000.0/tickrate);
         if (mspt <=0)
         {
-            mspt = 1l;
+            mspt = 1L;
             tickrate = 1000.0f;
         }
         PUBSUB_TICKRATE.publish();
     }
 
+    /**
+     * @param advance use {@code 0} to interrupt tick warping; {@code -1} to query tick warping status
+     */
+    @Nonnull
     public static String tickrate_advance(EntityPlayer player, long advance, String callback, ICommandSender icommandsender)
     {
         if (0 == advance)
@@ -67,6 +73,9 @@ public class TickSpeed
             tick_warp_sender = null;
             finish_time_warp();
             return "Warp interrupted";
+        } else if (advance < 0) {
+            // to be replaced with empty string
+            return "Tick warp status: (WIP)";
         }
         if (time_bias > 0)
         {
@@ -92,7 +101,7 @@ public class TickSpeed
         }
         milis_to_complete /= 1000000.0;
         int tps = (int) (1000.0D*completed_ticks/milis_to_complete);
-        double mspt = (1.0*milis_to_complete)/completed_ticks;
+        double mspt = milis_to_complete/completed_ticks;
         time_warp_scheduled_ticks = 0;
         time_warp_start_time = 0;
         if (tick_warp_callback != null)

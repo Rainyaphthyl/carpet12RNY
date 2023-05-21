@@ -60,7 +60,20 @@ public class CommandTick extends CommandCarpetBase
         }
         else if ("warp".equalsIgnoreCase(args[0]))
         {
-            long advance = args.length >= 2 ? parseLong(args[1], 0, Long.MAX_VALUE) : TickSpeed.time_bias > 0 ? 0 : Long.MAX_VALUE;
+            long advance;
+            if (args.length >= 2) {
+                if ("status".equalsIgnoreCase(args[1])) {
+                    advance = -1;
+                } else if ("interrupt".equalsIgnoreCase(args[1])) {
+                    advance = 0;
+                } else {
+                    advance = parseLong(args[1], 1, Long.MAX_VALUE);
+                }
+            } else {
+                advance = TickSpeed.time_bias > 0 ?
+                        (TickSpeed.time_warp_scheduled_ticks == Long.MAX_VALUE ? 0 : -1)
+                        : Long.MAX_VALUE;
+            }
             EntityPlayer player = null;
             if (sender instanceof EntityPlayer)
             {

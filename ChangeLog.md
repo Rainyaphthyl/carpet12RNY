@@ -12,4 +12,5 @@ Carpet 1.12 with [RNY](https://github.com/Rainyaphthyl)'s Addition
 
 # Features
 
-- Add HUD logger `tickWarp` with options: `bar`, `value`.
+- New HUD logger `tickWarp` with options: `bar`, `value`.
+- New option `interrupt` for command `tick warp`.
