@@ -2,6 +2,7 @@ package carpet.helpers;
 
 import carpet.CarpetServer;
 import carpet.CarpetSettings;
+import carpet.logging.logHelpers.TickWarpLogger;
 import carpet.pubsub.PubSubInfoProvider;
 import carpet.utils.Messenger;
 import net.minecraft.command.ICommandManager;
@@ -65,20 +66,17 @@ public class TickSpeed
      * @param advance use {@code 0} to interrupt tick warping; {@code -1} to query tick warping status
      */
     @Nonnull
-    public static String tickrate_advance(EntityPlayer player, long advance, String callback, ICommandSender icommandsender)
-    {
-        if (0 == advance)
-        {
+    public static String tickrate_advance(EntityPlayer player, long advance, String callback, ICommandSender icommandsender) {
+        if (0 == advance) {
             tick_warp_callback = null;
             tick_warp_sender = null;
             finish_time_warp();
             return "Warp interrupted";
         } else if (advance < 0) {
-            // to be replaced with empty string
-            return "Tick warp status: (WIP)";
+            TickWarpLogger.query_status(icommandsender);
+            return "";
         }
-        if (time_bias > 0)
-        {
+        if (time_bias > 0) {
             if (time_advancerer == null) {
                 return "The server is already advancing time at the moment. Try later or talk to the admins";
             } else {
