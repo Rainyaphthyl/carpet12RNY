@@ -7,6 +7,7 @@ import javax.annotation.Nullable;
 import carpet.utils.CarpetProfiler;
 import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommandSender;
+import net.minecraft.command.NumberInvalidException;
 import net.minecraft.command.WrongUsageException;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.server.MinecraftServer;
@@ -67,7 +68,17 @@ public class CommandTick extends CommandCarpetBase
                 } else if ("interrupt".equalsIgnoreCase(args[1])) {
                     advance = 0;
                 } else {
-                    advance = parseLong(args[1], 1, Long.MAX_VALUE);
+                    try {
+                        advance = parseLong(args[1], 1, Long.MAX_VALUE);
+                    } catch (NumberInvalidException e) {
+                        switch (args[1].charAt(0)) {
+                            case 's':
+                            case 'i':
+                                throw new WrongUsageException(getUsage(sender));
+                            default:
+                                throw e;
+                        }
+                    }
                 }
             } else {
                 advance = TickSpeed.time_bias > 0 ?

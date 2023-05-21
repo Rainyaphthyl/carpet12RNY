@@ -86,7 +86,7 @@ public class TickWarpLogger {
         }
         if (sender == null) {
             for (ITextComponent component : components) {
-                Messenger.print_server_message(CarpetServer.minecraft_server, component);
+                Messenger.print_server_message(CarpetServer.minecraft_server, component.getUnformattedText());
             }
         }
     }

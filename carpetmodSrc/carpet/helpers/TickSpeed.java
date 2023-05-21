@@ -12,6 +12,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.math.MathHelper;
 
 import javax.annotation.Nonnull;
+import java.util.Objects;
 
 public class TickSpeed
 {
@@ -70,13 +71,14 @@ public class TickSpeed
         if (0 == advance) {
             tick_warp_callback = null;
             tick_warp_sender = null;
-            finish_time_warp();
-            return "Warp interrupted";
+            long doneTicks = finish_time_warp();
+            return "Warp interrupted after " + doneTicks + " ticks";
         } else if (advance < 0) {
-            TickWarpLogger.query_status(icommandsender);
+            TickWarpLogger.query_status(player);
             return "";
         }
         if (time_bias > 0) {
+            Messenger.m(player, "g Check the status with command ", "gbi /tick warp status", "/tick warp status", "g !");
             if (time_advancerer == null) {
                 return "The server is already advancing time at the moment. Try later or talk to the admins";
             } else {
@@ -89,10 +91,13 @@ public class TickSpeed
         time_bias = advance;
         tick_warp_callback = callback;
         tick_warp_sender = icommandsender;
-        return "Warp speed ....";
+        return "Warp speed for " + advance + " ticks ....";
     }
 
-    public static void finish_time_warp()
+    /**
+     * @return completed ticks
+     */
+    public static long finish_time_warp()
     {
 
         long completed_ticks = time_warp_scheduled_ticks - time_bias;
@@ -108,7 +113,7 @@ public class TickSpeed
         time_warp_start_time = 0;
         if (tick_warp_callback != null)
         {
-            ICommandManager icommandmanager = tick_warp_sender.getServer().getCommandManager();
+            ICommandManager icommandmanager = Objects.requireNonNull(tick_warp_sender.getServer()).getCommandManager();
             try
             {
                 int j = icommandmanager.executeCommand(tick_warp_sender, tick_warp_callback);
@@ -147,6 +152,7 @@ public class TickSpeed
             Messenger.print_server_message(CarpetServer.minecraft_server, String.format("... Time warp completed with %d tps, or %.2f mspt", tps, mspt));
         }
         time_bias = 0;
+        return completed_ticks;
     }
 
     public static boolean continueWarp()
