@@ -10,7 +10,6 @@ Carpet 1.12 with [RNY](https://github.com/Rainyaphthyl)'s Addition
     - `Subscribed to <logger> \(<option>\)`
 - Fix the bug that carpet rule `updateSuppressionCrashFix` does not take effect on instant tile tick loops:
   - Frost Ice (in darkness);
-  - Repeating Command Block;
 
 # Feature Modifications
 
