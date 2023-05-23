@@ -8,8 +8,10 @@ Carpet 1.12 with [RNY](https://github.com/Rainyaphthyl)'s Addition
 - Add field `NAME` for all the logHelpers.
 - Display the actual option when setting logger with default options.
     - `Subscribed to <logger> \(<option>\)`
+- Fix the bug that carpet rule `updateSuppressionCrashFix` does not take effect on instant tile tick loops (pressure plates, tripwires, etc.).
 
 # Feature Modifications
 
 - Add HUD logger `tickWarp` with options: `bar`, `value`.
 - Add options `interrupt` and `status` for command `/tick warp`.
+- Fix a unicode encoding bug of command `/palette <posInfo>`.

@@ -229,16 +229,17 @@ public class CommandPalette extends CommandCarpetBase {
 
     private static void displayJKBits(ICommandSender sender, long longString, long l1, long l2, String append) {
         StringBuilder sb = new StringBuilder();
-
-        String add = "§f";
+        // '§' == 0x00a7
+        char section = (char) 0x00a7;
+        char add = 'f';
         for (int bitNum = 0; bitNum < 64; bitNum++) {
             char s = (longString & 1) == 1 ? '1' : '0';
             longString = longString >> 1;
-            if (bitNum == l1) add = "§c";
-            sb.append(add + s);
-            if (bitNum == l2) add = "§f";
+            if (bitNum == l1) add = 'c';
+            sb.append(section).append(add).append(s);
+            if (bitNum == l2) add = 'f';
         }
-        sender.sendMessage(new TextComponentString("§8L" + append + ":" + sb));
+        sender.sendMessage(new TextComponentString(section + "8L" + append + ":" + sb));
     }
 
     private static BlockPos[] getArrayFromJK(int j, int k, int bits, BlockPos pos) {
