@@ -6,6 +6,7 @@ import carpet.utils.Messenger;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.pathfinding.Path;
+import net.minecraft.pathfinding.PathPoint;
 import net.minecraft.util.EnumParticleTypes;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.text.ITextComponent;
@@ -63,11 +64,49 @@ public class PathReporter {
             }
             if (visual) {
                 if (player instanceof EntityPlayerMP) {
-                    drawParticleLine((EntityPlayerMP) player, entity.getPositionVector(), target, path != null);
+                    drawParticleLine((EntityPlayerMP) player, entity.getPositionVector(), target, successful);
+                    drawParticlePath((EntityPlayerMP) player, path);
                 }
             }
             return list.toArray(new ITextComponent[0]);
         });
+    }
+
+    private static void drawParticlePath(EntityPlayerMP player, Path path) {
+        if (path == null || player == null) {
+            return;
+        }
+        PathPoint point = path.getFinalPathPoint();
+        while (point != null) {
+            point = drawParticleSegment(player, point);
+        }
+    }
+
+    private static PathPoint drawParticleSegment(EntityPlayerMP player, PathPoint dst) {
+        if (dst == null) {
+            return null;
+        }
+        PathPoint src = dst.previous;
+        if (src == null) {
+            return null;
+        }
+        Vec3d increment = new Vec3d(dst.x - src.x, dst.y - src.y, dst.z - src.z);
+        increment = increment.normalize();
+        Random random = new Random();
+        double distance = dst.distanceTo(src);
+        double x = src.x + 0.5;
+        double y = src.y + 0.5;
+        double z = src.z + 0.5;
+        EnumParticleTypes particleLine = EnumParticleTypes.END_ROD;
+        for (double progress = 0.0, delta; progress <= distance; progress += delta) {
+            delta = 0.5 * random.nextDouble();
+            ((WorldServer) player.world).spawnParticle(player, particleLine, true, x, y, z,
+                    1, 0.0, 0.0, 0.0, 0.0);
+            x += delta * increment.x;
+            y += delta * increment.y;
+            z += delta * increment.z;
+        }
+        return src;
     }
 
     private static void drawParticleLine(EntityPlayerMP player, Vec3d src, Vec3d dst, boolean successful) {
@@ -90,11 +129,11 @@ public class PathReporter {
         double z = dst.z;
         for (double progress = 0.0, delta; progress <= distance; progress += delta) {
             delta = interval * random.nextDouble();
+            ((WorldServer) player.world).spawnParticle(player, particleLine, true, x, y, z,
+                    1, 0.0, 0.0, 0.0, speed);
             x -= delta * increment.x;
             y -= delta * increment.y;
             z -= delta * increment.z;
-            ((WorldServer) player.world).spawnParticle(player, particleLine, true, x, y, z,
-                    1, 0.0, 0.0, 0.0, speed);
         }
         if (successful) {
             ((WorldServer) player.world).spawnParticle(player, EnumParticleTypes.DRAGON_BREATH,
