@@ -6,7 +6,6 @@ import carpet.utils.Messenger;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.pathfinding.Path;
-import net.minecraft.pathfinding.PathPoint;
 import net.minecraft.util.EnumParticleTypes;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.text.ITextComponent;
@@ -45,15 +44,22 @@ public class PathReporter {
                     break;
             }
             List<ITextComponent> list = new ArrayList<>();
+            boolean successful = path != null;
             if (chat) {
-                if (path == null) {
-                    list.add(Messenger.s(null, "No Valid Paths!"));
-                } else {
-                    for (int i = 0, length = path.getCurrentPathLength(); i < length; ++i) {
-                        PathPoint point = path.getPathPointFromIndex(i);
-                        list.add(Messenger.s(null, String.format("Path %d : [%d, %d, %d] / %d", i, point.x, point.y, point.z, length)));
-                    }
-                }
+                String style = successful ? "w" : "r";
+                String nameStyle = entity.hasCustomName() ? "c" : style;
+                Vec3d src = entity.getPositionVector();
+                list.add(Messenger.m(null,
+                        nameStyle + ' ' + entity.getName(), style + "  : ",
+                        String.format("%s [%.1f, %.1f, %.1f]", style, src.x, src.y, src.z),
+                        String.format("^g " + src.x + ", " + src.y + ", " + src.z),
+                        String.format("/tp " + src.x + ' ' + src.y + ' ' + src.z),
+                        style + "  -> ",
+                        String.format("%s [%.1f, %.1f, %.1f]", style, target.x, target.y, target.z),
+                        String.format("^g " + target.x + ", " + target.y + ", " + target.z),
+                        String.format("/tp " + target.x + ' ' + target.y + ' ' + target.z),
+                        style + ' ' + (successful ? "" : " F")
+                ));
             }
             if (visual) {
                 if (player instanceof EntityPlayerMP) {
