@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.Random;
 
 public class PathReporter {
-    public static final String[] LOGGER_OPTIONS = new String[]{"chat", "visual", "all"};
+    public static final String[] LOGGER_OPTIONS = new String[]{"visual", "chat", "all"};
     public static final String DEFAULT_OPTION = LOGGER_OPTIONS[0];
     public static final String NAME = "pathFinding";
     private static Logger instance = null;
