@@ -1,6 +1,6 @@
 Carpet 1.12 with [RNY](https://github.com/Rainyaphthyl)'s Addition
 
-[version](src/carpet/CarpetSettings.java): `RNY-build-3-20230524`
+[version](src/carpet/CarpetSettings.java): `RNY-build-4-********`
 
 # TO-DO List
 
@@ -9,6 +9,8 @@ Carpet 1.12 with [RNY](https://github.com/Rainyaphthyl)'s Addition
 - Display the actual option when setting logger with default options.
     - `Subscribed to <logger> \(<option>\)`
 - Bump to release versions after merging pathfinding-logger?
+- Improve SpawnReporter: to report passive mob cap every tick.
+- Add another mode of mob-cap logger.
 
 # Feature Modifications
 
