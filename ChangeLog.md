@@ -12,7 +12,4 @@ Carpet 1.12 with [RNY](https://github.com/Rainyaphthyl)'s Addition
 
 # Feature Modifications
 
-- Add HUD logger `tickWarp` with options: `bar`, `value`.
-- Add options `interrupt` and `status` for command `/tick warp`.
-- Fix a unicode encoding bug of command `/palette <posInfo>`.
-- Fix the bug that carpet rule `updateSuppressionCrashFix` fails to protect the server from crashes caused by *Instant Tile Tick* loops of Pressure Plates, Tripwire, Detector Rail, and Frosted Ice.
+- Fix a display bug about symbol `%` of command `/spawn` on the server console.

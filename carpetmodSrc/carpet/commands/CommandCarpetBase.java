@@ -35,6 +35,19 @@ public abstract class CommandCarpetBase extends CommandBase
             for (ITextComponent t: texts) notifyCommandListener(sender, this, t.getUnformattedText());
         }
     }
+
+    public void msgFormatted(ICommandSender sender, List<ITextComponent> texts) {
+        if (texts != null) {
+            msgFormatted(sender, texts.toArray(new ITextComponent[0]));
+        }
+    }
+
+    public void msgFormatted(ICommandSender sender, ITextComponent... texts) {
+        if (sender != null) {
+            for (ITextComponent t : texts) sender.sendMessage(t);
+        }
+    }
+
     public boolean command_enabled(String command_name, ICommandSender sender)
     {
         if (!CarpetSettings.get(command_name).equalsIgnoreCase("true"))

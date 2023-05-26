@@ -42,7 +42,7 @@ public class CommandBlockInfo extends CommandCarpetBase
         }
         BlockPos blockpos = parseBlockPos(sender, args, 0, false);
         World world = sender.getEntityWorld();
-        msg(sender, BlockInfo.blockInfo(blockpos, world));
+        msgFormatted(sender, BlockInfo.blockInfo(blockpos, world));
     }
 
     public List<String> getTabCompletions(MinecraftServer server, ICommandSender sender, String[] args, @Nullable BlockPos pos)
