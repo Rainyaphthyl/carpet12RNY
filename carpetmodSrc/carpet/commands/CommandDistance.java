@@ -39,7 +39,7 @@ public class CommandDistance extends CommandCarpetBase
         }
         BlockPos blockpos = parseBlockPos(sender, args, 0, false);
         BlockPos blockpos2 = parseBlockPos(sender, args, 3, false);
-        msg(sender, DistanceCalculator.print_distance_two_points(blockpos, blockpos2));
+        msgFormatted(sender, DistanceCalculator.print_distance_two_points(blockpos, blockpos2));
 
     }
 

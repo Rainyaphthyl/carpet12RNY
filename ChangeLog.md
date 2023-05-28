@@ -4,11 +4,15 @@ Carpet 1.12 with [RNY](https://github.com/Rainyaphthyl)'s Addition
 
 # TO-DO List
 
-- Pathfinding Logger
-    - for PigZombie debugs
-    - carpet.logging.logHelpers.PathLogHelper
-    - net.minecraft.pathfinding.PathFinder::findPath
-    - PathNavigate line 302: Separate the path
-    - Path Cache and Filters
-    - Separate path searching and path navigating
-    - Do not distinguish successful and failed paths in direct particle lines
+- Add command `/log copy <player>` or `/logCopy <player>`, to copy logger configurations from other players.
+- Add field `NAME` for all the logHelpers.
+- Display the actual option when setting logger with default options.
+    - `Subscribed to <logger> \(<option>\)`
+- Bump to release versions after merging pathfinding-logger?
+- Improve SpawnReporter: to report passive mob cap every tick.
+- Add another mode of mob-cap logger.
+
+# Feature Modifications
+
+- Fix a display bug about symbol `%` of command `/spawn` on the server console.
+- Add `pathFinding` logger, displaying entity AI paths with particle lines.

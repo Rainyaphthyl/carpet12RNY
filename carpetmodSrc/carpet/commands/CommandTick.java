@@ -7,6 +7,7 @@ import javax.annotation.Nullable;
 import carpet.utils.CarpetProfiler;
 import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommandSender;
+import net.minecraft.command.NumberInvalidException;
 import net.minecraft.command.WrongUsageException;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.server.MinecraftServer;
@@ -21,18 +22,20 @@ public class CommandTick extends CommandCarpetBase
     /**
      * Gets the name of the command
      */
-
     public String getName()
     {
         return "tick";
     }
 
-        /**
+    /**
      * Gets the usage string for the command.
      */
     public String getUsage(ICommandSender sender)
     {
-        return "Usage: tick rate <tickrate in tps> | warp [time in ticks to skip]";
+        return "Usage: tick rate <tps>" +
+                "\n | tick warp (<ticks>|interrupt|status)" +
+                "\n | tick (freeze|step [<steps>])" +
+                "\n | tick superHot [start|stop]";
     }
 
     /**
@@ -58,7 +61,30 @@ public class CommandTick extends CommandCarpetBase
         }
         else if ("warp".equalsIgnoreCase(args[0]))
         {
-            long advance = args.length >= 2 ? parseLong(args[1], 0, Long.MAX_VALUE) : TickSpeed.time_bias > 0 ? 0 : Long.MAX_VALUE;
+            long advance;
+            if (args.length >= 2) {
+                if ("status".equalsIgnoreCase(args[1])) {
+                    advance = -1;
+                } else if ("interrupt".equalsIgnoreCase(args[1])) {
+                    advance = 0;
+                } else {
+                    try {
+                        advance = parseLong(args[1], 1, Long.MAX_VALUE);
+                    } catch (NumberInvalidException e) {
+                        switch (args[1].charAt(0)) {
+                            case 's':
+                            case 'i':
+                                throw new WrongUsageException(getUsage(sender));
+                            default:
+                                throw e;
+                        }
+                    }
+                }
+            } else {
+                advance = TickSpeed.time_bias > 0 ?
+                        (TickSpeed.time_warp_scheduled_ticks == Long.MAX_VALUE ? 0 : -1)
+                        : Long.MAX_VALUE;
+            }
             EntityPlayer player = null;
             if (sender instanceof EntityPlayer)
             {
@@ -170,7 +196,7 @@ public class CommandTick extends CommandCarpetBase
         }
         if (args.length == 2 && "warp".equalsIgnoreCase(args[0]))
         {
-            return getListOfStringsMatchingLastWord(args, "1000","24000","72000");
+            return getListOfStringsMatchingLastWord(args, "status", "interrupt", "1200", "6000", "72000");
         }
         if (args.length == 2 && "health".equalsIgnoreCase(args[0]))
         {

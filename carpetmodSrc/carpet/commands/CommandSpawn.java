@@ -57,7 +57,7 @@ public class CommandSpawn extends CommandCarpetBase
             }
             else
             {
-                msg(sender, SpawnReporter.report(blockpos, world));
+                msgFormatted(sender, SpawnReporter.report(blockpos, world));
                 return;
             }
         }
@@ -65,7 +65,7 @@ public class CommandSpawn extends CommandCarpetBase
         {
             if (args.length == 1)
             {
-                msg(sender, SpawnReporter.tracking_report(world));
+                msgFormatted(sender, SpawnReporter.tracking_report(world));
                 return;
             }
             else if ("start".equalsIgnoreCase(args[1]))
@@ -101,7 +101,7 @@ public class CommandSpawn extends CommandCarpetBase
             }
             else
             {
-                msg(sender, SpawnReporter.recent_spawns(world, args[1]));
+                msgFormatted(sender, SpawnReporter.recent_spawns(world, args[1]));
             }
             return;
         }
@@ -179,7 +179,7 @@ public class CommandSpawn extends CommandCarpetBase
             }
             if (sender instanceof EntityPlayerMP)
             {
-                msg(sender, SpawnReporter.print_general_mobcaps(world));
+                msgFormatted(sender, SpawnReporter.print_general_mobcaps(world));
             }
             return;
         }
@@ -187,7 +187,7 @@ public class CommandSpawn extends CommandCarpetBase
         {
             if (args.length == 1)
             {
-                msg(sender, SpawnReporter.print_general_mobcaps(world));
+                msgFormatted(sender, SpawnReporter.print_general_mobcaps(world));
                 return;
             }
             if (args.length > 1)
@@ -203,16 +203,16 @@ public class CommandSpawn extends CommandCarpetBase
                             notifyCommandListener(sender, this, String.format("Mobcaps for hostile mobs changed to %d, other groups will follow", desired_mobcap));
                             return;
                         }
-                        msg(sender, SpawnReporter.print_general_mobcaps(world));
+                        msgFormatted(sender, SpawnReporter.print_general_mobcaps(world));
                         return;
                     case "overworld":
-                        msg(sender, SpawnReporter.printMobcapsForDimension(world, 0, "overworld"));
+                        msgFormatted(sender, SpawnReporter.printMobcapsForDimension(world, 0, "overworld"));
                         return;
                     case "nether":
-                        msg(sender, SpawnReporter.printMobcapsForDimension(world, -1, "nether"));
+                        msgFormatted(sender, SpawnReporter.printMobcapsForDimension(world, -1, "nether"));
                         return;
                     case "end":
-                        msg(sender, SpawnReporter.printMobcapsForDimension(world, 1, "the end"));
+                        msgFormatted(sender, SpawnReporter.printMobcapsForDimension(world, 1, "the end"));
                         return;
 
                 }
@@ -224,12 +224,12 @@ public class CommandSpawn extends CommandCarpetBase
         {
             if (args.length == 1)
             {
-                msg(sender, SpawnReporter.print_general_mobcaps(world));
+                msgFormatted(sender, SpawnReporter.print_general_mobcaps(world));
                 return;
             }
             else
             {
-                msg(sender, SpawnReporter.printEntitiesByType(args[1], world));
+                msgFormatted(sender, SpawnReporter.printEntitiesByType(args[1], world));
                 return;
             }
         }
@@ -336,7 +336,7 @@ public class CommandSpawn extends CommandCarpetBase
 
     private void trackStop(World world, ICommandSender sender)
     {
-        msg(sender, SpawnReporter.tracking_report(world));
+        msgFormatted(sender, SpawnReporter.tracking_report(world));
         SpawnReporter.reset_spawn_stats(false);
         SpawnReporter.track_spawns = 0L;
         SpawnReporter.lower_spawning_limit = null;
