@@ -95,9 +95,9 @@ public class PathReporter {
         Random random = new Random();
         double distance = dst.distanceTo(src);
         double x = src.x + 0.5;
-        double y = src.y + 0.5;
+        double y = src.y;
         double z = src.z + 0.5;
-        EnumParticleTypes particleLine = EnumParticleTypes.END_ROD;
+        EnumParticleTypes particleLine = EnumParticleTypes.REDSTONE;
         for (double progress = 0.0, delta; progress <= distance; progress += delta) {
             delta = 0.5 * random.nextDouble();
             ((WorldServer) player.world).spawnParticle(player, particleLine, true, x, y, z,
@@ -118,14 +118,14 @@ public class PathReporter {
                     true, src.x, src.y, src.z,
                     5, 0.0, 0.5, 0.0, 0.0);
         }
-        EnumParticleTypes particleLine = EnumParticleTypes.REDSTONE;
+        EnumParticleTypes particleLine = EnumParticleTypes.END_ROD;
         double speed = successful ? 1.0 : 0.0;
         double interval = successful ? 0.5 : 1.0;
         Vec3d increment = dst.subtract(src).normalize();
         Random random = new Random();
         double distance = dst.distanceTo(src);
         double x = dst.x;
-        double y = dst.y;
+        double y = dst.y + 0.5;
         double z = dst.z;
         for (double progress = 0.0, delta; progress <= distance; progress += delta) {
             delta = interval * random.nextDouble();
