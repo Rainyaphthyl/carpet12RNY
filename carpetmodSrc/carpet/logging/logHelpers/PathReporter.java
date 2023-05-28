@@ -14,6 +14,7 @@ import net.minecraft.world.WorldServer;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Random;
 
 public class PathReporter {
@@ -65,43 +66,61 @@ public class PathReporter {
             if (visual) {
                 if (player instanceof EntityPlayerMP) {
                     drawParticleLine((EntityPlayerMP) player, entity.getPositionVector(), target, successful);
-                    drawParticlePath((EntityPlayerMP) player, path);
+                    drawParticlePath((EntityPlayerMP) player, entity.getPositionVector(), path);
                 }
             }
             return list.toArray(new ITextComponent[0]);
         });
     }
 
-    private static void drawParticlePath(EntityPlayerMP player, Path path) {
+    private static void drawParticlePath(EntityPlayerMP player, Vec3d entityPos, Path path) {
         if (path == null || player == null) {
             return;
         }
         PathPoint point = path.getFinalPathPoint();
+        PathPoint curr = path.isFinished() ? point : path.getPathPointFromIndex(path.getCurrentPathIndex());
         while (point != null) {
-            point = drawParticleSegment(player, point);
+            point = drawParticleSegment(player, entityPos, point, curr);
         }
     }
 
-    private static PathPoint drawParticleSegment(EntityPlayerMP player, PathPoint dst) {
+    private static PathPoint drawParticleSegment(EntityPlayerMP player, Vec3d entityPos, PathPoint dst, PathPoint curr) {
         if (dst == null) {
             return null;
         }
         PathPoint src = dst.previous;
-        if (src == null) {
-            return null;
+        if (src != null && Objects.equals(curr, dst) && entityPos != null) {
+            src = null;
         }
-        Vec3d increment = new Vec3d(dst.x - src.x, dst.y - src.y, dst.z - src.z);
+        Vec3d increment;
+        double distance;
+        double x, y, z;
+        if (src == null) {
+            if (entityPos == null) {
+                return null;
+            }
+            double dstX = dst.x + 0.5;
+            double dstZ = dst.z + 0.5;
+            increment = new Vec3d(dstX - entityPos.x, dst.y - entityPos.y, dstZ - entityPos.z);
+            distance = entityPos.distanceTo(new Vec3d(dstX, dst.y, dstZ));
+            x = entityPos.x;
+            y = entityPos.y;
+            z = entityPos.z;
+        } else {
+            increment = new Vec3d(dst.x - src.x, dst.y - src.y, dst.z - src.z);
+            distance = dst.distanceTo(src);
+            x = src.x + 0.5;
+            y = src.y;
+            z = src.z + 0.5;
+        }
         increment = increment.normalize();
         Random random = new Random();
-        double distance = dst.distanceTo(src);
-        double x = src.x + 0.5;
-        double y = src.y;
-        double z = src.z + 0.5;
         EnumParticleTypes particleLine = EnumParticleTypes.REDSTONE;
+        double speed = increment.y == 0.0 ? 0.0 : 1.0;
         for (double progress = 0.0, delta; progress <= distance; progress += delta) {
-            delta = 0.5 * random.nextDouble();
+            delta = 0.25 * random.nextDouble();
             ((WorldServer) player.world).spawnParticle(player, particleLine, true, x, y, z,
-                    1, 0.0, 0.0, 0.0, 0.0);
+                    1, 0.0, 0.0, 0.0, speed);
             x += delta * increment.x;
             y += delta * increment.y;
             z += delta * increment.z;
@@ -119,13 +138,13 @@ public class PathReporter {
                     5, 0.0, 0.5, 0.0, 0.0);
         }
         EnumParticleTypes particleLine = EnumParticleTypes.END_ROD;
-        double speed = successful ? 1.0 : 0.0;
+        double speed = 0.0;
         double interval = successful ? 0.5 : 1.0;
         Vec3d increment = dst.subtract(src).normalize();
         Random random = new Random();
         double distance = dst.distanceTo(src);
         double x = dst.x;
-        double y = dst.y + 0.5;
+        double y = dst.y;
         double z = dst.z;
         for (double progress = 0.0, delta; progress <= distance; progress += delta) {
             delta = interval * random.nextDouble();
