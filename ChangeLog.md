@@ -15,3 +15,4 @@ Carpet 1.12 with [RNY](https://github.com/Rainyaphthyl)'s Addition
 # Feature Modifications
 
 - Fix a display bug about symbol `%` of command `/spawn` on the server console.
+- Add `pathFinding` logger, displaying entity AI paths with particle lines.

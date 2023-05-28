@@ -2,6 +2,7 @@ package carpet.logging;
 
 import carpet.CarpetSettings;
 import carpet.logging.logHelpers.LightCheckReporter;
+import carpet.logging.logHelpers.PathReporter;
 import carpet.logging.logHelpers.RNGMonitor;
 import carpet.logging.logHelpers.TickWarpLogger;
 import com.google.common.base.Charsets;
@@ -44,6 +45,7 @@ public class LoggerRegistry {
     public static boolean __normalCameraVision;
     public static boolean __rngManip;
     public static boolean __lightCheck;
+    public static boolean __pathFinding;
     public static boolean __tickWarp;
     // Map from logger names to loggers.
     private static Map<String, Logger> loggerRegistry = new HashMap<>();
@@ -66,6 +68,7 @@ public class LoggerRegistry {
         registerLogger("rng", new Logger(server, "rng", null, null, LogHandler.CHAT));
         registerLogger("explosions", new Logger(server, "explosions", "brief", new String[]{"brief", "full", "harvest"}, LogHandler.CHAT));
         registerLogger("lightCheck", new Logger(server, "lightCheck", LightCheckReporter.DEFAULT_OPTION, LightCheckReporter.LOGGER_OPTIONS, LogHandler.CHAT));
+        registerLogger(PathReporter.NAME, new Logger(server, PathReporter.NAME, PathReporter.DEFAULT_OPTION, PathReporter.LOGGER_OPTIONS, LogHandler.CHAT));
 
         registerLogger("autosave", new Logger(server, "autosave", null, null, LogHandler.HUD));
         registerLogger("tps", new Logger(server, "tps", null, null, LogHandler.HUD));
