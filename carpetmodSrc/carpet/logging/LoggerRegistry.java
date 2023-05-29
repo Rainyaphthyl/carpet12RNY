@@ -67,7 +67,7 @@ public class LoggerRegistry {
         registerLogger("items", new Logger(server, "items", "brief", new String[]{"brief", "full"}, LogHandler.CHAT));
         registerLogger("rng", new Logger(server, "rng", null, null, LogHandler.CHAT));
         registerLogger("explosions", new Logger(server, "explosions", "brief", new String[]{"brief", "full", "harvest"}, LogHandler.CHAT));
-        registerLogger("lightCheck", new Logger(server, "lightCheck", LightCheckReporter.DEFAULT_OPTION, LightCheckReporter.LOGGER_OPTIONS, LogHandler.CHAT));
+        registerLogger(LightCheckReporter.NAME, new Logger(server, LightCheckReporter.NAME, LightCheckReporter.DEFAULT_OPTION, LightCheckReporter.LOGGER_OPTIONS, LogHandler.CHAT));
         registerLogger(PathReporter.NAME, new Logger(server, PathReporter.NAME, PathReporter.DEFAULT_OPTION, PathReporter.LOGGER_OPTIONS, LogHandler.CHAT));
 
         registerLogger("autosave", new Logger(server, "autosave", null, null, LogHandler.HUD));
@@ -75,7 +75,7 @@ public class LoggerRegistry {
         registerLogger("packets", new Logger(server, "packets", null, null, LogHandler.HUD));
         registerLogger("counter", new Logger(server, "counter", "white", new String[]{"all", "cactus", "white", "orange", "magenta", "light_blue", "yellow", "lime", "pink", "gray", "silver", "cyan", "purple", "blue", "brown", "green", "red", "black"}, LogHandler.HUD));
         registerLogger("mobcaps", new Logger(server, "mobcaps", "dynamic", new String[]{"dynamic", "overworld", "nether", "end"}, LogHandler.HUD));
-        registerLogger("rngManip", new Logger(server, "rngManip", RNGMonitor.DEFAULT_OPTION, RNGMonitor.LOGGER_OPTIONS, LogHandler.HUD));
+        registerLogger(RNGMonitor.NAME, new Logger(server, RNGMonitor.NAME, RNGMonitor.DEFAULT_OPTION, RNGMonitor.LOGGER_OPTIONS, LogHandler.HUD));
         registerLogger(TickWarpLogger.NAME, new Logger(server, TickWarpLogger.NAME, TickWarpLogger.DEFAULT_OPTION, TickWarpLogger.LOGGER_OPTIONS, LogHandler.HUD));
 
         registerDebugger("recipes", new Logger(server, "recipes", null, null, LogHandler.CHAT));

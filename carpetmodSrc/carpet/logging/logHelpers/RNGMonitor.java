@@ -21,6 +21,7 @@ public class RNGMonitor {
     public static final double FREQUENCY_THRESHOLD = 0.75;
     public static final String DEFAULT_OPTION = RNGAppType.raw.name();
     public static final String[] LOGGER_OPTIONS;
+    public static final String NAME = "rngManip";
 
     static {
         RNGAppType[] apps = RNGAppType.values();
@@ -135,7 +136,7 @@ public class RNGMonitor {
     public void updateLogHUD() {
         if (this.isValid()) {
             try {
-                LoggerRegistry.getLogger("rngManip").log(playerOption -> {
+                LoggerRegistry.getLogger(NAME).log(playerOption -> {
                     RNGAppType rngAppType = RNGAppType.valueOf(playerOption);
                     RNGSeedBundle seedBundle = randSeedBundles.get(rngAppType);
                     long currSeed = seedBundle.currentRandSeed;
