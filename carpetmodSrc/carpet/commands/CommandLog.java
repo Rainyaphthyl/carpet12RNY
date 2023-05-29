@@ -11,6 +11,7 @@ import net.minecraft.command.ICommandSender;
 import net.minecraft.command.WrongUsageException;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.management.PlayerList;
 import net.minecraft.util.math.BlockPos;
 import org.apache.commons.lang3.ArrayUtils;
 
@@ -21,7 +22,7 @@ import java.util.*;
 
 public class CommandLog extends CommandCarpetBase {
 
-    private final String USAGE = "/log (interactive menu) OR /log <logName> [?option] [player] [handler ...] OR /log <logName> clear [player] OR /log defaults (interactive menu) OR /log setDefault <logName> [?option] [handler ...] OR /log removeDefault <logName>";
+    private final String USAGE = "/log (interactive menu) \nOR /log <logName> [?option] [player] [handler ...] \nOR /log <logName> clear [player] \nOR /log defaults (interactive menu) \nOR /log setDefault <logName> [?option] [handler ...] \nOR /log removeDefault <logName> \nOR /log copy <another_player>";
 
     @Override
     @Nonnull
@@ -159,11 +160,21 @@ public class CommandLog extends CommandCarpetBase {
             options.add("defaults");
             options.add("setDefault");
             options.add("removeDefault");
+            options.add("copy");
             return getListOfStringsMatchingLastWord(args, options);
         } else if (args.length == 2) {
             if ("clear".equalsIgnoreCase(args[0])) {
                 List<String> players = Arrays.asList(server.getOnlinePlayerNames());
                 return getListOfStringsMatchingLastWord(args, players.toArray(new String[0]));
+            }
+
+            if ("copy".equalsIgnoreCase(args[0])) {
+                PlayerList serverPlayerList = server.getPlayerList();
+                Set<String> playerNames = new HashSet<>();
+                playerNames.addAll(Arrays.asList(serverPlayerList.getOnlinePlayerNames()));
+                playerNames.addAll(Arrays.asList(serverPlayerList.getWhitelistedPlayerNames()));
+                playerNames.addAll(Arrays.asList(serverPlayerList.getOppedPlayerNames()));
+                return getListOfStringsMatchingLastWord(args, playerNames.toArray(new String[0]));
             }
 
             if ("setDefault".equalsIgnoreCase(args[0]) || "removeDefault".equalsIgnoreCase(args[0])) {
