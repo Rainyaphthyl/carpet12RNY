@@ -63,6 +63,34 @@ public class CommandLog extends CommandCarpetBase {
             return;
         }
 
+        if ("copy".equalsIgnoreCase(args[0])) {
+            if (player == null) {
+                throw new WrongUsageException("Command \"/log copy\" must be executed by players");
+            }
+            String srcName = null;
+            if (args.length > 1) {
+                srcName = args[1];
+            }
+            if (srcName == null) {
+                throw new WrongUsageException("No src player specified");
+            }
+            String dstName = player.getName();
+            if (srcName.equalsIgnoreCase(dstName)) {
+                Messenger.m(sender, "gi You should not copy from yourself!");
+            } else {
+                Map<String, LoggerOptions> currMap = LoggerRegistry.getPlayerSubscriptions(dstName);
+                Map<String, LoggerOptions> logMap = LoggerRegistry.getPlayerSubscriptions(srcName);
+                logMap.forEach((logger, options) -> {
+                    if (!currMap.containsKey(logger)) {
+                        LogHandler handler;
+                        handler = LogHandler.createHandler(options.handlerName, options.extraArgs);
+                        LoggerRegistry.switchPlayerSubscription(server, dstName, options.logger, options.option, handler);
+                    }
+                });
+            }
+            return;
+        }
+
         if ("defaults".equalsIgnoreCase(args[0])) {
             displayDefaultLoggerMenu(player);
             return;
