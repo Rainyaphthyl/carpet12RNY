@@ -5,18 +5,24 @@ import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.server.MinecraftServer;
 
+import javax.annotation.Nonnull;
+import javax.annotation.ParametersAreNonnullByDefault;
+
 public class CommandLogMenu extends CommandLog {
     @Override
+    @Nonnull
     public String getName() {
         return "logMenu";
     }
 
     @Override
+    @Nonnull
     public String getUsage(ICommandSender sender) {
         return "/logMenu (interactive menu) OR /logMenu <logName> [?option] [player] [handler ...] OR /logMenu <logName> clear [player] OR /logMenu defaults (interactive menu) OR /logMenu setDefault <logName> [?option] [handler ...] OR /logMenu removeDefault <logName>";
     }
 
     @Override
+    @ParametersAreNonnullByDefault
     public void execute(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
         super.execute(server, sender, args);
         boolean showingDefault = args.length > 0 &&

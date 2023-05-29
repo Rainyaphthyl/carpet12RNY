@@ -14,6 +14,9 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.math.BlockPos;
 import org.apache.commons.lang3.ArrayUtils;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import javax.annotation.ParametersAreNonnullByDefault;
 import java.util.*;
 
 public class CommandLog extends CommandCarpetBase {
@@ -21,16 +24,19 @@ public class CommandLog extends CommandCarpetBase {
     private final String USAGE = "/log (interactive menu) OR /log <logName> [?option] [player] [handler ...] OR /log <logName> clear [player] OR /log defaults (interactive menu) OR /log setDefault <logName> [?option] [handler ...] OR /log removeDefault <logName>";
 
     @Override
+    @Nonnull
     public String getName() {
         return "log";
     }
 
     @Override
+    @Nonnull
     public String getUsage(ICommandSender sender) {
         return USAGE;
     }
 
     @Override
+    @ParametersAreNonnullByDefault
     public void execute(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
         if (!command_enabled("commandLog", sender)) return;
         EntityPlayer player = null;
@@ -69,7 +75,6 @@ public class CommandLog extends CommandCarpetBase {
                     if (args.length >= 3) {
                         option = logger.getAcceptedOption(args[2]);
                     }
-
                     LogHandler handler = null;
                     if (args.length >= 4) {
                         handler = LogHandler.createHandler(args[3], ArrayUtils.subarray(args, 4, args.length));
@@ -77,9 +82,8 @@ public class CommandLog extends CommandCarpetBase {
                             throw new CommandException("Invalid handler");
                         }
                     }
-
                     LoggerRegistry.setDefault(server, args[1], option, handler);
-                    Messenger.m(player, "gi Added " + logger.getLogName() + " to default subscriptions.");
+                    Messenger.m(player, "gi Added " + logger.getNameWithOption(option) + " to default subscriptions.");
                     return;
                 } else {
                     throw new WrongUsageException("No logger named " + args[1] + ".");
@@ -133,7 +137,7 @@ public class CommandLog extends CommandCarpetBase {
                 subscribed = LoggerRegistry.switchPlayerSubscription(server, player.getName(), logger.getLogName(), option, handler);
             }
             if (subscribed) {
-                Messenger.m(player, String.format("gi Subscribed to %s%s.", logger.getLogName(), option == null ? "" : String.format(" (%s)", option)));
+                Messenger.m(player, "gi Subscribed to " + logger.getNameWithOption(option) + '.');
             } else {
                 Messenger.m(player, "gi Unsubscribed from " + logger.getLogName() + ".");
             }
@@ -143,12 +147,14 @@ public class CommandLog extends CommandCarpetBase {
     }
 
     @Override
-    public List<String> getTabCompletions(MinecraftServer server, ICommandSender sender, String[] args, BlockPos targetPos) {
+    @Nonnull
+    @ParametersAreNonnullByDefault
+    public List<String> getTabCompletions(MinecraftServer server, ICommandSender sender, String[] args, @Nullable BlockPos targetPos) {
         if (!CarpetSettings.commandLog) {
-            return Collections.<String>emptyList();
+            return Collections.emptyList();
         }
         if (args.length == 1) {
-            Set<String> options = new HashSet<String>(Arrays.asList(LoggerRegistry.getLoggerNames(classType())));
+            Set<String> options = new HashSet<>(Arrays.asList(LoggerRegistry.getLoggerNames(classType())));
             options.add("clear");
             options.add("defaults");
             options.add("setDefault");
@@ -161,7 +167,7 @@ public class CommandLog extends CommandCarpetBase {
             }
 
             if ("setDefault".equalsIgnoreCase(args[0]) || "removeDefault".equalsIgnoreCase(args[0])) {
-                Set<String> options = new HashSet<String>(Arrays.asList(LoggerRegistry.getLoggerNames(classType())));
+                Set<String> options = new HashSet<>(Arrays.asList(LoggerRegistry.getLoggerNames(classType())));
                 return getListOfStringsMatchingLastWord(args, options);
             }
 
@@ -195,7 +201,7 @@ public class CommandLog extends CommandCarpetBase {
             return getListOfStringsMatchingLastWord(args, LogHandler.getHandlerNames());
         }
 
-        return Collections.<String>emptyList();
+        return Collections.emptyList();
     }
 
     private int classType() {
