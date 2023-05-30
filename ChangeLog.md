@@ -1,6 +1,6 @@
 Carpet 1.12 with [RNY](https://github.com/Rainyaphthyl)'s Addition
 
-[version](src/carpet/CarpetSettings.java): `RNY-build-4-********`
+[version](src/carpet/CarpetSettings.java): `RNY-build-4-20230530`
 
 # TO-DO List
 
