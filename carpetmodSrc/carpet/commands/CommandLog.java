@@ -24,6 +24,14 @@ public class CommandLog extends CommandCarpetBase {
 
     private final String USAGE = "/log (interactive menu) \nOR /log <logName> [?option] [player] [handler ...] \nOR /log <logName> clear [player] \nOR /log defaults (interactive menu) \nOR /log setDefault <logName> [?option] [handler ...] \nOR /log removeDefault <logName> \nOR /log copy <another_player>";
 
+    public static String get_name_with_option(String logName, String option) {
+        if (option != null) {
+            return logName + " (" + option + ')';
+        } else {
+            return logName;
+        }
+    }
+
     @Override
     @Nonnull
     public String getName() {
@@ -78,15 +86,29 @@ public class CommandLog extends CommandCarpetBase {
             if (srcName.equalsIgnoreCase(dstName)) {
                 Messenger.m(sender, "gi You should not copy from yourself!");
             } else {
-                Map<String, LoggerOptions> currMap = LoggerRegistry.getPlayerSubscriptions(dstName);
-                Map<String, LoggerOptions> logMap = LoggerRegistry.getPlayerSubscriptions(srcName);
-                logMap.forEach((logger, options) -> {
-                    if (!currMap.containsKey(logger)) {
-                        LogHandler handler;
-                        handler = LogHandler.createHandler(options.handlerName, options.extraArgs);
-                        LoggerRegistry.switchPlayerSubscription(server, dstName, options.logger, options.option, handler);
+                Map<String, LoggerOptions> currMap = LoggerRegistry.hasSubscriptions(dstName) ? LoggerRegistry.getPlayerSubscriptions(dstName) : Collections.emptyMap();
+                Map<String, LoggerOptions> logMap = LoggerRegistry.hasSubscriptions(srcName) ? LoggerRegistry.getPlayerSubscriptions(srcName) : Collections.emptyMap();
+                int copies = 0;
+                for (LoggerOptions options : logMap.values()) {
+                    String logger = options.logger;
+                    String option = options.option;
+                    LoggerOptions currOpt = currMap.get(logger);
+                    if (!Objects.equals(currOpt, options)) {
+                        LogHandler handler = null;
+                        try {
+                            handler = LogHandler.createHandler(options.handlerName, options.extraArgs);
+                        } catch (NullPointerException ignored) {
+                        }
+                        LoggerRegistry.switchPlayerSubscription(server, dstName, options.logger, option, handler);
+                        Messenger.m(player, "gi Subscribed to " + get_name_with_option(logger, option) + '.');
+                        ++copies;
                     }
-                });
+                }
+                if (copies > 0) {
+                    Messenger.m(player, "gi Copied " + copies + " loggers from " + srcName);
+                } else {
+                    Messenger.m(player, "gi You had no loggers to sync from " + srcName);
+                }
             }
             return;
         }

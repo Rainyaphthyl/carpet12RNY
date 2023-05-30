@@ -394,6 +394,9 @@ public class LoggerRegistry {
     }
 
     private static void unsubscribePlayer(String playerName, String logName) {
-        LoggerRegistry.getLogger(logName).removePlayer(playerName);
+        Logger logger = LoggerRegistry.getLogger(logName);
+        if (logger != null) {
+            logger.removePlayer(playerName);
+        }
     }
 }
