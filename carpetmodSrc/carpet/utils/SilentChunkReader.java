@@ -4,6 +4,7 @@ import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.entity.EnumCreatureType;
 import net.minecraft.init.Blocks;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
@@ -12,6 +13,7 @@ import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.EnumSkyBlock;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.WorldServer;
+import net.minecraft.world.biome.Biome;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.gen.ChunkProviderServer;
 
@@ -19,6 +21,8 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 import java.io.IOException;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Objects;
 
 /**
@@ -242,5 +246,22 @@ public class SilentChunkReader implements IBlockAccess {
     public int getRedstonePower(BlockPos pos, EnumFacing facing) {
         IBlockState state = getBlockState(pos);
         return state.isNormalCube() ? getStrongPower(pos) : state.getWeakPower(this, pos, facing);
+    }
+
+    public Collection<Biome.SpawnListEntry> getPossibleCreatures(EnumCreatureType creatureType, BlockPos blockPos) {
+        return Collections.emptySet();
+    }
+
+    public Biome getBiome(final BlockPos pos) {
+        Chunk chunk = getChunk(pos);
+        Biome biome = null;
+        if (chunk != null) {
+            int i = pos.getX() & 15;
+            int j = pos.getZ() & 15;
+            byte[] biomeArray = chunk.getBiomeArray();
+            int k = biomeArray[j << 4 | i] & 255;
+            biome = Biome.getBiome(k);
+        }
+        return biome;
     }
 }
