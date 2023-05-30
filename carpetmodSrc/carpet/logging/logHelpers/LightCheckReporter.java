@@ -14,11 +14,12 @@ import java.util.List;
 public class LightCheckReporter {
     public static final String[] LOGGER_OPTIONS = new String[]{"raw", "relative", "verbose"};
     public static final String DEFAULT_OPTION = LOGGER_OPTIONS[0];
+    public static final String NAME = "lightCheck";
     private static Logger instance = null;
 
     public static Logger get_instance() {
         if (instance == null) {
-            instance = LoggerRegistry.getLogger("lightCheck");
+            instance = LoggerRegistry.getLogger(NAME);
         }
         return instance;
     }
