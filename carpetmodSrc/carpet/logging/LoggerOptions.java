@@ -5,13 +5,17 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.minecraft.util.IJsonSerializable;
 
+import java.util.Arrays;
+import java.util.Objects;
+
 public class LoggerOptions implements IJsonSerializable {
     public String logger;
     public String option;
     public String handlerName;
     public String[] extraArgs;
 
-    LoggerOptions() {}
+    LoggerOptions() {
+    }
 
     public LoggerOptions(String logger, String option, String handlerName, String... extraArgs) {
         this.logger = logger;
@@ -22,7 +26,7 @@ public class LoggerOptions implements IJsonSerializable {
 
     @Override
     public void fromJson(JsonElement json) {
-        JsonObject obj = (JsonObject)json;
+        JsonObject obj = (JsonObject) json;
 
         logger = obj.get("logger").getAsString();
         if (!obj.get("option").isJsonNull())
@@ -52,5 +56,19 @@ public class LoggerOptions implements IJsonSerializable {
         entry.add("extraArgs", args);
 
         return entry;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == this) {
+            return true;
+        } else if (obj instanceof LoggerOptions) {
+            return Objects.equals(logger, ((LoggerOptions) obj).logger)
+                    && Objects.equals(option, ((LoggerOptions) obj).option)
+                    && Objects.equals(handlerName, ((LoggerOptions) obj).handlerName)
+                    && Arrays.equals(extraArgs, ((LoggerOptions) obj).extraArgs);
+        } else {
+            return false;
+        }
     }
 }

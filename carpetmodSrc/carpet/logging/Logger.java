@@ -57,6 +57,16 @@ public class Logger
         return logName;
     }
 
+    public String getNameWithOption(String option) {
+        if (option != null) {
+            return logName + " (" + option + ')';
+        } else if (default_option != null) {
+            return logName + " (" + default_option + ')';
+        } else {
+            return logName;
+        }
+    }
+
     /**
      * Subscribes the player with the given logName to the logger.
      */
