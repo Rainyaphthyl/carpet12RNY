@@ -10,20 +10,23 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.EnumSkyBlock;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.WorldServer;
 import net.minecraft.world.biome.Biome;
+import net.minecraft.world.border.WorldBorder;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.gen.ChunkProviderServer;
+import net.minecraft.world.storage.WorldInfo;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 import java.io.IOException;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Objects;
+import java.util.Set;
 
 /**
  * carpet12RNY feature
@@ -36,6 +39,7 @@ public class SilentChunkReader implements IBlockAccess {
     // TODO: 2023/5/12,0012 Use Task ChunkReader instead of Permanent ChunkReader
     private final Long2ObjectMap<Chunk> chunkCache;
     private final WorldServer world;
+    private BlockPos cachedWorldSpawn = null;
 
     {
         chunkCache = new Long2ObjectOpenHashMap<>();
@@ -252,7 +256,7 @@ public class SilentChunkReader implements IBlockAccess {
         return state.isNormalCube() ? getStrongPower(pos) : state.getWeakPower(this, pos, facing);
     }
 
-    public Collection<Biome.SpawnListEntry> getPossibleCreatures(EnumCreatureType creatureType, BlockPos blockPos) {
+    public Set<Biome.SpawnListEntry> getPossibleCreatures(EnumCreatureType creatureType, BlockPos blockPos) {
         return Collections.emptySet();
     }
 
@@ -267,5 +271,43 @@ public class SilentChunkReader implements IBlockAccess {
             biome = Biome.getBiome(k);
         }
         return biome;
+    }
+
+    /**
+     * @return the spawn point in the world
+     */
+    public BlockPos getSpawnPoint() {
+        if (cachedWorldSpawn == null) {
+            WorldInfo worldInfo = world.getWorldInfo();
+            BlockPos posWorldSpawn = new BlockPos(worldInfo.getSpawnX(), worldInfo.getSpawnY(), worldInfo.getSpawnZ());
+            WorldBorder worldBorder = world.getWorldBorder();
+            if (!worldBorder.contains(posWorldSpawn)) {
+                int centerX = MathHelper.floor(worldBorder.getCenterX());
+                int centerZ = MathHelper.floor(worldBorder.getCenterZ());
+                posWorldSpawn = new BlockPos(centerX, getHeight(centerX, centerZ), centerZ);
+            }
+            cachedWorldSpawn = posWorldSpawn;
+        }
+        return cachedWorldSpawn;
+    }
+
+    /**
+     * {@link net.minecraft.world.World#getHeight}
+     *
+     * @return from the height map, the height of the highest block at this x and z coordinate.
+     */
+    public int getHeight(int blockX, int blockZ) {
+        int height;
+        if (blockX >= -30000000 && blockZ >= -30000000 && blockX < 30000000 && blockZ < 30000000) {
+            Chunk chunk = getChunk(blockX >> 4, blockZ >> 4);
+            if (chunk == null) {
+                height = 0;
+            } else {
+                height = chunk.getHeightValue(blockX & 15, blockZ & 15);
+            }
+        } else {
+            height = world.getSeaLevel() + 1;
+        }
+        return height;
     }
 }

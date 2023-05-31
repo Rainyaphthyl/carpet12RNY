@@ -12,7 +12,7 @@ import java.util.*;
 public class PerimeterResult {
     private final Object2IntMap<EnumCreatureType> generalCounts = new Object2IntOpenHashMap<>();
     private final Object2IntMap<Class<? extends EntityLiving>> specificCounts = new Object2IntOpenHashMap<>();
-    private final Map<Class<? extends EntityLiving>, Set<BlockPos>> spotSamples = new HashMap<>();
+    private final Map<Class<? extends EntityLiving>, Set<BlockPos>> spotSampleSets = new HashMap<>();
 
     private PerimeterResult() {
     }
@@ -32,9 +32,30 @@ public class PerimeterResult {
         if (entityTypes != null) {
             for (Class<? extends EntityLiving> entityType : entityTypes) {
                 result.specificCounts.put(entityType, 0);
-                result.spotSamples.put(entityType, new LinkedHashSet<>());
+                result.spotSampleSets.put(entityType, new LinkedHashSet<>());
             }
         }
         return result;
+    }
+
+    public boolean containsPos(Class<? extends EntityLiving> entityType, BlockPos pos) {
+        if (pos == null) {
+            return false;
+        }
+        boolean answer = false;
+        if (entityType != null) {
+            Set<BlockPos> samples = spotSampleSets.get(entityType);
+            if (samples != null && samples.contains(pos)) {
+                answer = true;
+            }
+        } else {
+            for (Set<BlockPos> samples : spotSampleSets.values()) {
+                if (samples != null && samples.contains(pos)) {
+                    answer = true;
+                    break;
+                }
+            }
+        }
+        return answer;
     }
 }
