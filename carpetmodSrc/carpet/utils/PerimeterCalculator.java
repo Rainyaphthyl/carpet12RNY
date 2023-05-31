@@ -149,7 +149,7 @@ public class PerimeterCalculator implements Runnable {
                                     float mobZ = (float) posTarget.getZ() + 0.5F;
                                     int mobY = posTarget.getY();
                                     if (isSpawnAllowed(mobX, mobY, mobZ)) {
-                                        Set<Biome.SpawnListEntry> entrySet = reader.getPossibleCreatures(creatureType, posTarget);
+                                        List<Biome.SpawnListEntry> entries = reader.getPossibleCreatures(creatureType, posTarget);
                                     }
                                 });
                             }

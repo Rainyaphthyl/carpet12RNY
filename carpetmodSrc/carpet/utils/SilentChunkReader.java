@@ -17,16 +17,17 @@ import net.minecraft.world.WorldServer;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.border.WorldBorder;
 import net.minecraft.world.chunk.Chunk;
+import net.minecraft.world.gen.ChunkGeneratorOverworld;
 import net.minecraft.world.gen.ChunkProviderServer;
+import net.minecraft.world.gen.IChunkGenerator;
 import net.minecraft.world.storage.WorldInfo;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 import java.io.IOException;
-import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 
 /**
  * carpet12RNY feature
@@ -256,8 +257,14 @@ public class SilentChunkReader implements IBlockAccess {
         return state.isNormalCube() ? getStrongPower(pos) : state.getWeakPower(this, pos, facing);
     }
 
-    public Set<Biome.SpawnListEntry> getPossibleCreatures(EnumCreatureType creatureType, BlockPos blockPos) {
-        return Collections.emptySet();
+    public List<Biome.SpawnListEntry> getPossibleCreatures(EnumCreatureType creatureType, BlockPos blockPos) {
+        Biome biome = getBiome(blockPos);
+        List<Biome.SpawnListEntry> entryList = biome.getSpawnableList(creatureType);
+        // structure check for dimensions...
+        IChunkGenerator generator = world.getChunkProvider().chunkGenerator;
+        if (generator instanceof ChunkGeneratorOverworld) {
+        }
+        return entryList;
     }
 
     public Biome getBiome(final BlockPos pos) {
