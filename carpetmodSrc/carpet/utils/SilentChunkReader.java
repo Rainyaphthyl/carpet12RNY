@@ -98,8 +98,12 @@ public class SilentChunkReader implements IBlockAccess {
         return chunk;
     }
 
-    private Chunk getChunk(@Nonnull BlockPos pos) {
-        return getChunk(pos.getX() >> 4, pos.getZ() >> 4);
+    public Chunk getChunk(@Nonnull BlockPos blockPos) {
+        return getChunk(blockPos.getX() >> 4, blockPos.getZ() >> 4);
+    }
+
+    public Chunk getChunk(@Nonnull ChunkPos chunkPos) {
+        return getChunk(chunkPos.x, chunkPos.z);
     }
 
     public int getLightFor(EnumSkyBlock lightType, @Nonnull BlockPos pos) {

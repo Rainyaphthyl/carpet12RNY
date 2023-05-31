@@ -2,24 +2,30 @@ package carpet.utils;
 
 import carpet.CarpetServer;
 import net.minecraft.entity.EntityLiving;
+import net.minecraft.entity.EnumCreatureType;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.border.WorldBorder;
+import net.minecraft.world.chunk.Chunk;
 
+import javax.annotation.Nonnull;
 import java.util.*;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.function.Consumer;
 
 /**
  * {@link net.minecraft.world.WorldEntitySpawner#findChunksForSpawning}
  */
 public class PerimeterCalculator implements Runnable {
     private final Map<Class<? extends EntityLiving>, Biome.SpawnListEntry> entityEntryMap = new HashMap<>();
-    private final Queue<Class<? extends EntityLiving>> constructBuffer = new LinkedBlockingQueue<>();
+    private final Queue<Class<? extends EntityLiving>> constructBuffer = new LinkedList<>();
     private final WorldServer worldServer;
     private final Vec3d center;
+    private Set<ChunkPos> eligibleChunks = null;
 
     public PerimeterCalculator(WorldServer worldServer, Vec3d center, Collection<Class<? extends EntityLiving>> entityTypes) {
         this.worldServer = worldServer;
@@ -35,23 +41,75 @@ public class PerimeterCalculator implements Runnable {
         constructBuffer.add(entityType);
     }
 
-    @Override
-    public void run() {
-        final SilentChunkReader reader = worldServer.silentChunkReader;
-        // eligible chunks for a virtual player at the perimeter center
-        // ignoring the outermost circle (only used for mobCap count)
-        final Set<ChunkPos> eligibleChunks = new HashSet<>(15 * 15);
-        int chunkX = MathHelper.floor(center.x / 16.0);
-        int chunkZ = MathHelper.floor(center.z / 16.0);
-        // checking player chunk map
-        final int radius = Math.min(CarpetServer.minecraft_server.getPlayerList().getViewDistance(), 7);
-        final WorldBorder worldBorder = worldServer.getWorldBorder();
-        for (int dx = -radius; dx <= radius; ++dx) {
-            for (int dz = -radius; dz <= radius; ++dz) {
-                ChunkPos chunkPos = new ChunkPos(chunkX, chunkZ);
-                if (worldBorder.contains(chunkPos)) {
-                    eligibleChunks.add(chunkPos);
+    public static void asyncSearch(World world, Vec3d center, Collection<Class<? extends EntityLiving>> entityTypes) {
+        if (world instanceof WorldServer) {
+            PerimeterCalculator calculator = new PerimeterCalculator((WorldServer) world, center, entityTypes);
+            Thread thread = new Thread(calculator);
+            thread.start();
+        }
+    }
+
+    public PerimeterResult getEmptyResult() {
+        return PerimeterResult.getEmptyResult(entityEntryMap.keySet());
+    }
+
+    private synchronized Set<ChunkPos> getEligibleChunks() {
+        if (eligibleChunks == null) {
+            // eligible chunks for a virtual player at the perimeter center
+            // ignoring the outermost circle (only used for mobCap count)
+            final Set<ChunkPos> tempSet = new HashSet<>(15 * 15);
+            int chunkX = MathHelper.floor(center.x / 16.0);
+            int chunkZ = MathHelper.floor(center.z / 16.0);
+            // checking player chunk map
+            final int radius = Math.min(CarpetServer.minecraft_server.getPlayerList().getViewDistance(), 7);
+            final WorldBorder worldBorder = worldServer.getWorldBorder();
+            for (int dx = -radius; dx <= radius; ++dx) {
+                for (int dz = -radius; dz <= radius; ++dz) {
+                    ChunkPos chunkPos = new ChunkPos(chunkX, chunkZ);
+                    if (worldBorder.contains(chunkPos)) {
+                        tempSet.add(chunkPos);
+                    }
                 }
+            }
+            eligibleChunks = tempSet;
+        }
+        return eligibleChunks;
+    }
+
+    public void searchChunkPositions(@Nonnull ChunkPos chunkPos, Consumer<BlockPos> consumer) {
+        final SilentChunkReader reader = worldServer.silentChunkReader;
+        int originX = chunkPos.x * 16;
+        int originZ = chunkPos.z * 16;
+        Chunk chunk = reader.getChunk(chunkPos);
+        int height = MathHelper.roundUp(chunk.getHeight(new BlockPos(originX + 8, 0, originZ + 8)) + 1, 16);
+        if (height <= 0) {
+            height = chunk.getTopFilledSegment() + 15;
+        }
+        BlockPos.MutableBlockPos posIter = new BlockPos.MutableBlockPos();
+        for (int dx = 0; dx < 16; ++dx) {
+            int x = originX + dx;
+            for (int dz = 0; dz < 16; ++dz) {
+                int z = originZ + dz;
+                posIter.setPos(x, 0, z);
+                for (int y = 0; y < height; ++y) {
+                    posIter.setY(y);
+                    consumer.accept(posIter);
+                }
+            }
+        }
+    }
+
+    public PerimeterResult countSpots() {
+        PerimeterResult result = getEmptyResult();
+        final SilentChunkReader reader = worldServer.silentChunkReader;
+        final Set<ChunkPos> eligibleChunks = getEligibleChunks();
+        // spawning attempts
+        for (EnumCreatureType enumcreaturetype : EnumCreatureType.values()) {
+            BlockPos.MutableBlockPos posIter = new BlockPos.MutableBlockPos();
+            for (ChunkPos chunkPos : eligibleChunks) {
+                searchChunkPositions(chunkPos, pos -> {
+                    Messenger.print_server_message(CarpetServer.minecraft_server, pos.toImmutable().toString());
+                });
             }
         }
 
@@ -188,5 +246,12 @@ public class PerimeterCalculator implements Runnable {
         //        }
         //    }
         //}
+        return result;
     }
+
+    @Override
+    public void run() {
+        PerimeterResult result = countSpots();
+    }
+
 }

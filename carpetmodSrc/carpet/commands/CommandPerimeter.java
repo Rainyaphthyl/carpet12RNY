@@ -1,6 +1,7 @@
 package carpet.commands;
 
 import carpet.utils.Messenger;
+import carpet.utils.PerimeterCalculator;
 import carpet.utils.PerimeterDiagnostics;
 import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommandSender;
@@ -35,7 +36,7 @@ public class CommandPerimeter extends CommandCarpetBase
      */
     public String getUsage(ICommandSender sender)
     {
-        return "/perimetercheck <X> <Y> <Z> <target_entity?>";
+        return "/perimetercheck <X> <Y> <Z> [<target_entity>?...]";
     }
 
     /**
@@ -76,6 +77,12 @@ public class CommandPerimeter extends CommandCarpetBase
                     throw new CommandException("Failed to test entity");
                 }
             }
+            // test start
+            PerimeterCalculator.asyncSearch(world, new Vec3d(blockpos), entityliving == null ? null : Collections.singleton(entityliving.getClass()));
+            if (true){
+                return;
+            }
+            // test end
             PerimeterDiagnostics.Result res = PerimeterDiagnostics.countSpots((WorldServer) world, blockpos, entityliving);
             if (sender instanceof EntityPlayer)
             {
