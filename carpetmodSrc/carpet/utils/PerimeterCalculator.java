@@ -48,7 +48,7 @@ public class PerimeterCalculator implements Runnable {
         }
     }
 
-    public static EnumCreatureType getCreatureType(Class<? extends EntityLiving> entityType) {
+    public static EnumCreatureType checkCreatureType(Class<? extends EntityLiving> entityType) {
         if (entityType == null) {
             return null;
         }
@@ -63,7 +63,8 @@ public class PerimeterCalculator implements Runnable {
         return creatureType;
     }
 
-    private Long2IntMap getEligibleHeightMap() {
+    @Nonnull
+    private Long2IntMap createEligibleHeightMap() {
         Long2IntMap tempMap = new Long2IntAVLTreeMap();
         // eligible chunks for a virtual player at the perimeter center
         // ignoring the outermost circle (only used for mobCap count)
@@ -77,7 +78,7 @@ public class PerimeterCalculator implements Runnable {
                 ChunkPos chunkPos = new ChunkPos(chunkX + dx, chunkZ + dz);
                 if (worldBorder.contains(chunkPos)) {
                     long index = SilentChunkReader.chunkAsLong(chunkPos);
-                    tempMap.put(index, getChunkHeight(chunkPos));
+                    tempMap.put(index, checkChunkHeight(chunkPos));
                 }
             }
         }
@@ -109,7 +110,7 @@ public class PerimeterCalculator implements Runnable {
         }
     }
 
-    public int getChunkHeight(@Nonnull ChunkPos chunkPos) {
+    public int checkChunkHeight(@Nonnull ChunkPos chunkPos) {
         final int originX = chunkPos.x * 16;
         final int originZ = chunkPos.z * 16;
         Chunk chunk = reader.getChunk(chunkPos);
@@ -179,8 +180,8 @@ public class PerimeterCalculator implements Runnable {
     private synchronized void initialize() {
         reader = worldServer.silentChunkReader;
         result = PerimeterResult.getEmptyResult();
-        creatureType = getCreatureType(entityType);
-        eligibleChunkHeightMap = getEligibleHeightMap();
+        creatureType = checkCreatureType(entityType);
+        eligibleChunkHeightMap = createEligibleHeightMap();
     }
 
     private void countSpots() {
