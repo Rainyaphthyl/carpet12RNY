@@ -51,6 +51,10 @@ public class SilentChunkReader implements IBlockAccess {
         this.world = world;
     }
 
+    public static long chunkAsLong(@Nonnull ChunkPos chunkPos) {
+        return ChunkPos.asLong(chunkPos.x, chunkPos.z);
+    }
+
     @Nonnull
     public IBlockState getBlockState(int x, int y, int z) throws NullPointerException {
         if (y < 0 || y >= 256) {
