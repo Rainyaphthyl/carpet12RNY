@@ -6,6 +6,7 @@ import carpet.utils.PerimeterDiagnostics;
 import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.command.WrongUsageException;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityList;
 import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.player.EntityPlayer;
@@ -67,22 +68,22 @@ public class CommandPerimeter extends CommandCarpetBase
             World world = sender.getEntityWorld();
             NBTTagCompound nbttagcompound = new NBTTagCompound();
             EntityLiving entityliving = null;
+            Class<? extends EntityLiving> entityType = null;
             if (args.length >= 4)
             {
                 s = args[3];
                 nbttagcompound.setString("id", s);
-                entityliving = (EntityLiving) AnvilChunkLoader.readWorldEntityPos(nbttagcompound, world, d0, d1+2, d2, true);
+                entityliving = (EntityLiving) AnvilChunkLoader.readWorldEntityPos(nbttagcompound, world, d0, d1+256, d2, true);
                 if (entityliving == null)
                 {
                     throw new CommandException("Failed to test entity");
                 }
+                entityType = entityliving.getClass();
+                entityliving.setDead();
             }
             // test start
-            PerimeterCalculator.asyncSearch(world, new Vec3d(blockpos), entityliving == null ? null : Collections.singleton(entityliving.getClass()));
+            PerimeterCalculator.asyncSearch(world, new Vec3d(blockpos), entityType);
             if (true) {
-                if (entityliving != null) {
-                    entityliving.setDead();
-                }
                 return;
             }
             // test end

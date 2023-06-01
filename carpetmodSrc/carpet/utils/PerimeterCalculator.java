@@ -1,6 +1,8 @@
 package carpet.utils;
 
 import carpet.CarpetServer;
+import it.unimi.dsi.fastutil.ints.Int2BooleanMap;
+import it.unimi.dsi.fastutil.ints.Int2BooleanOpenHashMap;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.EnumCreatureType;
@@ -23,46 +25,39 @@ import java.util.function.Consumer;
  * {@link net.minecraft.world.WorldEntitySpawner#findChunksForSpawning}
  */
 public class PerimeterCalculator implements Runnable {
-    private final Map<Class<? extends EntityLiving>, Biome.SpawnListEntry> entityEntryMap = new HashMap<>();
-    private final Set<Class<? extends EntityLiving>> entityTypeSet = new HashSet<>();
+    private final Class<? extends EntityLiving> entityType;
     private final WorldServer worldServer;
     private final Vec3d center;
+    private final Map<BlockPos, Boolean> searchedFlags = new HashMap<>();
+    private final Map<BlockPos, Int2BooleanMap> wanderedFlags = new HashMap<>();
     private SilentChunkReader reader = null;
     private Set<ChunkPos> eligibleChunks = null;
     private PerimeterResult result = null;
     private BlockPos worldSpawnPoint = null;
 
-    private PerimeterCalculator(WorldServer worldServer, Vec3d center, Collection<Class<? extends EntityLiving>> entityTypes) {
-        this.worldServer = worldServer;
-        this.center = center;
-        if (entityTypes != null) {
-            entityTypeSet.addAll(entityTypes);
-        }
-    }
-
     private PerimeterCalculator(WorldServer worldServer, Vec3d center, Class<? extends EntityLiving> entityType) {
         this.worldServer = worldServer;
         this.center = center;
-        entityTypeSet.add(entityType);
+        this.entityType = entityType;
     }
 
-    public static void asyncSearch(World world, Vec3d center, Collection<Class<? extends EntityLiving>> entityTypes) {
+    public static void asyncSearch(World world, Vec3d center, Class<? extends EntityLiving> entityType) {
         if (world instanceof WorldServer) {
             Messenger.print_server_message(world.getMinecraftServer(), "Start checking perimeter ...");
-            PerimeterCalculator calculator = new PerimeterCalculator((WorldServer) world, center, entityTypes);
+            PerimeterCalculator calculator = new PerimeterCalculator((WorldServer) world, center, entityType);
             HttpUtil.DOWNLOADER_EXECUTOR.submit(calculator);
         }
     }
 
     private void setEmptyResult() {
-        result = PerimeterResult.getEmptyResult(entityTypeSet);
+        result = PerimeterResult.getEmptyResult();
     }
 
     private void setEligibleChunks() {
         if (eligibleChunks == null) {
             // eligible chunks for a virtual player at the perimeter center
             // ignoring the outermost circle (only used for mobCap count)
-            Set<ChunkPos> tempSet = new HashSet<>(15 * 15);
+            Set<ChunkPos> tempSet = new LinkedHashSet<>();
             int chunkX = MathHelper.floor(center.x / 16.0);
             int chunkZ = MathHelper.floor(center.z / 16.0);
             // checking player chunk map
@@ -70,7 +65,7 @@ public class PerimeterCalculator implements Runnable {
             WorldBorder worldBorder = worldServer.getWorldBorder();
             for (int dx = -radius; dx <= radius; ++dx) {
                 for (int dz = -radius; dz <= radius; ++dz) {
-                    ChunkPos chunkPos = new ChunkPos(chunkX, chunkZ);
+                    ChunkPos chunkPos = new ChunkPos(chunkX + dx, chunkZ + dz);
                     if (worldBorder.contains(chunkPos)) {
                         tempSet.add(chunkPos);
                     }
@@ -109,9 +104,18 @@ public class PerimeterCalculator implements Runnable {
      * Wandering from [-5, 0, -5] to [+5, 0, +5] for one round
      */
     private void forEachWanderingSpawn(@Nonnull BlockPos posBegin, int rounds, Consumer<BlockPos> consumer) {
-        --rounds;
-        if (rounds < 0) {
+        if (rounds <= 0) {
             return;
+        }
+        Int2BooleanMap partialFlags;
+        if (wanderedFlags.containsKey(posBegin)) {
+            partialFlags = wanderedFlags.get(posBegin);
+            if (partialFlags.containsKey(rounds)) {
+                return;
+            }
+        } else {
+            partialFlags = new Int2BooleanOpenHashMap();
+            wanderedFlags.put(posBegin.toImmutable(), partialFlags);
         }
         BlockPos.MutableBlockPos posTarget = new BlockPos.MutableBlockPos(posBegin);
         int originX = posBegin.getX();
@@ -125,7 +129,19 @@ public class PerimeterCalculator implements Runnable {
                     for (int dzn = 0; dzn < 6; ++dzn) {
                         posTarget.setPos(originX + dxp - dxn, originY, originZ + dzp - dzn);
                         consumer.accept(posTarget);
-                        if (rounds > 0) {
+                    }
+                }
+            }
+        }
+        partialFlags.put(rounds, true);
+        if (rounds > 1) {
+            --rounds;
+            for (int dxp = 0; dxp < 6; ++dxp) {
+                for (int dxn = 0; dxn < 6; ++dxn) {
+                    // dyp or dzp is always 0, ignored
+                    for (int dzp = 0; dzp < 6; ++dzp) {
+                        for (int dzn = 0; dzn < 6; ++dzn) {
+                            posTarget.setPos(originX + dxp - dxn, originY, originZ + dzp - dzn);
                             forEachWanderingSpawn(posBegin, rounds, consumer);
                         }
                     }
@@ -152,9 +168,10 @@ public class PerimeterCalculator implements Runnable {
         // TODO: 2023/6/1,0001 Calculate the spawning rate / probability when going through the random choices
         setEmptyResult();
         setEligibleChunks();
+        int chunksCounted = 0;
+        int chunksTotal = eligibleChunks.size();
         // spawning attempts
         for (EnumCreatureType creatureType : EnumCreatureType.values()) {
-            BlockPos.MutableBlockPos posIter = new BlockPos.MutableBlockPos();
             for (ChunkPos chunkPos : eligibleChunks) {
                 forEachChunkPosition(chunkPos, posBegin -> {
                     IBlockState blockState = reader.getBlockState(posBegin);
@@ -163,25 +180,32 @@ public class PerimeterCalculator implements Runnable {
                             //int wanders = MathHelper.ceil(Math.random() * 4.0);
                             int wanders = 4;
                             forEachWanderingSpawn(posBegin, wanders, posTarget -> {
+                                if (searchedFlags.containsKey(posTarget)) {
+                                    return;
+                                }
                                 float mobX = (float) posTarget.getX() + 0.5F;
                                 float mobZ = (float) posTarget.getZ() + 0.5F;
                                 int mobY = posTarget.getY();
+                                boolean successful = false;
                                 if (isSpawnAllowed(mobX, mobY, mobZ)) {
                                     // spawning probability calc - forEachEntityType
                                     List<Biome.SpawnListEntry> testedEntries = new ArrayList<>();
                                     for (Biome.SpawnListEntry entry : reader.getPossibleCreatures(creatureType, posTarget)) {
-                                        if (entityTypeSet.contains(entry.entityClass)) {
+                                        if (entityType == entry.entityClass) {
                                             testedEntries.add(entry);
                                         }
                                     }
                                     for (Biome.SpawnListEntry entry : testedEntries) {
-                                        int a = 0;
+                                        successful = true;
                                     }
                                 }
+                                searchedFlags.put(posTarget.toImmutable(), successful);
                             });
                         }
                     }
                 });
+                ++chunksCounted;
+                Messenger.print_server_message(CarpetServer.minecraft_server, "Checked spawning in chunk " + chunkPos + " (" + chunksCounted + '/' + chunksTotal + ')');
             }
         }
         //Messenger.print_server_message(CarpetServer.minecraft_server, pos.toImmutable().toString());

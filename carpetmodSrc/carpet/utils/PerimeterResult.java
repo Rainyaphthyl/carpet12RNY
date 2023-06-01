@@ -7,7 +7,9 @@ import net.minecraft.entity.EnumCreatureType;
 import net.minecraft.util.math.BlockPos;
 
 import javax.annotation.Nonnull;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 public class PerimeterResult {
     private final Object2IntMap<EnumCreatureType> generalCounts = new Object2IntOpenHashMap<>();
@@ -22,18 +24,6 @@ public class PerimeterResult {
         PerimeterResult result = new PerimeterResult();
         for (EnumCreatureType creatureType : EnumCreatureType.values()) {
             result.generalCounts.put(creatureType, 0);
-        }
-        return result;
-    }
-
-    @Nonnull
-    public static PerimeterResult getEmptyResult(Collection<Class<? extends EntityLiving>> entityTypes) {
-        PerimeterResult result = getEmptyResult();
-        if (entityTypes != null) {
-            for (Class<? extends EntityLiving> entityType : entityTypes) {
-                result.specificCounts.put(entityType, 0);
-                result.spotSampleSets.put(entityType, new LinkedHashSet<>());
-            }
         }
         return result;
     }
