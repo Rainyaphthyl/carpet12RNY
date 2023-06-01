@@ -79,7 +79,10 @@ public class CommandPerimeter extends CommandCarpetBase
             }
             // test start
             PerimeterCalculator.asyncSearch(world, new Vec3d(blockpos), entityliving == null ? null : Collections.singleton(entityliving.getClass()));
-            if (true){
+            if (true) {
+                if (entityliving != null) {
+                    entityliving.setDead();
+                }
                 return;
             }
             // test end

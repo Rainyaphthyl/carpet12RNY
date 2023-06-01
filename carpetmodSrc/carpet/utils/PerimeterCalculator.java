@@ -4,6 +4,7 @@ import carpet.CarpetServer;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.EnumCreatureType;
+import net.minecraft.util.HttpUtil;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.math.MathHelper;
@@ -23,7 +24,7 @@ import java.util.function.Consumer;
  */
 public class PerimeterCalculator implements Runnable {
     private final Map<Class<? extends EntityLiving>, Biome.SpawnListEntry> entityEntryMap = new HashMap<>();
-    private final Queue<Class<? extends EntityLiving>> constructBuffer = new LinkedList<>();
+    private final Set<Class<? extends EntityLiving>> entityTypeSet = new HashSet<>();
     private final WorldServer worldServer;
     private final Vec3d center;
     private SilentChunkReader reader = null;
@@ -35,26 +36,26 @@ public class PerimeterCalculator implements Runnable {
         this.worldServer = worldServer;
         this.center = center;
         if (entityTypes != null) {
-            constructBuffer.addAll(entityTypes);
+            entityTypeSet.addAll(entityTypes);
         }
     }
 
     private PerimeterCalculator(WorldServer worldServer, Vec3d center, Class<? extends EntityLiving> entityType) {
         this.worldServer = worldServer;
         this.center = center;
-        constructBuffer.add(entityType);
+        entityTypeSet.add(entityType);
     }
 
     public static void asyncSearch(World world, Vec3d center, Collection<Class<? extends EntityLiving>> entityTypes) {
         if (world instanceof WorldServer) {
+            Messenger.print_server_message(world.getMinecraftServer(), "Start checking perimeter ...");
             PerimeterCalculator calculator = new PerimeterCalculator((WorldServer) world, center, entityTypes);
-            Thread thread = new Thread(calculator);
-            thread.start();
+            HttpUtil.DOWNLOADER_EXECUTOR.submit(calculator);
         }
     }
 
     private void setEmptyResult() {
-        result = PerimeterResult.getEmptyResult(entityEntryMap.keySet());
+        result = PerimeterResult.getEmptyResult(entityTypeSet);
     }
 
     private void setEligibleChunks() {
@@ -82,7 +83,7 @@ public class PerimeterCalculator implements Runnable {
     /**
      * Select a random block position in the chunk
      */
-    private void searchChunkPositions(@Nonnull ChunkPos chunkPos, Consumer<BlockPos> consumer) {
+    private void forEachChunkPosition(@Nonnull ChunkPos chunkPos, Consumer<BlockPos> consumer) {
         final int originX = chunkPos.x * 16;
         final int originZ = chunkPos.z * 16;
         Chunk chunk = reader.getChunk(chunkPos);
@@ -107,9 +108,30 @@ public class PerimeterCalculator implements Runnable {
     /**
      * Wandering from [-5, 0, -5] to [+5, 0, +5] for one round
      */
-    private void searchWanderingSpawns(@Nonnull BlockPos posBegin, Consumer<BlockPos> consumer) {
-        // TODO: 2023/6/1,0001 This should NOT be a uniform distribution
-
+    private void forEachWanderingSpawn(@Nonnull BlockPos posBegin, int rounds, Consumer<BlockPos> consumer) {
+        --rounds;
+        if (rounds < 0) {
+            return;
+        }
+        BlockPos.MutableBlockPos posTarget = new BlockPos.MutableBlockPos(posBegin);
+        int originX = posBegin.getX();
+        int originY = posBegin.getY();
+        int originZ = posBegin.getZ();
+        // positive & negative
+        for (int dxp = 0; dxp < 6; ++dxp) {
+            for (int dxn = 0; dxn < 6; ++dxn) {
+                // dyp or dzp is always 0, ignored
+                for (int dzp = 0; dzp < 6; ++dzp) {
+                    for (int dzn = 0; dzn < 6; ++dzn) {
+                        posTarget.setPos(originX + dxp - dxn, originY, originZ + dzp - dzn);
+                        consumer.accept(posTarget);
+                        if (rounds > 0) {
+                            forEachWanderingSpawn(posBegin, rounds, consumer);
+                        }
+                    }
+                }
+            }
+        }
     }
 
     /**
@@ -134,25 +156,29 @@ public class PerimeterCalculator implements Runnable {
         for (EnumCreatureType creatureType : EnumCreatureType.values()) {
             BlockPos.MutableBlockPos posIter = new BlockPos.MutableBlockPos();
             for (ChunkPos chunkPos : eligibleChunks) {
-                searchChunkPositions(chunkPos, posBegin -> {
+                forEachChunkPosition(chunkPos, posBegin -> {
                     IBlockState blockState = reader.getBlockState(posBegin);
                     if (!blockState.isNormalCube()) {
                         for (int i = 0; i < 3; ++i) {
-                            int targetX = posBegin.getX();
-                            int targetY = posBegin.getY();
-                            int targetZ = posBegin.getZ();
                             //int wanders = MathHelper.ceil(Math.random() * 4.0);
                             int wanders = 4;
-                            for (int w = 0; w < wanders; ++w) {
-                                searchWanderingSpawns(posBegin, posTarget -> {
-                                    float mobX = (float) posTarget.getX() + 0.5F;
-                                    float mobZ = (float) posTarget.getZ() + 0.5F;
-                                    int mobY = posTarget.getY();
-                                    if (isSpawnAllowed(mobX, mobY, mobZ)) {
-                                        List<Biome.SpawnListEntry> entries = reader.getPossibleCreatures(creatureType, posTarget);
+                            forEachWanderingSpawn(posBegin, wanders, posTarget -> {
+                                float mobX = (float) posTarget.getX() + 0.5F;
+                                float mobZ = (float) posTarget.getZ() + 0.5F;
+                                int mobY = posTarget.getY();
+                                if (isSpawnAllowed(mobX, mobY, mobZ)) {
+                                    // spawning probability calc - forEachEntityType
+                                    List<Biome.SpawnListEntry> testedEntries = new ArrayList<>();
+                                    for (Biome.SpawnListEntry entry : reader.getPossibleCreatures(creatureType, posTarget)) {
+                                        if (entityTypeSet.contains(entry.entityClass)) {
+                                            testedEntries.add(entry);
+                                        }
                                     }
-                                });
-                            }
+                                    for (Biome.SpawnListEntry entry : testedEntries) {
+                                        int a = 0;
+                                    }
+                                }
+                            });
                         }
                     }
                 });
@@ -260,8 +286,11 @@ public class PerimeterCalculator implements Runnable {
             }
             countSpots();
             // print result
+            Messenger.print_server_message(CarpetServer.minecraft_server, "Perimeter Info:");
         } catch (Exception e) {
             // failed
+            Messenger.print_server_message(CarpetServer.minecraft_server, "Failed to check perimeter");
+            e.printStackTrace();
         }
     }
 
