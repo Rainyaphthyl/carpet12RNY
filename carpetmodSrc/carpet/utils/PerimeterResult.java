@@ -20,7 +20,7 @@ public class PerimeterResult {
     }
 
     @Nonnull
-    public static PerimeterResult getEmptyResult() {
+    public static PerimeterResult createEmptyResult() {
         PerimeterResult result = new PerimeterResult();
         for (EnumCreatureType creatureType : EnumCreatureType.values()) {
             result.generalCounts.put(creatureType, 0);

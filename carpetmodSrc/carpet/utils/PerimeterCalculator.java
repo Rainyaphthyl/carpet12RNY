@@ -1,8 +1,10 @@
 package carpet.utils;
 
 import carpet.CarpetServer;
-import it.unimi.dsi.fastutil.longs.Long2IntAVLTreeMap;
 import it.unimi.dsi.fastutil.longs.Long2IntMap;
+import it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap;
+import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.EnumCreatureType;
 import net.minecraft.entity.passive.EntityAmbientCreature;
@@ -15,6 +17,7 @@ import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
+import net.minecraft.world.biome.Biome;
 import net.minecraft.world.border.WorldBorder;
 import net.minecraft.world.chunk.Chunk;
 
@@ -25,10 +28,12 @@ import java.util.function.Consumer;
  * {@link net.minecraft.world.WorldEntitySpawner#findChunksForSpawning}
  */
 public class PerimeterCalculator implements Runnable {
+    private static final int SECTION_UNIT = 16;
     private final Class<? extends EntityLiving> entityType;
     private final WorldServer worldServer;
     private final Vec3d center;
     private Long2IntMap eligibleChunkHeightMap = null;
+    private Long2ObjectMap<Biome.SpawnListEntry> spawnEntryCache = null;
     private EnumCreatureType creatureType = null;
     private SilentChunkReader reader = null;
     private PerimeterResult result = null;
@@ -63,9 +68,8 @@ public class PerimeterCalculator implements Runnable {
         return creatureType;
     }
 
-    @Nonnull
-    private Long2IntMap createEligibleHeightMap() {
-        Long2IntMap tempMap = new Long2IntAVLTreeMap();
+    private void initEligibleHeightMap() {
+        eligibleChunkHeightMap = new Long2IntOpenHashMap();
         // eligible chunks for a virtual player at the perimeter center
         // ignoring the outermost circle (only used for mobCap count)
         int chunkX = MathHelper.floor(center.x / 16.0);
@@ -78,11 +82,11 @@ public class PerimeterCalculator implements Runnable {
                 ChunkPos chunkPos = new ChunkPos(chunkX + dx, chunkZ + dz);
                 if (worldBorder.contains(chunkPos)) {
                     long index = SilentChunkReader.chunkAsLong(chunkPos);
-                    tempMap.put(index, checkChunkHeight(chunkPos));
+                    int height = checkChunkHeight(chunkPos);
+                    eligibleChunkHeightMap.put(index, height);
                 }
             }
         }
-        return tempMap;
     }
 
     /**
@@ -97,13 +101,12 @@ public class PerimeterCalculator implements Runnable {
             height = chunk.getTopFilledSegment() + 15;
         }
         BlockPos.MutableBlockPos posIter = new BlockPos.MutableBlockPos();
-        for (int dx = 0; dx < 16; ++dx) {
-            final int x = originX + dx;
-            for (int dz = 0; dz < 16; ++dz) {
-                final int z = originZ + dz;
-                posIter.setPos(x, 0, z);
-                for (int y = 0; y < height; ++y) {
-                    posIter.setY(y);
+        for (int y = 0; y < height; ++y) {
+            for (int dx = 0; dx < 16; ++dx) {
+                final int x = originX + dx;
+                for (int dz = 0; dz < 16; ++dz) {
+                    final int z = originZ + dz;
+                    posIter.setPos(x, y, z);
                     consumer.accept(posIter);
                 }
             }
@@ -114,9 +117,9 @@ public class PerimeterCalculator implements Runnable {
         final int originX = chunkPos.x * 16;
         final int originZ = chunkPos.z * 16;
         Chunk chunk = reader.getChunk(chunkPos);
-        int height = MathHelper.roundUp(chunk.getHeight(new BlockPos(originX + 8, 0, originZ + 8)) + 1, 16);
+        int height = MathHelper.roundUp(chunk.getHeight(new BlockPos(originX + 8, 0, originZ + 8)) + 1, SECTION_UNIT);
         if (height <= 0) {
-            height = chunk.getTopFilledSegment() + 15;
+            height = chunk.getTopFilledSegment() + (SECTION_UNIT - 1);
         }
         return height;
     }
@@ -177,11 +180,12 @@ public class PerimeterCalculator implements Runnable {
     /**
      * Some non-final fields should not be null
      */
-    private synchronized void initialize() {
+    private void initialize() {
         reader = worldServer.silentChunkReader;
-        result = PerimeterResult.getEmptyResult();
+        result = PerimeterResult.createEmptyResult();
         creatureType = checkCreatureType(entityType);
-        eligibleChunkHeightMap = createEligibleHeightMap();
+        initEligibleHeightMap();
+        spawnEntryCache = new Long2ObjectOpenHashMap<>();
     }
 
     private void countSpots() {
