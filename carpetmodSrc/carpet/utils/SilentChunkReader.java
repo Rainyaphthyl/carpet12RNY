@@ -55,6 +55,20 @@ public class SilentChunkReader implements IBlockAccess {
         return ChunkPos.asLong(chunkPos.x, chunkPos.z);
     }
 
+    /**
+     * Only uses the X and Z, as if using {@link ChunkPos#asLong}
+     */
+    public static long blockHorizonLong(@Nonnull BlockPos blockPos) {
+        return ChunkPos.asLong(blockPos.getX(), blockPos.getZ());
+    }
+
+    @Nonnull
+    public static ChunkPos chunkFromLong(long index) {
+        int x = (int) (index & 0xFFFFFFFFL);
+        int z = (int) ((index >>> 32) & 0xFFFFFFFFL);
+        return new ChunkPos(x, z);
+    }
+
     @Nonnull
     public IBlockState getBlockState(int x, int y, int z) throws NullPointerException {
         if (y < 0 || y >= 256) {
