@@ -4,15 +4,20 @@ import carpet.CarpetServer;
 import carpet.utils.Messenger;
 import carpet.utils.SilentChunkReader;
 import it.unimi.dsi.fastutil.longs.*;
+import net.minecraft.block.Block;
+import net.minecraft.block.material.Material;
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.EntitySpawnPlacementRegistry;
 import net.minecraft.entity.EnumCreatureType;
 import net.minecraft.entity.passive.EntityAmbientCreature;
 import net.minecraft.entity.passive.EntityAnimal;
 import net.minecraft.entity.passive.EntityWaterMob;
+import net.minecraft.init.Blocks;
 import net.minecraft.util.HttpUtil;
 import net.minecraft.util.math.*;
 import net.minecraft.world.World;
+import net.minecraft.world.WorldEntitySpawner;
 import net.minecraft.world.WorldServer;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.border.WorldBorder;
@@ -180,7 +185,7 @@ public class PerimeterCalculator implements Runnable {
     /**
      * The 24-meter check for the world spawn point and the closest player
      */
-    private PerimeterResult.EnumDistLevel getDistLevelTo(@Nonnull BlockPos posTarget) {
+    private PerimeterResult.EnumDistLevel getDistLevelOf(@Nonnull BlockPos posTarget) {
         long index = posTarget.toLong();
         if (spawnAllowanceCache.containsKey(index)) {
             return spawnAllowanceCache.get(index);
@@ -196,7 +201,7 @@ public class PerimeterCalculator implements Runnable {
             double distSq = center.squareDistanceTo(mobX, mobY, mobZ);
             level = PerimeterResult.EnumDistLevel.getLevelOfDistSq(distSq);
         } else {
-            level = PerimeterResult.EnumDistLevel.CLOSE;
+            level = PerimeterResult.EnumDistLevel.BANNED;
         }
         spawnAllowanceCache.put(index, level);
         return level;
@@ -241,7 +246,28 @@ public class PerimeterCalculator implements Runnable {
                 for (int z = zMin; z <= zMax; ++z) {
                     posTarget.setPos(x, y, z);
                     if (isSpawnBiomeAllowing(posTarget)) {
-                        PerimeterResult.EnumDistLevel distLevel = getDistLevelTo(posTarget);
+                        IBlockState stateTarget = reader.getBlockState(posTarget);
+                        IBlockState stateDown = reader.getBlockState(x, y - 1, z);
+                        IBlockState stateUp = reader.getBlockState(x, y + 1, z);
+                        // check placement in liquid
+                        boolean flagLiquid = stateTarget.getMaterial() == Material.WATER
+                                && stateDown.getMaterial() == Material.WATER && !stateUp.isNormalCube();
+                        boolean flagGround;
+                        if (!stateDown.isTopSolid()) {
+                            flagGround = false;
+                        } else {
+                            Block blockDown = stateDown.getBlock();
+                            boolean flag = blockDown != Blocks.BEDROCK && blockDown != Blocks.BARRIER;
+                            flagGround = flag && WorldEntitySpawner.isValidEmptySpawnBlock(stateTarget)
+                                    && WorldEntitySpawner.isValidEmptySpawnBlock(stateUp);
+                        }
+                        PerimeterResult.EnumDistLevel distLevel = getDistLevelOf(posTarget);
+                        if (flagLiquid) {
+                            result.addGeneralSpot(EntityLiving.SpawnPlacementType.IN_WATER, distLevel);
+                        }
+                        if (flagGround) {
+                            result.addGeneralSpot(EntityLiving.SpawnPlacementType.ON_GROUND, distLevel);
+                        }
                     }
                 }
             }

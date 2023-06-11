@@ -34,7 +34,11 @@ public class PerimeterResult {
         return result;
     }
 
-    public void addGeneralSpot(EntityLiving.SpawnPlacementType placementType, BlockPos posTarget) {
+    public void addGeneralSpot(EntityLiving.SpawnPlacementType placementType, EnumDistLevel distLevel) {
+
+    }
+
+    public void addSpecificSample(BlockPos blockPos, EnumDistLevel distLevel) {
 
     }
 
@@ -73,9 +77,13 @@ public class PerimeterResult {
          */
         NEARBY,
         /**
-         * {@code r < 24}, Not Spawning (including dist to the world's spawning point)
+         * {@code r < 24} (to the player), Not Spawning
          */
-        CLOSE;
+        CLOSE,
+        /**
+         * {@code r < 24} (to the World Spawn), Not Spawning
+         */
+        BANNED;
 
         public static EnumDistLevel getLevelOfDistSq(double distSq) {
             if (distSq > 1024.0) {
