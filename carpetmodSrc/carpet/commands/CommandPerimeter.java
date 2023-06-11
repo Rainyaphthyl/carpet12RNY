@@ -1,12 +1,11 @@
 package carpet.commands;
 
 import carpet.utils.Messenger;
-import carpet.utils.PerimeterCalculator;
+import carpet.utils.perimeter.PerimeterCalculator;
 import carpet.utils.PerimeterDiagnostics;
 import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.command.WrongUsageException;
-import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityList;
 import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.player.EntityPlayer;

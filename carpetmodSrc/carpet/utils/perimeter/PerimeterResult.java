@@ -1,4 +1,4 @@
-package carpet.utils;
+package carpet.utils.perimeter;
 
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
