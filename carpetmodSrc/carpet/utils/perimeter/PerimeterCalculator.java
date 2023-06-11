@@ -3,20 +3,15 @@ package carpet.utils.perimeter;
 import carpet.CarpetServer;
 import carpet.utils.Messenger;
 import carpet.utils.SilentChunkReader;
-import it.unimi.dsi.fastutil.longs.Long2IntMap;
-import it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap;
-import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
-import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.longs.*;
 import net.minecraft.entity.EntityLiving;
+import net.minecraft.entity.EntitySpawnPlacementRegistry;
 import net.minecraft.entity.EnumCreatureType;
 import net.minecraft.entity.passive.EntityAmbientCreature;
 import net.minecraft.entity.passive.EntityAnimal;
 import net.minecraft.entity.passive.EntityWaterMob;
 import net.minecraft.util.HttpUtil;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.ChunkPos;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.math.*;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
 import net.minecraft.world.biome.Biome;
@@ -24,6 +19,7 @@ import net.minecraft.world.border.WorldBorder;
 import net.minecraft.world.chunk.Chunk;
 
 import javax.annotation.Nonnull;
+import java.util.Objects;
 import java.util.function.Consumer;
 
 /**
@@ -31,15 +27,24 @@ import java.util.function.Consumer;
  */
 public class PerimeterCalculator implements Runnable {
     private static final int SECTION_UNIT = 16;
+    private static final int yMin = 0;
+    private static final int yMax = 255;
     private final Class<? extends EntityLiving> entityType;
     private final WorldServer worldServer;
     private final Vec3d center;
     private Long2IntMap eligibleChunkHeightMap = null;
-    private Long2ObjectMap<Biome.SpawnListEntry> spawnEntryCache = null;
+    private AxisAlignedBB alignedBB = null;
+    private Long2BooleanMap biomeAllowanceCache = null;
+    private Long2ObjectMap<PerimeterResult.EnumDistLevel> spawnAllowanceCache = null;
     private EnumCreatureType creatureType = null;
+    private EntityLiving.SpawnPlacementType placementType = null;
     private SilentChunkReader reader = null;
     private PerimeterResult result = null;
     private BlockPos worldSpawnPoint = null;
+    private int xMin = 0;
+    private int xMax = 0;
+    private int zMin = 0;
+    private int zMax = 0;
 
     private PerimeterCalculator(WorldServer worldServer, Vec3d center, Class<? extends EntityLiving> entityType) {
         this.worldServer = worldServer;
@@ -70,25 +75,18 @@ public class PerimeterCalculator implements Runnable {
         return creatureType;
     }
 
-    private void initEligibleHeightMap() {
-        eligibleChunkHeightMap = new Long2IntOpenHashMap();
-        // eligible chunks for a virtual player at the perimeter center
-        // ignoring the outermost circle (only used for mobCap count)
+    private void initSpawningRange() {
         int chunkX = MathHelper.floor(center.x / 16.0);
         int chunkZ = MathHelper.floor(center.z / 16.0);
         // checking player chunk map
         int radius = Math.min(CarpetServer.minecraft_server.getPlayerList().getViewDistance(), 7);
+        int expand = 20;
         WorldBorder worldBorder = worldServer.getWorldBorder();
-        for (int dx = -radius; dx <= radius; ++dx) {
-            for (int dz = -radius; dz <= radius; ++dz) {
-                ChunkPos chunkPos = new ChunkPos(chunkX + dx, chunkZ + dz);
-                if (worldBorder.contains(chunkPos)) {
-                    long index = SilentChunkReader.chunkAsLong(chunkPos);
-                    int height = checkChunkHeight(chunkPos);
-                    eligibleChunkHeightMap.put(index, height);
-                }
-            }
-        }
+        int worldLimit = worldBorder.getSize();
+        xMin = MathHelper.clamp(((chunkX - radius) << 4) - expand, -worldLimit, worldLimit);
+        xMax = MathHelper.clamp(((chunkX + radius) >> 4) + 15 + expand, -worldLimit, worldLimit);
+        zMin = MathHelper.clamp(((chunkZ - radius) << 4) - expand, -worldLimit, worldLimit);
+        zMax = MathHelper.clamp(((chunkZ + radius) >> 4) + 15 + expand, -worldLimit, worldLimit);
     }
 
     /**
@@ -180,18 +178,74 @@ public class PerimeterCalculator implements Runnable {
     }
 
     /**
+     * The 24-meter check for the world spawn point and the closest player
+     */
+    private PerimeterResult.EnumDistLevel getDistLevelTo(@Nonnull BlockPos posTarget) {
+        long index = posTarget.toLong();
+        if (spawnAllowanceCache.containsKey(index)) {
+            return spawnAllowanceCache.get(index);
+        }
+        float mobX = (float) posTarget.getX() + 0.5F;
+        float mobZ = (float) posTarget.getZ() + 0.5F;
+        int mobY = posTarget.getY();
+        PerimeterResult.EnumDistLevel level;
+        if (worldSpawnPoint == null) {
+            worldSpawnPoint = reader.getSpawnPoint();
+        }
+        if (worldSpawnPoint.distanceSq(mobX, mobY, mobZ) >= 576.0) {
+            double distSq = center.squareDistanceTo(mobX, mobY, mobZ);
+            level = PerimeterResult.EnumDistLevel.getLevelOfDistSq(distSq);
+        } else {
+            level = PerimeterResult.EnumDistLevel.CLOSE;
+        }
+        spawnAllowanceCache.put(index, level);
+        return level;
+    }
+
+    private boolean isSpawnBiomeAllowing(@Nonnull BlockPos posTarget) {
+        long index = SilentChunkReader.blockHorizonLong(posTarget);
+        if (biomeAllowanceCache.containsKey(index)) {
+            return biomeAllowanceCache.get(index);
+        }
+        boolean allowing = false;
+        for (Biome.SpawnListEntry entryOption : reader.getPossibleCreatures(creatureType, posTarget)) {
+            if (Objects.equals(entryOption.entityClass, entityType)) {
+                allowing = true;
+                break;
+            }
+        }
+        biomeAllowanceCache.put(index, allowing);
+        return allowing;
+    }
+
+    /**
      * Some non-final fields should not be null
      */
     private void initialize() {
         reader = worldServer.silentChunkReader;
         result = PerimeterResult.createEmptyResult();
         creatureType = checkCreatureType(entityType);
-        initEligibleHeightMap();
-        spawnEntryCache = new Long2ObjectOpenHashMap<>();
+        placementType = EntitySpawnPlacementRegistry.getPlacementForEntity(entityType);
+        initSpawningRange();
+        spawnAllowanceCache = new Long2ObjectOpenHashMap<>();
+        biomeAllowanceCache = new Long2BooleanOpenHashMap();
     }
 
     private void countSpots() {
         // TODO: 2023/6/1,0001 Calculate the spawning rate / probability when going through the random choices
+        // TODO: 2023/6/12,0012 Only count the possible spots. Do NOT calculate the rates.
+        //  The spawning rates can be 0 while the spot is counted as spawn-able.
+        BlockPos.MutableBlockPos posTarget = new BlockPos.MutableBlockPos();
+        for (int y = yMin; y <= yMax; ++y) {
+            for (int x = xMin; x <= xMax; ++x) {
+                for (int z = zMin; z <= zMax; ++z) {
+                    posTarget.setPos(x, y, z);
+                    if (isSpawnBiomeAllowing(posTarget)) {
+                        PerimeterResult.EnumDistLevel distLevel = getDistLevelTo(posTarget);
+                    }
+                }
+            }
+        }
     }
 
     @Override
