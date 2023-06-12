@@ -11,7 +11,6 @@ import net.minecraft.entity.EnumCreatureType;
 import net.minecraft.util.math.BlockPos;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.util.*;
 
 public class PerimeterResult {
@@ -43,16 +42,6 @@ public class PerimeterResult {
     public LongSet getSampleSet(Class<? extends EntityLiving> entityType, EnumDistLevel distLevel) {
         Map<EnumDistLevel, LongSet> levelMap = spotSampleSets.computeIfAbsent(entityType, et -> new EnumMap<>(EnumDistLevel.class));
         return levelMap.computeIfAbsent(distLevel, dl -> new LongAVLTreeSet());
-    }
-
-    @Nullable
-    public LongSet querySampleSet(Class<? extends EntityLiving> entityType, EnumDistLevel distLevel) {
-        LongSet tempSet = null;
-        Map<EnumDistLevel, LongSet> levelMap = spotSampleSets.get(entityType);
-        if (levelMap != null) {
-            tempSet = levelMap.get(distLevel);
-        }
-        return tempSet;
     }
 
     public void addGeneralSpot(EntityLiving.SpawnPlacementType placementType, EnumDistLevel distLevel) {
