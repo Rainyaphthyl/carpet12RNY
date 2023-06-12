@@ -5,6 +5,8 @@ import carpet.utils.Messenger;
 import carpet.utils.SilentChunkReader;
 import it.unimi.dsi.fastutil.longs.*;
 import net.minecraft.block.Block;
+import net.minecraft.block.BlockLeaves;
+import net.minecraft.block.BlockLog;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.EntityCreature;
@@ -13,6 +15,7 @@ import net.minecraft.entity.EntitySpawnPlacementRegistry;
 import net.minecraft.entity.EnumCreatureType;
 import net.minecraft.entity.monster.*;
 import net.minecraft.entity.passive.*;
+import net.minecraft.init.Biomes;
 import net.minecraft.init.Blocks;
 import net.minecraft.util.HttpUtil;
 import net.minecraft.util.math.*;
@@ -24,6 +27,7 @@ import net.minecraft.world.border.WorldBorder;
 import net.minecraft.world.chunk.Chunk;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.util.Objects;
 import java.util.function.Consumer;
 
@@ -83,6 +87,43 @@ public class PerimeterCalculator implements Runnable {
 
     public static boolean isImmuneToFire(Class<? extends EntityLiving> entityType) {
         return false;
+    }
+
+    @Nullable
+    public static Block getSpawnableBlock(Class<? extends EntityLiving> entityType) {
+        if (!EntityAnimal.class.isAssignableFrom(entityType)) {
+            return null;
+        }
+        return EntityMooshroom.class.isAssignableFrom(entityType) ? Blocks.MYCELIUM : Blocks.GRASS;
+    }
+
+    /**
+     * Some non-final fields should not be null
+     */
+    private void initialize() {
+        reader = worldServer.silentChunkReader;
+        result = PerimeterResult.createEmptyResult();
+        if (entityType != null) {
+            specific = true;
+            creatureType = checkCreatureType(entityType);
+            placementType = EntitySpawnPlacementRegistry.getPlacementForEntity(entityType);
+        } else {
+            specific = false;
+        }
+        initSpawningRange();
+        spawnAllowanceCache = new Long2ObjectOpenHashMap<>();
+        biomeAllowanceCache = new Long2BooleanOpenHashMap();
+    }
+
+    private boolean isLightValid(Class<? extends EntityLiving> mobClass, BlockPos pos) {
+        if (!EntityMob.class.isAssignableFrom(mobClass)) {
+            return false;
+        }
+        if (EntityBlaze.class.isAssignableFrom(mobClass) || EntityEndermite.class.isAssignableFrom(mobClass) || EntityGuardian.class.isAssignableFrom(mobClass) || EntitySilverfish.class.isAssignableFrom(mobClass)) {
+            return true;
+        }
+        int lightLevel = reader.getLightFromNeighbors(pos, true);
+        return lightLevel < 8;
     }
 
     private void initSpawningRange() {
@@ -228,26 +269,8 @@ public class PerimeterCalculator implements Runnable {
         return allowing;
     }
 
-    /**
-     * Some non-final fields should not be null
-     */
-    private void initialize() {
-        reader = worldServer.silentChunkReader;
-        result = PerimeterResult.createEmptyResult();
-        if (entityType != null) {
-            specific = true;
-            creatureType = checkCreatureType(entityType);
-            placementType = EntitySpawnPlacementRegistry.getPlacementForEntity(entityType);
-        } else {
-            specific = false;
-        }
-        initSpawningRange();
-        spawnAllowanceCache = new Long2ObjectOpenHashMap<>();
-        biomeAllowanceCache = new Long2BooleanOpenHashMap();
-    }
-
-    private boolean isPositionAllowing(@Nonnull BlockPos posTarget) {
-        if (entityType == null) {
+    private boolean isPositionAllowing(Class<? extends EntityLiving> entityClass, @Nonnull BlockPos posTarget) {
+        if (entityClass == null) {
             return false;
         }
         int blockX = posTarget.getX();
@@ -255,58 +278,98 @@ public class PerimeterCalculator implements Runnable {
         float mobX = (float) blockX + 0.5F;
         float mobZ = (float) blockZ + 0.5F;
         int mobY = posTarget.getY();
-        boolean flagNormal = true;
         IBlockState stateDown = reader.getBlockState(blockX, mobY - 1, blockZ);
-        if (stateDown.getBlock() == Blocks.MAGMA) {
-            flagNormal = isImmuneToFire(entityType);
-        }
-        if (EntityBat.class.isAssignableFrom(entityType)) {
-
-        } else if (EntityCreature.class.isAssignableFrom(entityType)) {
-            if (EntityAnimal.class.isAssignableFrom(entityType)) {
-                if (EntityOcelot.class.isAssignableFrom(entityType)) {
-
-                } else if (EntityParrot.class.isAssignableFrom(entityType)) {
-
-                } else {
-
-                }
-            } else if (EntityMob.class.isAssignableFrom(entityType)) {
-                if (EntityEndermite.class.isAssignableFrom(entityType)) {
-
-                } else if (EntityGuardian.class.isAssignableFrom(entityType)) {
-
-                } else if (EntitySilverfish.class.isAssignableFrom(entityType)) {
-
-                } else if (EntityHusk.class.isAssignableFrom(entityType)) {
-
-                } else if (EntityPigZombie.class.isAssignableFrom(entityType)) {
-
-                } else if (EntityStray.class.isAssignableFrom(entityType)) {
-
-                } else {
-
-                }
+        Block blockDown = stateDown.getBlock();
+        if (EntityBat.class.isAssignableFrom(entityClass)) {
+            if (mobY >= worldServer.getSeaLevel()) {
+                return false;
             } else {
-
+                int lightLevel = reader.getLightFromNeighbors(posTarget, true);
+                int limit = 7;
+                return lightLevel <= limit && isPositionAllowing(EntityLiving.class, posTarget);
             }
-        } else if (EntityGhast.class.isAssignableFrom(entityType)) {
-
-        } else if (EntitySlime.class.isAssignableFrom(entityType)) {
-            if (EntityMagmaCube.class.isAssignableFrom(entityType)) {
-
+        } else if (EntityCreature.class.isAssignableFrom(entityClass)) {
+            if (EntityAnimal.class.isAssignableFrom(entityClass)) {
+                if (EntityOcelot.class.isAssignableFrom(entityClass)) {
+                    return true;
+                } else if (EntityParrot.class.isAssignableFrom(entityClass)) {
+                    return blockDown instanceof BlockLeaves || blockDown == Blocks.GRASS
+                            || blockDown instanceof BlockLog || blockDown == Blocks.AIR
+                            && reader.getLight(posTarget) > 8
+                            && isPositionAllowing(EntityAnimal.class, posTarget);
+                } else {
+                    return blockDown == getSpawnableBlock(entityClass)
+                            && reader.getLight(posTarget) > 8
+                            && isPositionAllowing(EntityCreature.class, posTarget);
+                }
+            } else if (EntityMob.class.isAssignableFrom(entityClass)) {
+                if (EntityEndermite.class.isAssignableFrom(entityClass)) {
+                    return isPositionAllowing(EntityMob.class, posTarget)
+                            && center.squareDistanceTo(mobX, mobY, mobZ) >= 25.0;
+                } else if (EntityGuardian.class.isAssignableFrom(entityClass)) {
+                    return reader.canBlockSeeSky(posTarget) && isPositionAllowing(EntityMob.class, posTarget);
+                } else if (EntitySilverfish.class.isAssignableFrom(entityClass)) {
+                    return isPositionAllowing(EntityMob.class, posTarget)
+                            && center.squareDistanceTo(mobX, mobY, mobZ) >= 25.0;
+                } else if (EntityHusk.class.isAssignableFrom(entityClass)) {
+                    return isPositionAllowing(EntityMob.class, posTarget) && reader.canSeeSky(posTarget);
+                } else if (EntityPigZombie.class.isAssignableFrom(entityClass)) {
+                    return true;
+                } else if (EntityStray.class.isAssignableFrom(entityClass)) {
+                    return isPositionAllowing(EntityMob.class, posTarget) && reader.canSeeSky(posTarget);
+                } else {
+                    return isLightValid(entityClass, posTarget) && isPositionAllowing(EntityCreature.class, posTarget);
+                }
             } else {
-
+                return isPositionAllowing(EntityLiving.class, posTarget)
+                        && getBlockPathWeight(entityClass, posTarget) >= 0.0F;
             }
-        } else if (EntityWaterMob.class.isAssignableFrom(entityType)) {
-            if (EntitySquid.class.isAssignableFrom(entityType)) {
+        } else if (EntityGhast.class.isAssignableFrom(entityClass)) {
+            return isPositionAllowing(EntityLiving.class, posTarget);
+        } else if (EntitySlime.class.isAssignableFrom(entityClass)) {
+            if (EntityMagmaCube.class.isAssignableFrom(entityClass)) {
+                return true;
             } else {
-
+                Chunk chunk = reader.getChunk(posTarget);
+                Biome biome = reader.getBiome(posTarget);
+                if (biome == Biomes.SWAMPLAND && mobY > 50 && mobY < 70
+                        && reader.getLightFromNeighbors(posTarget, true) < 8) {
+                    return isPositionAllowing(EntityLiving.class, posTarget);
+                } else if (chunk != null && chunk.getRandomWithSeed(987234911L).nextInt(10) == 0 && mobY < 40) {
+                    return isPositionAllowing(EntityLiving.class, posTarget);
+                } else {
+                    return false;
+                }
+            }
+        } else if (EntityWaterMob.class.isAssignableFrom(entityClass)) {
+            if (EntitySquid.class.isAssignableFrom(entityClass)) {
+                return mobY > 45 && mobY < worldServer.getSeaLevel() && isPositionAllowing(EntityWaterMob.class, posTarget);
+            } else {
+                return true;
             }
         } else {
-
+            return blockDown != Blocks.MAGMA || isImmuneToFire(entityClass);
         }
-        return flagNormal;
+    }
+
+    private float getBlockPathWeight(Class<? extends EntityLiving> entityClass, BlockPos posTarget) {
+        if (EntityAnimal.class.isAssignableFrom(entityClass)) {
+            Block blockDown = reader.getBlockState(posTarget.getX(), posTarget.getY() - 1, posTarget.getZ()).getBlock();
+            return blockDown == getSpawnableBlock(entityClass) ? 10.0F : reader.getLightBrightness(posTarget) - 0.5F;
+        } else if (EntityGiantZombie.class.isAssignableFrom(entityClass)) {
+            return reader.getLightBrightness(posTarget) - 0.5F;
+        } else if (EntityGuardian.class.isAssignableFrom(entityClass)) {
+            return reader.getBlockState(posTarget).getMaterial() == Material.WATER
+                    ? 10.0F + reader.getLightBrightness(posTarget) - 0.5F
+                    : getBlockPathWeight(EntityMob.class, posTarget);
+        } else if (EntityMob.class.isAssignableFrom(entityClass)) {
+            return 0.5F - reader.getLightBrightness(posTarget);
+        } else if (EntitySilverfish.class.isAssignableFrom(entityClass)) {
+            Block blockDown = reader.getBlockState(posTarget.getX(), posTarget.getY() - 1, posTarget.getZ()).getBlock();
+            return blockDown == Blocks.STONE ? 10.0F : getBlockPathWeight(EntityMob.class, posTarget);
+        } else {
+            return 0.0F;
+        }
     }
 
     private void countSpots() {
@@ -341,7 +404,7 @@ public class PerimeterCalculator implements Runnable {
                         if (flagGround) {
                             result.addGeneralSpot(EntityLiving.SpawnPlacementType.ON_GROUND, distLevel);
                         }
-                        if (specific && isPositionAllowing(posTarget)) {
+                        if (specific && isPositionAllowing(entityType, posTarget)) {
                         }
                     }
                 }

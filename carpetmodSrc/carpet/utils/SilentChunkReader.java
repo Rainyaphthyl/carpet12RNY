@@ -26,6 +26,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -121,10 +122,12 @@ public class SilentChunkReader implements IBlockAccess {
         return chunk;
     }
 
+    @Nullable
     public Chunk getChunk(@Nonnull BlockPos blockPos) {
         return getChunk(blockPos.getX() >> 4, blockPos.getZ() >> 4);
     }
 
+    @Nullable
     public Chunk getChunk(@Nonnull ChunkPos chunkPos) {
         return getChunk(chunkPos.x, chunkPos.z);
     }
@@ -277,7 +280,7 @@ public class SilentChunkReader implements IBlockAccess {
 
     public List<Biome.SpawnListEntry> getPossibleCreatures(EnumCreatureType creatureType, BlockPos blockPos) {
         Biome biome = getBiome(blockPos);
-        List<Biome.SpawnListEntry> entryList = biome.getSpawnableList(creatureType);
+        List<Biome.SpawnListEntry> entryList = biome == null ? Collections.emptyList() : biome.getSpawnableList(creatureType);
         // structure check for dimensions...
         IChunkGenerator generator = world.getChunkProvider().chunkGenerator;
         if (generator instanceof ChunkGeneratorOverworld) {
@@ -285,6 +288,7 @@ public class SilentChunkReader implements IBlockAccess {
         return entryList;
     }
 
+    @Nullable
     public Biome getBiome(final BlockPos pos) {
         Chunk chunk = getChunk(pos);
         Biome biome = null;
@@ -334,5 +338,33 @@ public class SilentChunkReader implements IBlockAccess {
             height = world.getSeaLevel() + 1;
         }
         return height;
+    }
+
+    public boolean canBlockSeeSky(@Nonnull BlockPos pos) {
+        int targetX = pos.getX();
+        int targetZ = pos.getZ();
+        int targetY = pos.getY();
+        int seaLevel = world.getSeaLevel();
+        if (targetY >= seaLevel) {
+            return canSeeSky(pos);
+        } else {
+            BlockPos seaPos = new BlockPos(targetX, seaLevel, targetZ);
+            if (!canSeeSky(seaPos)) {
+                return false;
+            } else {
+                for (int y = seaLevel - 1; y > targetY; --y) {
+                    IBlockState iblockstate = getBlockState(targetX, y, targetZ);
+                    if (iblockstate.getLightOpacity() > 0 && !iblockstate.getMaterial().isLiquid()) {
+                        return false;
+                    }
+                }
+                return true;
+            }
+        }
+    }
+
+    public boolean canSeeSky(@Nonnull BlockPos pos) {
+        Chunk chunk = getChunk(pos);
+        return chunk != null && chunk.canSeeSky(pos);
     }
 }
