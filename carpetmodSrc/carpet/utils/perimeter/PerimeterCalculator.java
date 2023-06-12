@@ -13,6 +13,8 @@ import net.minecraft.entity.EntityCreature;
 import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.EntitySpawnPlacementRegistry;
 import net.minecraft.entity.EnumCreatureType;
+import net.minecraft.entity.boss.EntityDragon;
+import net.minecraft.entity.boss.EntityWither;
 import net.minecraft.entity.monster.*;
 import net.minecraft.entity.passive.*;
 import net.minecraft.init.Biomes;
@@ -86,7 +88,15 @@ public class PerimeterCalculator implements Runnable {
     }
 
     public static boolean isImmuneToFire(Class<? extends EntityLiving> entityType) {
-        return false;
+        return EntityDragon.class.isAssignableFrom(entityType)
+                || EntityWither.class.isAssignableFrom(entityType)
+                || EntityBlaze.class.isAssignableFrom(entityType)
+                || EntityGhast.class.isAssignableFrom(entityType)
+                || EntityMagmaCube.class.isAssignableFrom(entityType)
+                || EntityPigZombie.class.isAssignableFrom(entityType)
+                || EntityShulker.class.isAssignableFrom(entityType)
+                || EntityVex.class.isAssignableFrom(entityType)
+                || EntityWitherSkeleton.class.isAssignableFrom(entityType);
     }
 
     @Nullable
