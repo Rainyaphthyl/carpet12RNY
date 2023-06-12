@@ -20,6 +20,7 @@ import net.minecraft.entity.passive.*;
 import net.minecraft.init.Biomes;
 import net.minecraft.init.Blocks;
 import net.minecraft.util.HttpUtil;
+import net.minecraft.util.Tuple;
 import net.minecraft.util.math.*;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldEntitySpawner;
@@ -30,6 +31,9 @@ import net.minecraft.world.chunk.Chunk;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.annotation.ParametersAreNonnullByDefault;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 import java.util.function.Consumer;
 
@@ -37,9 +41,71 @@ import java.util.function.Consumer;
  * {@link net.minecraft.world.WorldEntitySpawner#findChunksForSpawning}
  */
 public class PerimeterCalculator implements Runnable {
+    /**
+     * Default value: {@code <0.6F, 1.8F>}
+     */
+    private static final Map<Class<? extends EntityLiving>, Tuple<Float, Float>> CREATURE_SIZE_MAP = new HashMap<>();
     private static final int SECTION_UNIT = 16;
     private static final int yMin = 0;
     private static final int yMax = 255;
+
+    static {
+        // bosses
+        CREATURE_SIZE_MAP.put(EntityDragon.class, new Tuple<>(16.0F, 8.0F));
+        CREATURE_SIZE_MAP.put(EntityWither.class, new Tuple<>(0.9F, 3.5F));
+        // monsters
+        CREATURE_SIZE_MAP.put(EntitySkeleton.class, new Tuple<>(0.6F, 1.99F));
+        CREATURE_SIZE_MAP.put(EntityStray.class, new Tuple<>(0.6F, 1.99F));
+        CREATURE_SIZE_MAP.put(EntityCaveSpider.class, new Tuple<>(0.7F, 0.5F));
+        CREATURE_SIZE_MAP.put(EntityCreeper.class, new Tuple<>(0.6F, 1.7F));
+        CREATURE_SIZE_MAP.put(EntityEnderman.class, new Tuple<>(0.6F, 2.9F));
+        CREATURE_SIZE_MAP.put(EntityEndermite.class, new Tuple<>(0.4F, 0.3F));
+        CREATURE_SIZE_MAP.put(EntityEvoker.class, new Tuple<>(0.6F, 1.95F));
+        CREATURE_SIZE_MAP.put(EntityGhast.class, new Tuple<>(4.0F, 4.0F));
+        CREATURE_SIZE_MAP.put(EntityGuardian.class, new Tuple<>(0.85F, 0.85F));
+        CREATURE_SIZE_MAP.put(EntityIllusionIllager.class, new Tuple<>(0.6F, 1.95F));
+        CREATURE_SIZE_MAP.put(EntityIronGolem.class, new Tuple<>(1.4F, 2.7F));
+        CREATURE_SIZE_MAP.put(EntityPolarBear.class, new Tuple<>(1.3F, 1.4F));
+        CREATURE_SIZE_MAP.put(EntityShulker.class, new Tuple<>(1.0F, 1.0F));
+        CREATURE_SIZE_MAP.put(EntitySilverfish.class, new Tuple<>(0.4F, 0.3F));
+        CREATURE_SIZE_MAP.put(EntitySlime.class, new Tuple<>(0.51000005F, 0.51000005F));
+        CREATURE_SIZE_MAP.put(EntityMagmaCube.class, new Tuple<>(0.51000005F, 0.51000005F));
+        CREATURE_SIZE_MAP.put(EntitySnowman.class, new Tuple<>(0.7F, 1.9F));
+        CREATURE_SIZE_MAP.put(EntitySpider.class, new Tuple<>(1.4F, 0.9F));
+        CREATURE_SIZE_MAP.put(EntityVex.class, new Tuple<>(0.4F, 0.8F));
+        CREATURE_SIZE_MAP.put(EntityVindicator.class, new Tuple<>(0.6F, 1.95F));
+        CREATURE_SIZE_MAP.put(EntityWitch.class, new Tuple<>(0.6F, 1.95F));
+        CREATURE_SIZE_MAP.put(EntityWitherSkeleton.class, new Tuple<>(0.7F, 2.4F));
+        CREATURE_SIZE_MAP.put(EntityZombie.class, new Tuple<>(0.6F, 1.95F));
+        CREATURE_SIZE_MAP.put(EntityHusk.class, new Tuple<>(0.6F, 1.95F));
+        CREATURE_SIZE_MAP.put(EntityPigZombie.class, new Tuple<>(0.6F, 1.95F));
+        CREATURE_SIZE_MAP.put(EntityZombieVillager.class, new Tuple<>(0.6F, 1.95F));
+        // animals
+        CREATURE_SIZE_MAP.put(EntityHorse.class, new Tuple<>(1.3964844F, 1.6F));
+        CREATURE_SIZE_MAP.put(EntitySkeletonHorse.class, new Tuple<>(1.3964844F, 1.6F));
+        CREATURE_SIZE_MAP.put(EntityZombieHorse.class, new Tuple<>(1.3964844F, 1.6F));
+        CREATURE_SIZE_MAP.put(EntityDonkey.class, new Tuple<>(1.3964844F, 1.6F));
+        CREATURE_SIZE_MAP.put(EntityMule.class, new Tuple<>(1.3964844F, 1.6F));
+        CREATURE_SIZE_MAP.put(EntityBat.class, new Tuple<>(0.5F, 0.9F));
+        CREATURE_SIZE_MAP.put(EntityChicken.class, new Tuple<>(0.4F, 0.7F));
+        CREATURE_SIZE_MAP.put(EntityCow.class, new Tuple<>(0.9F, 1.4F));
+        CREATURE_SIZE_MAP.put(EntityLlama.class, new Tuple<>(0.9F, 1.87F));
+        CREATURE_SIZE_MAP.put(EntityMooshroom.class, new Tuple<>(0.9F, 1.4F));
+        CREATURE_SIZE_MAP.put(EntityOcelot.class, new Tuple<>(0.6F, 0.7F));
+        CREATURE_SIZE_MAP.put(EntityParrot.class, new Tuple<>(0.5F, 0.9F));
+        CREATURE_SIZE_MAP.put(EntityPig.class, new Tuple<>(0.9F, 0.9F));
+        CREATURE_SIZE_MAP.put(EntityRabbit.class, new Tuple<>(0.4F, 0.5F));
+        CREATURE_SIZE_MAP.put(EntitySheep.class, new Tuple<>(0.9F, 1.3F));
+        CREATURE_SIZE_MAP.put(EntitySquid.class, new Tuple<>(0.8F, 0.8F));
+        CREATURE_SIZE_MAP.put(EntityVillager.class, new Tuple<>(0.6F, 1.95F));
+        CREATURE_SIZE_MAP.put(EntityWolf.class, new Tuple<>(0.6F, 0.85F));
+        // special mobs
+        Tuple<Float, Float> tempPair = CREATURE_SIZE_MAP.get(EntityGuardian.class);
+        CREATURE_SIZE_MAP.put(EntityElderGuardian.class, new Tuple<>(tempPair.getFirst() * 2.35F, tempPair.getSecond() * 2.35F));
+        tempPair = CREATURE_SIZE_MAP.get(EntityZombie.class);
+        CREATURE_SIZE_MAP.put(EntityGiantZombie.class, new Tuple<>(tempPair.getFirst() * 6.0F, tempPair.getSecond() * 6.0F));
+    }
+
     private final Class<? extends EntityLiving> entityType;
     private final WorldServer worldServer;
     private final Vec3d center;
@@ -107,6 +173,27 @@ public class PerimeterCalculator implements Runnable {
         return EntityMooshroom.class.isAssignableFrom(entityType) ? Blocks.MYCELIUM : Blocks.GRASS;
     }
 
+    @Nullable
+    @ParametersAreNonnullByDefault
+    public static AxisAlignedBB getEntityBoundingBox(Class<? extends EntityLiving> entityClass, BlockPos blockPos) {
+        if (!EntityLiving.class.isAssignableFrom(entityClass)) {
+            return null;
+        }
+        double posX = (float) blockPos.getX() + 0.5F;
+        double posY = blockPos.getY();
+        double posZ = (float) blockPos.getZ() + 0.5F;
+        float width = 0.6F;
+        float height = 1.8F;
+        Tuple<Float, Float> sizeTuple = CREATURE_SIZE_MAP.get(entityClass);
+        if (sizeTuple != null) {
+            width = sizeTuple.getFirst();
+            height = sizeTuple.getSecond();
+        }
+        double radius = width / 2.0F;
+        return new AxisAlignedBB(posX - radius, posY, posZ - radius,
+                posX + radius, posY + (double) height, posZ + radius);
+    }
+
     /**
      * Some non-final fields should not be null
      */
@@ -123,6 +210,60 @@ public class PerimeterCalculator implements Runnable {
         initSpawningRange();
         spawnAllowanceCache = new Long2ObjectOpenHashMap<>();
         biomeAllowanceCache = new Long2BooleanOpenHashMap();
+    }
+
+    private void countSpots() {
+        // TODO: 2023/6/1,0001 Calculate the spawning rate / probability when going through the random choices
+        // TODO: 2023/6/12,0012 Only count the possible spots. Do NOT calculate the rates.
+        //  The spawning rates can be 0 while the spot is counted as spawn-able.
+        BlockPos.MutableBlockPos posTarget = new BlockPos.MutableBlockPos();
+        for (int y = yMin; y <= yMax; ++y) {
+            for (int x = xMin; x <= xMax; ++x) {
+                for (int z = zMin; z <= zMax; ++z) {
+                    posTarget.setPos(x, y, z);
+                    if (isBiomeAllowing(posTarget)) {
+                        IBlockState stateTarget = reader.getBlockState(posTarget);
+                        IBlockState stateDown = reader.getBlockState(x, y - 1, z);
+                        IBlockState stateUp = reader.getBlockState(x, y + 1, z);
+                        // check placement in liquid
+                        boolean flagLiquid = stateTarget.getMaterial() == Material.WATER
+                                && stateDown.getMaterial() == Material.WATER && !stateUp.isNormalCube();
+                        boolean flagGround;
+                        if (!stateDown.isTopSolid()) {
+                            flagGround = false;
+                        } else {
+                            Block blockDown = stateDown.getBlock();
+                            boolean flag = blockDown != Blocks.BEDROCK && blockDown != Blocks.BARRIER;
+                            flagGround = flag && WorldEntitySpawner.isValidEmptySpawnBlock(stateTarget)
+                                    && WorldEntitySpawner.isValidEmptySpawnBlock(stateUp);
+                        }
+                        PerimeterResult.EnumDistLevel distLevel = getDistLevelOf(posTarget);
+                        if (flagLiquid) {
+                            result.addGeneralSpot(EntityLiving.SpawnPlacementType.IN_WATER, distLevel);
+                        }
+                        if (flagGround) {
+                            result.addGeneralSpot(EntityLiving.SpawnPlacementType.ON_GROUND, distLevel);
+                        }
+                        if (specific && isPositionAllowing(entityType, posTarget) && isNotColliding(entityType, posTarget)) {
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    @Override
+    public void run() {
+        try {
+            initialize();
+            countSpots();
+            // print result
+            Messenger.print_server_message(CarpetServer.minecraft_server, "Perimeter Info:");
+        } catch (Exception e) {
+            // failed
+            Messenger.print_server_message(CarpetServer.minecraft_server, "Failed to check perimeter");
+            e.printStackTrace();
+        }
     }
 
     private boolean isLightValid(Class<? extends EntityLiving> mobClass, BlockPos pos) {
@@ -382,58 +523,16 @@ public class PerimeterCalculator implements Runnable {
         }
     }
 
-    private void countSpots() {
-        // TODO: 2023/6/1,0001 Calculate the spawning rate / probability when going through the random choices
-        // TODO: 2023/6/12,0012 Only count the possible spots. Do NOT calculate the rates.
-        //  The spawning rates can be 0 while the spot is counted as spawn-able.
-        BlockPos.MutableBlockPos posTarget = new BlockPos.MutableBlockPos();
-        for (int y = yMin; y <= yMax; ++y) {
-            for (int x = xMin; x <= xMax; ++x) {
-                for (int z = zMin; z <= zMax; ++z) {
-                    posTarget.setPos(x, y, z);
-                    if (isBiomeAllowing(posTarget)) {
-                        IBlockState stateTarget = reader.getBlockState(posTarget);
-                        IBlockState stateDown = reader.getBlockState(x, y - 1, z);
-                        IBlockState stateUp = reader.getBlockState(x, y + 1, z);
-                        // check placement in liquid
-                        boolean flagLiquid = stateTarget.getMaterial() == Material.WATER
-                                && stateDown.getMaterial() == Material.WATER && !stateUp.isNormalCube();
-                        boolean flagGround;
-                        if (!stateDown.isTopSolid()) {
-                            flagGround = false;
-                        } else {
-                            Block blockDown = stateDown.getBlock();
-                            boolean flag = blockDown != Blocks.BEDROCK && blockDown != Blocks.BARRIER;
-                            flagGround = flag && WorldEntitySpawner.isValidEmptySpawnBlock(stateTarget)
-                                    && WorldEntitySpawner.isValidEmptySpawnBlock(stateUp);
-                        }
-                        PerimeterResult.EnumDistLevel distLevel = getDistLevelOf(posTarget);
-                        if (flagLiquid) {
-                            result.addGeneralSpot(EntityLiving.SpawnPlacementType.IN_WATER, distLevel);
-                        }
-                        if (flagGround) {
-                            result.addGeneralSpot(EntityLiving.SpawnPlacementType.ON_GROUND, distLevel);
-                        }
-                        if (specific && isPositionAllowing(entityType, posTarget)) {
-                        }
-                    }
-                }
-            }
+    private boolean isNotColliding(Class<? extends EntityLiving> entityClass, BlockPos.MutableBlockPos posTarget) {
+        AxisAlignedBB boundingBox = getEntityBoundingBox(entityClass, posTarget);
+        if (boundingBox == null) {
+            return false;
         }
-    }
-
-    @Override
-    public void run() {
-        try {
-            initialize();
-            countSpots();
-            // print result
-            Messenger.print_server_message(CarpetServer.minecraft_server, "Perimeter Info:");
-        } catch (Exception e) {
-            // failed
-            Messenger.print_server_message(CarpetServer.minecraft_server, "Failed to check perimeter");
-            e.printStackTrace();
-        }
+        boolean liquidColliding = reader.containsAnyLiquid(boundingBox);
+        // TODO: 2023/6/13,0013 Not finished yet... 
+        boolean blockColliding = reader.optimizedGetCollisionBoxes(boundingBox, true, null);
+        boolean entityColliding = false;
+        return !liquidColliding && !blockColliding && !entityColliding;
     }
 
 }

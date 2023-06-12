@@ -295,7 +295,7 @@
              return true;
          }
      }
-@@ -439,4 +592,27 @@
+@@ -439,4 +592,32 @@
          p_193383_2_ = this.func_176221_a(p_193383_2_, p_193383_1_, p_193383_3_);
          return p_193383_2_.func_177229_b(field_176387_N) != p_193383_4_.func_176734_d() && ((Boolean)p_193383_2_.func_177229_b(field_176320_b)).booleanValue() ? BlockFaceShape.UNDEFINED : BlockFaceShape.SOLID;
      }
@@ -321,5 +321,10 @@
 +    // Added method for checking if block is being pushed for duping fixes CARPET-XCOM
 +    public static boolean isBeingPushed(BlockPos pos){
 +        return dupeFixLocations.contains(pos);
++    }
++
++    // carpet12RNY - SilentChunkReader
++    public void addCollisionBoxToList_silent(IBlockState state, IBlockAccess access, BlockPos pos, AxisAlignedBB entityBox, List<AxisAlignedBB> collidingBoxes, @Nullable Entity entityIn, boolean isActualState) {
++        func_185492_a(pos, entityBox, collidingBoxes, state.func_185900_c(access, pos));
 +    }
  }

@@ -1,0 +1,33 @@
+--- ../src-base/minecraft/net/minecraft/block/BlockChorusPlant.java
++++ ../src-work/minecraft/net/minecraft/block/BlockChorusPlant.java
+@@ -193,4 +193,30 @@
+     {
+         return BlockFaceShape.UNDEFINED;
+     }
++
++    // carpet12RNY - SilentChunkReader
++    public void addCollisionBoxToList_silent(IBlockState state, IBlockAccess access, BlockPos pos, AxisAlignedBB entityBox, List<AxisAlignedBB> collidingBoxes, @Nullable Entity entityIn, boolean isActualState) {
++        if (!isActualState) {
++            state = state.func_185899_b(access, pos);
++        }
++        func_185492_a(pos, entityBox, collidingBoxes, new AxisAlignedBB(0.1875D, 0.1875D, 0.1875D, 0.8125D, 0.8125D, 0.8125D));
++        if (state.func_177229_b(field_185612_d)) {
++            func_185492_a(pos, entityBox, collidingBoxes, new AxisAlignedBB(0.0D, 0.1875D, 0.1875D, 0.1875D, 0.8125D, 0.8125D));
++        }
++        if (state.func_177229_b(field_185610_b)) {
++            func_185492_a(pos, entityBox, collidingBoxes, new AxisAlignedBB(0.8125D, 0.1875D, 0.1875D, 1.0D, 0.8125D, 0.8125D));
++        }
++        if (state.func_177229_b(field_185613_e)) {
++            func_185492_a(pos, entityBox, collidingBoxes, new AxisAlignedBB(0.1875D, 0.8125D, 0.1875D, 0.8125D, 1.0D, 0.8125D));
++        }
++        if (state.func_177229_b(field_185614_f)) {
++            func_185492_a(pos, entityBox, collidingBoxes, new AxisAlignedBB(0.1875D, 0.0D, 0.1875D, 0.8125D, 0.1875D, 0.8125D));
++        }
++        if (state.func_177229_b(field_185609_a)) {
++            func_185492_a(pos, entityBox, collidingBoxes, new AxisAlignedBB(0.1875D, 0.1875D, 0.0D, 0.8125D, 0.8125D, 0.1875D));
++        }
++        if (state.func_177229_b(field_185611_c)) {
++            func_185492_a(pos, entityBox, collidingBoxes, new AxisAlignedBB(0.1875D, 0.1875D, 0.8125D, 0.8125D, 0.8125D, 1.0D));
++        }
++    }
+ }

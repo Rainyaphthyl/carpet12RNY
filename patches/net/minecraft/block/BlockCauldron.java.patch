@@ -1,0 +1,16 @@
+--- ../src-base/minecraft/net/minecraft/block/BlockCauldron.java
++++ ../src-work/minecraft/net/minecraft/block/BlockCauldron.java
+@@ -318,4 +318,13 @@
+             return p_193383_4_ == EnumFacing.DOWN ? BlockFaceShape.UNDEFINED : BlockFaceShape.SOLID;
+         }
+     }
++
++    // carpet12RNY - SilentChunkReader
++    public void addCollisionBoxToList_silent(IBlockState state, IBlockAccess access, BlockPos pos, AxisAlignedBB entityBox, List<AxisAlignedBB> collidingBoxes, @Nullable Entity entityIn, boolean isActualState) {
++        func_185492_a(pos, entityBox, collidingBoxes, field_185596_b);
++        func_185492_a(pos, entityBox, collidingBoxes, field_185600_f);
++        func_185492_a(pos, entityBox, collidingBoxes, field_185597_c);
++        func_185492_a(pos, entityBox, collidingBoxes, field_185599_e);
++        func_185492_a(pos, entityBox, collidingBoxes, field_185598_d);
++    }
+ }

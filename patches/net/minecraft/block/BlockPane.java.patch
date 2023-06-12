@@ -1,0 +1,27 @@
+--- ../src-base/minecraft/net/minecraft/block/BlockPane.java
++++ ../src-work/minecraft/net/minecraft/block/BlockPane.java
+@@ -186,4 +186,24 @@
+     {
+         return p_193383_4_ != EnumFacing.UP && p_193383_4_ != EnumFacing.DOWN ? BlockFaceShape.MIDDLE_POLE_THIN : BlockFaceShape.CENTER_SMALL;
+     }
++
++    // carpet12RNY - SilentChunkReader
++    public void addCollisionBoxToList_silent(IBlockState state, IBlockAccess access, BlockPos pos, AxisAlignedBB entityBox, List<AxisAlignedBB> collidingBoxes, @Nullable Entity entityIn, boolean isActualState) {
++        if (!isActualState) {
++            state = func_176221_a(state, access, pos);
++        }
++        func_185492_a(pos, entityBox, collidingBoxes, field_185730_f[0]);
++        if (state.func_177229_b(field_176241_b)) {
++            func_185492_a(pos, entityBox, collidingBoxes, field_185730_f[func_185729_a(EnumFacing.NORTH)]);
++        }
++        if (state.func_177229_b(field_176243_N)) {
++            func_185492_a(pos, entityBox, collidingBoxes, field_185730_f[func_185729_a(EnumFacing.SOUTH)]);
++        }
++        if (state.func_177229_b(field_176242_M)) {
++            func_185492_a(pos, entityBox, collidingBoxes, field_185730_f[func_185729_a(EnumFacing.EAST)]);
++        }
++        if (state.func_177229_b(field_176244_O)) {
++            func_185492_a(pos, entityBox, collidingBoxes, field_185730_f[func_185729_a(EnumFacing.WEST)]);
++        }
++    }
+ }

@@ -1,0 +1,15 @@
+--- ../src-base/minecraft/net/minecraft/block/BlockPistonMoving.java
++++ ../src-work/minecraft/net/minecraft/block/BlockPistonMoving.java
+@@ -214,4 +214,12 @@
+     {
+         return BlockFaceShape.UNDEFINED;
+     }
++
++    // carpet12RNY - SilentChunkReader
++    public void addCollisionBoxToList_silent(IBlockState state, IBlockAccess access, BlockPos pos, AxisAlignedBB entityBox, List<AxisAlignedBB> collidingBoxes, @Nullable Entity entityIn, boolean isActualState) {
++        //TileEntityPiston tileentitypiston = getTilePistonAt(access, pos);
++        //if (tileentitypiston != null) {
++        //    tileentitypiston.addCollissionAABBs(worldIn, pos, entityBox, collidingBoxes, entityIn);
++        //}
++    }
+ }

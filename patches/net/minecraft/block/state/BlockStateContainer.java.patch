@@ -1,0 +1,14 @@
+--- ../src-base/minecraft/net/minecraft/block/state/BlockStateContainer.java
++++ ../src-work/minecraft/net/minecraft/block/state/BlockStateContainer.java
+@@ -435,5 +435,11 @@
+             {
+                 return this.field_177239_a.func_193383_a(p_193401_1_, this, p_193401_2_, p_193401_3_);
+             }
++
++            // carpet12RNY - SilentChunkReader
++            @Override
++            public void addCollisionBoxToList_silent(IBlockAccess access, BlockPos pos, AxisAlignedBB entityBox, List<AxisAlignedBB> collidingBoxes, @Nullable Entity entityIn, boolean isActualState) {
++                field_177239_a.addCollisionBoxToList_silent(this, access, pos, entityBox, collidingBoxes, entityIn, isActualState);
++            }
+         }
+ }

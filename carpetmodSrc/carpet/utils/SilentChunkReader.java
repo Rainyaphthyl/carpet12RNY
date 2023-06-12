@@ -8,6 +8,7 @@ import net.minecraft.entity.EnumCreatureType;
 import net.minecraft.init.Blocks;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
+import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.math.MathHelper;
@@ -26,6 +27,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -71,13 +73,17 @@ public class SilentChunkReader implements IBlockAccess {
     }
 
     @Nonnull
-    public IBlockState getBlockState(int x, int y, int z) throws NullPointerException {
-        if (y < 0 || y >= 256) {
-            return Objects.requireNonNull(Blocks.AIR).getDefaultState();
-        } else {
-            Chunk chunk = getChunk(x >> 4, z >> 4);
-            return Objects.requireNonNull(chunk).getBlockState(x, y, z);
+    public IBlockState getBlockState(int x, int y, int z) {
+        try {
+            if (y < 0 || y >= 256) {
+                return Objects.requireNonNull(Blocks.AIR).getDefaultState();
+            } else {
+                Chunk chunk = getChunk(x >> 4, z >> 4);
+                return Objects.requireNonNull(chunk).getBlockState(x, y, z);
+            }
+        } catch (NullPointerException ignored) {
         }
+        return BlockNull.STATE;
     }
 
     public boolean isChunkValid(BlockPos blockPos, boolean allowRemote) {
@@ -212,12 +218,7 @@ public class SilentChunkReader implements IBlockAccess {
     @Override
     @Nonnull
     public IBlockState getBlockState(@Nonnull BlockPos pos) {
-        IBlockState state = BlockNull.STATE;
-        try {
-            state = getBlockState(pos.getX(), pos.getY(), pos.getZ());
-        } catch (NullPointerException ignored) {
-        }
-        return state;
+        return getBlockState(pos.getX(), pos.getY(), pos.getZ());
     }
 
     /**
@@ -366,5 +367,93 @@ public class SilentChunkReader implements IBlockAccess {
     public boolean canSeeSky(@Nonnull BlockPos pos) {
         Chunk chunk = getChunk(pos);
         return chunk != null && chunk.canSeeSky(pos);
+    }
+
+    /**
+     * Checks if any of the blocks within the aabb are liquids.
+     */
+    public boolean containsAnyLiquid(@Nonnull AxisAlignedBB bb) {
+        int minX = MathHelper.floor(bb.minX);
+        int maxX = MathHelper.ceil(bb.maxX);
+        int minY = MathHelper.floor(bb.minY);
+        int maxY = MathHelper.ceil(bb.maxY);
+        int minZ = MathHelper.floor(bb.minZ);
+        int maxZ = MathHelper.ceil(bb.maxZ);
+        for (int x = minX; x < maxX; ++x) {
+            for (int y = minY; y < maxY; ++y) {
+                for (int z = minZ; z < maxZ; ++z) {
+                    IBlockState state = getBlockState(x, y, z);
+                    if (state.getMaterial().isLiquid()) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * @return {@code true} if the AABB list is not empty
+     */
+    public boolean optimizedGetCollisionBoxes(AxisAlignedBB aabb, boolean strictCheck, @Nullable List<AxisAlignedBB> outList) {
+        final int startX = MathHelper.floor(aabb.minX) - 1;
+        final int endX = MathHelper.ceil(aabb.maxX) + 1;
+        final int startY = MathHelper.floor(aabb.minY) - 1;
+        final int endY = MathHelper.ceil(aabb.maxY) + 1;
+        final int startZ = MathHelper.floor(aabb.minZ) - 1;
+        final int endZ = MathHelper.ceil(aabb.maxZ) + 1;
+        WorldBorder worldborder = world.getWorldBorder();
+        boolean outsideBorder = false;
+        boolean insideBorder = false;
+        BlockPos.PooledMutableBlockPos posMutable = BlockPos.PooledMutableBlockPos.retain();
+        if (outList == null) {
+            outList = new ArrayList<>();
+        }
+        try {
+            IBlockState stateStone = Objects.requireNonNull(Blocks.STONE).getDefaultState();
+            final int chunkStartX = (startX >> 4);
+            final int chunkStartZ = (startZ >> 4);
+            final int chunkEndX = (endX >> 4);
+            final int chunkEndZ = (endZ >> 4);
+            final int yMin = Math.max(0, startY);
+            for (int cx = chunkStartX; cx <= chunkEndX; cx++) {
+                for (int cz = chunkStartZ; cz <= chunkEndZ; cz++) {
+                    Chunk chunk = getChunk(cx, cz);
+                    if (chunk != null) {
+                        final int xMin = Math.max(cx << 4, startX);
+                        final int zMin = Math.max(cz << 4, startZ);
+                        final int xMax = Math.min((cx << 4) + 15, endX - 1);
+                        final int zMax = Math.min((cz << 4) + 15, endZ - 1);
+                        final int yMax = Math.min(chunk.getTopFilledSegment() + 15, endY - 1);
+                        for (int x = xMin; x <= xMax; ++x) {
+                            for (int z = zMin; z <= zMax; ++z) {
+                                boolean xIsEdge = x == startX || x == endX - 1;
+                                boolean zIsEdge = z == startZ || z == endZ - 1;
+                                if (!xIsEdge || !zIsEdge) {
+                                    for (int y = yMin; y <= yMax; ++y) {
+                                        if (!xIsEdge && !zIsEdge || y != endY - 1) {
+                                            if (strictCheck) {
+                                                if (x < -30000000 || x >= 30000000 || z < -30000000 || z >= 30000000) {
+                                                    return true;
+                                                }
+                                            }
+                                            posMutable.setPos(x, y, z);
+                                            IBlockState state = chunk.getBlockState(posMutable);
+                                            state.addCollisionBoxToList_silent(this, posMutable.toImmutable(), aabb, outList, null, false);
+                                            if (strictCheck && !outList.isEmpty()) {
+                                                return true;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } finally {
+            posMutable.release();
+        }
+        return !outList.isEmpty();
     }
 }

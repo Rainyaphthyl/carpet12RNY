@@ -31,7 +31,7 @@
          if (flag != ((Boolean)p_176427_3_.func_177229_b(field_176429_b)).booleanValue())
          {
              p_176427_1_.func_180501_a(p_176427_2_, p_176427_3_.func_177226_a(field_176429_b, Boolean.valueOf(flag)), 4);
-@@ -230,4 +238,16 @@
+@@ -230,4 +238,25 @@
      {
          return p_193383_4_ == EnumFacing.UP ? BlockFaceShape.BOWL : BlockFaceShape.UNDEFINED;
      }
@@ -46,5 +46,14 @@
 +    @Override
 +    public boolean isActive(World world, BlockPos pos, IBlockState state) {
 +        return state.func_177229_b(field_176429_b);
++    }
++
++    // carpet12RNY - SilentChunkReader
++    public void addCollisionBoxToList_silent(IBlockState state, IBlockAccess access, BlockPos pos, AxisAlignedBB entityBox, List<AxisAlignedBB> collidingBoxes, @Nullable Entity entityIn, boolean isActualState) {
++        func_185492_a(pos, entityBox, collidingBoxes, field_185571_c);
++        func_185492_a(pos, entityBox, collidingBoxes, field_185575_g);
++        func_185492_a(pos, entityBox, collidingBoxes, field_185574_f);
++        func_185492_a(pos, entityBox, collidingBoxes, field_185572_d);
++        func_185492_a(pos, entityBox, collidingBoxes, field_185573_e);
 +    }
  }

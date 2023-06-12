@@ -1,0 +1,15 @@
+--- ../src-base/minecraft/net/minecraft/block/BlockWall.java
++++ ../src-work/minecraft/net/minecraft/block/BlockWall.java
+@@ -224,4 +224,12 @@
+             }
+         }
+     }
++
++    // carpet12RNY - SilentChunkReader
++    public void addCollisionBoxToList_silent(IBlockState state, IBlockAccess access, BlockPos pos, AxisAlignedBB entityBox, List<AxisAlignedBB> collidingBoxes, @Nullable Entity entityIn, boolean isActualState) {
++        if (!isActualState) {
++            state = this.func_176221_a(state, access, pos);
++        }
++        func_185492_a(pos, entityBox, collidingBoxes, field_185750_B[func_185749_i(state)]);
++    }
+ }

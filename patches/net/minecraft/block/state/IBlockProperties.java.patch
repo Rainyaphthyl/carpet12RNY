@@ -1,0 +1,10 @@
+--- ../src-base/minecraft/net/minecraft/block/state/IBlockProperties.java
++++ ../src-work/minecraft/net/minecraft/block/state/IBlockProperties.java
+@@ -82,4 +82,7 @@
+     boolean func_191058_s();
+ 
+     BlockFaceShape func_193401_d(IBlockAccess p_193401_1_, BlockPos p_193401_2_, EnumFacing p_193401_3_);
++
++    // carpet12RNY - SilentChunkReader
++    void addCollisionBoxToList_silent(IBlockAccess access, BlockPos pos, AxisAlignedBB entityBox, List<AxisAlignedBB> collidingBoxes, @Nullable Entity entityIn, boolean isActualState);
+ }
