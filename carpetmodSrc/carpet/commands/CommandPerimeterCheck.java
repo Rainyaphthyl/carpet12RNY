@@ -35,7 +35,7 @@ public class CommandPerimeterCheck extends CommandCarpetBase
      */
     public String getUsage(ICommandSender sender)
     {
-        return "/perimetercheck <X> <Y> <Z> [<target_entity>?...]";
+        return "/perimetercheck <X> <Y> <Z> [<target_entity>]";
     }
 
     /**

@@ -61,6 +61,7 @@ public class CarpetCommands {
 
         // ----- Naftalluvia ----- //
         handler.registerCommand(new CommandEndermelon());
+        handler.registerCommand(new CommandPerimeterInfo());
         handler.registerCommand(new CommandPortal());
     }
 }
