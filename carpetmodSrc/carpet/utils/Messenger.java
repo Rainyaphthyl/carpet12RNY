@@ -353,4 +353,25 @@ public class Messenger {
             entityplayer.sendMessage(message);
         }
     }
+
+    /**
+     * Using "/tp" instead of "!/tp"
+     */
+    @Nonnull
+    public static ITextComponent tpa(String style, double x, double y, double z) {
+        String display = String.format("%s [%.1f, %.1f, %.1f]", style, x, y, z);
+        String detail = String.format("^g " + x + ", " + y + ", " + z);
+        String suggest = String.format("/tp " + x + ' ' + y + ' ' + z);
+        return m(null, display, detail, suggest);
+    }
+
+    /**
+     * Using "/tp" instead of "!/tp"
+     */
+    @Nonnull
+    public static ITextComponent tpa(String style, int x, int y, int z) {
+        String display = String.format("%s [%d, %d, %d]", style, x, y, z);
+        String suggest = String.format("/tp " + x + ' ' + y + ' ' + z);
+        return m(null, display, suggest);
+    }
 }

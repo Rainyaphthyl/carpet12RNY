@@ -9,6 +9,7 @@ Carpet 1.12 with [RNY](https://github.com/Rainyaphthyl)'s Addition
 - Add another mode of mob-cap logger.
 - Make command `/spawn list` smarter: parsing the block position above the floor.
 - Add a spawning rate calculator.
+- Define and throw `ChunkNotGeneratedException`.
 
 # Feature Modifications
 

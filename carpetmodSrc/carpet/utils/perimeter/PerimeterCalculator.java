@@ -3,6 +3,8 @@ package carpet.utils.perimeter;
 import carpet.CarpetServer;
 import carpet.utils.Messenger;
 import carpet.utils.SilentChunkReader;
+import it.unimi.dsi.fastutil.ints.Int2ObjectAVLTreeMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectSortedMap;
 import it.unimi.dsi.fastutil.longs.*;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockLeaves;
@@ -47,7 +49,6 @@ public class PerimeterCalculator implements Runnable {
     private static final Map<Class<? extends EntityLiving>, Tuple<Float, Float>> CREATURE_SIZE_MAP = new HashMap<>();
     private static final int SECTION_UNIT = 16;
     private static final int yMin = 0;
-    private static final int yMax = 255;
 
     static {
         // bosses
@@ -109,10 +110,10 @@ public class PerimeterCalculator implements Runnable {
     private final Class<? extends EntityLiving> entityType;
     private final WorldServer worldServer;
     private final Vec3d center;
+    private int yMax = SECTION_UNIT - 1;
     private Long2IntMap eligibleChunkHeightMap = null;
-    private AxisAlignedBB alignedBB = null;
     private Long2BooleanMap biomeAllowanceCache = null;
-    private Long2ObjectMap<PerimeterResult.EnumDistLevel> spawnAllowanceCache = null;
+    private Int2ObjectSortedMap<Long2ObjectMap<PerimeterResult.EnumDistLevel>> distanceCacheLayered = null;
     private EnumCreatureType creatureType = null;
     private EntityLiving.SpawnPlacementType placementType = null;
     private SilentChunkReader reader = null;
@@ -201,6 +202,25 @@ public class PerimeterCalculator implements Runnable {
             countSpots();
             // print result
             Messenger.print_server_message(CarpetServer.minecraft_server, "Perimeter Info:");
+            Messenger.print_server_message(CarpetServer.minecraft_server, Messenger.c(
+                    "w Spawning spaces around ", Messenger.tpa("w", center.x, center.y, center.z)
+            ));
+            int inner = result.getPlacementCount(EntityLiving.SpawnPlacementType.IN_WATER,
+                    PerimeterResult.EnumDistLevel.NEARBY, PerimeterResult.EnumDistLevel.NORMAL);
+            int outer = result.getPlacementCount(EntityLiving.SpawnPlacementType.IN_WATER,
+                    PerimeterResult.EnumDistLevel.DISTANT);
+            Messenger.print_server_message(CarpetServer.minecraft_server, Messenger.c(
+                    "w   potential in-liquid: ", "l " + inner, "^e 24 <= dist <= 128",
+                    "w  + ", "r " + outer, "^n dist > 128", "w  = ", "m " + (inner + outer), "^p dist >= 24"
+            ));
+            inner = result.getPlacementCount(EntityLiving.SpawnPlacementType.ON_GROUND,
+                    PerimeterResult.EnumDistLevel.NEARBY, PerimeterResult.EnumDistLevel.NORMAL);
+            outer = result.getPlacementCount(EntityLiving.SpawnPlacementType.ON_GROUND,
+                    PerimeterResult.EnumDistLevel.DISTANT);
+            Messenger.print_server_message(CarpetServer.minecraft_server, Messenger.c(
+                    "w   potential on-ground: ", "l " + inner, "^e 24 <= dist <= 128",
+                    "w  + ", "r " + outer, "^n dist > 128", "w  = ", "m " + (inner + outer), "^p dist >= 24"
+            ));
         } catch (Exception e) {
             // failed
             Messenger.print_server_message(CarpetServer.minecraft_server, "Failed to check perimeter");
@@ -222,7 +242,7 @@ public class PerimeterCalculator implements Runnable {
             specific = false;
         }
         initSpawningRange();
-        spawnAllowanceCache = new Long2ObjectOpenHashMap<>();
+        distanceCacheLayered = new Int2ObjectAVLTreeMap<>();
         biomeAllowanceCache = new Long2BooleanOpenHashMap();
     }
 
@@ -235,7 +255,7 @@ public class PerimeterCalculator implements Runnable {
             for (int x = xMin; x <= xMax; ++x) {
                 for (int z = zMin; z <= zMax; ++z) {
                     posTarget.setPos(x, y, z);
-                    if (isBiomeAllowing(posTarget)) {
+                    if (!specific || isBiomeAllowing(posTarget)) {
                         IBlockState stateTarget = reader.getBlockState(posTarget);
                         IBlockState stateDown = reader.getBlockState(x, y - 1, z);
                         IBlockState stateUp = reader.getBlockState(x, y + 1, z);
@@ -251,18 +271,30 @@ public class PerimeterCalculator implements Runnable {
                             flagGround = flag && WorldEntitySpawner.isValidEmptySpawnBlock(stateTarget)
                                     && WorldEntitySpawner.isValidEmptySpawnBlock(stateUp);
                         }
-                        PerimeterResult.EnumDistLevel distLevel = getDistLevelOf(posTarget);
                         if (flagLiquid) {
-                            result.addGeneralSpot(EntityLiving.SpawnPlacementType.IN_WATER, distLevel);
+                            result.addGeneralSpot(EntityLiving.SpawnPlacementType.IN_WATER, getDistLevelOf(posTarget));
                         }
                         if (flagGround) {
-                            result.addGeneralSpot(EntityLiving.SpawnPlacementType.ON_GROUND, distLevel);
+                            result.addGeneralSpot(EntityLiving.SpawnPlacementType.ON_GROUND, getDistLevelOf(posTarget));
                         }
-                        if (specific && isPositionAllowing(entityType, posTarget) && isNotColliding(entityType, posTarget)) {
+                        if (specific) {
+                            boolean placeable = false;
+                            switch (placementType) {
+                                case ON_GROUND:
+                                    placeable = flagGround;
+                                    break;
+                                case IN_WATER:
+                                    placeable = flagLiquid;
+                                    break;
+                            }
+                            if (placeable && isPositionAllowing(entityType, posTarget) && isNotColliding(entityType, posTarget)) {
+                                result.addSpecificSpot(entityType, getDistLevelOf(posTarget), posTarget);
+                            }
                         }
                     }
                 }
             }
+            distanceCacheLayered.remove(y);
         }
     }
 
@@ -278,10 +310,22 @@ public class PerimeterCalculator implements Runnable {
     }
 
     private void initSpawningRange() {
+        eligibleChunkHeightMap = new Long2IntOpenHashMap();
         int chunkX = MathHelper.floor(center.x / 16.0);
         int chunkZ = MathHelper.floor(center.z / 16.0);
         // checking player chunk map
         int radius = Math.min(CarpetServer.minecraft_server.getPlayerList().getViewDistance(), 7);
+        for (int cx = -radius; cx <= radius; ++cx) {
+            for (int cz = -radius; cz <= radius; ++cz) {
+                ChunkPos chunkPos = new ChunkPos(chunkX + cx, chunkZ + cz);
+                long index = ChunkPos.asLong(chunkPos.x, chunkPos.z);
+                int height = checkChunkHeight(chunkPos);
+                eligibleChunkHeightMap.put(index, height);
+                if (height > yMax) {
+                    yMax = height;
+                }
+            }
+        }
         int expand = 20;
         WorldBorder worldBorder = worldServer.getWorldBorder();
         int worldLimit = worldBorder.getSize();
@@ -315,15 +359,19 @@ public class PerimeterCalculator implements Runnable {
         }
     }
 
-    public int checkChunkHeight(@Nonnull ChunkPos chunkPos) {
+    private int checkChunkHeight(@Nonnull ChunkPos chunkPos) {
         final int originX = chunkPos.x * 16;
         final int originZ = chunkPos.z * 16;
         Chunk chunk = reader.getChunk(chunkPos);
-        int height = MathHelper.roundUp(chunk.getHeight(new BlockPos(originX + 8, 0, originZ + 8)) + 1, SECTION_UNIT);
-        if (height <= 0) {
-            height = chunk.getTopFilledSegment() + (SECTION_UNIT - 1);
+        if (chunk == null) {
+            return SECTION_UNIT - 1;
+        } else {
+            int height = MathHelper.roundUp(chunk.getHeight(new BlockPos(originX + 8, 0, originZ + 8)) + 1, SECTION_UNIT);
+            if (height <= 0) {
+                height = chunk.getTopFilledSegment() + (SECTION_UNIT - 1);
+            }
+            return height;
         }
-        return height;
     }
 
     /**
@@ -383,24 +431,32 @@ public class PerimeterCalculator implements Runnable {
      * The 24-meter check for the world spawn point and the closest player
      */
     private PerimeterResult.EnumDistLevel getDistLevelOf(@Nonnull BlockPos posTarget) {
-        long index = posTarget.toLong();
-        if (spawnAllowanceCache.containsKey(index)) {
-            return spawnAllowanceCache.get(index);
+        int posY = posTarget.getY();
+        Long2ObjectMap<PerimeterResult.EnumDistLevel> cacheLayer;
+        if (distanceCacheLayered.containsKey(posY)) {
+            cacheLayer = distanceCacheLayered.get(posY);
+        } else {
+            cacheLayer = new Long2ObjectOpenHashMap<>();
+            cacheLayer.defaultReturnValue(null);
+            distanceCacheLayered.put(posY, cacheLayer);
+        }
+        long index = SilentChunkReader.blockHorizonLong(posTarget);
+        if (cacheLayer.containsKey(index)) {
+            return cacheLayer.get(index);
         }
         float mobX = (float) posTarget.getX() + 0.5F;
         float mobZ = (float) posTarget.getZ() + 0.5F;
-        int mobY = posTarget.getY();
         PerimeterResult.EnumDistLevel level;
         if (worldSpawnPoint == null) {
             worldSpawnPoint = reader.getSpawnPoint();
         }
-        if (worldSpawnPoint.distanceSq(mobX, mobY, mobZ) >= 576.0) {
-            double distSq = center.squareDistanceTo(mobX, mobY, mobZ);
+        if (worldSpawnPoint.distanceSq(mobX, posY, mobZ) >= 576.0) {
+            double distSq = center.squareDistanceTo(mobX, posY, mobZ);
             level = PerimeterResult.EnumDistLevel.getLevelOfDistSq(distSq);
         } else {
             level = PerimeterResult.EnumDistLevel.BANNED;
         }
-        spawnAllowanceCache.put(index, level);
+        cacheLayer.put(index, level);
         return level;
     }
 
