@@ -3,6 +3,7 @@ package carpet.utils.perimeter;
 import carpet.CarpetServer;
 import carpet.utils.Messenger;
 import carpet.utils.SilentChunkReader;
+import carpet.utils.perimeter.PerimeterResult.EnumDistLevel;
 import it.unimi.dsi.fastutil.ints.Int2ObjectAVLTreeMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectSortedMap;
 import it.unimi.dsi.fastutil.longs.*;
@@ -11,10 +12,8 @@ import net.minecraft.block.BlockLeaves;
 import net.minecraft.block.BlockLog;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
-import net.minecraft.entity.EntityCreature;
-import net.minecraft.entity.EntityLiving;
-import net.minecraft.entity.EntitySpawnPlacementRegistry;
-import net.minecraft.entity.EnumCreatureType;
+import net.minecraft.entity.*;
+import net.minecraft.entity.EntityLiving.SpawnPlacementType;
 import net.minecraft.entity.boss.EntityDragon;
 import net.minecraft.entity.boss.EntityWither;
 import net.minecraft.entity.monster.*;
@@ -37,7 +36,6 @@ import javax.annotation.ParametersAreNonnullByDefault;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-import java.util.function.Consumer;
 
 /**
  * {@link net.minecraft.world.WorldEntitySpawner#findChunksForSpawning}
@@ -111,11 +109,10 @@ public class PerimeterCalculator implements Runnable {
     private final WorldServer worldServer;
     private final Vec3d center;
     private int yMax = SECTION_UNIT - 1;
-    private Long2IntMap eligibleChunkHeightMap = null;
     private Long2BooleanMap biomeAllowanceCache = null;
-    private Int2ObjectSortedMap<Long2ObjectMap<PerimeterResult.EnumDistLevel>> distanceCacheLayered = null;
+    private Int2ObjectSortedMap<Long2ObjectMap<EnumDistLevel>> distanceCacheLayered = null;
     private EnumCreatureType creatureType = null;
-    private EntityLiving.SpawnPlacementType placementType = null;
+    private SpawnPlacementType placementType = null;
     private SilentChunkReader reader = null;
     private PerimeterResult result = null;
     private BlockPos worldSpawnPoint = null;
@@ -205,22 +202,29 @@ public class PerimeterCalculator implements Runnable {
             Messenger.print_server_message(CarpetServer.minecraft_server, Messenger.c(
                     "w Spawning spaces around ", Messenger.tpa("w", center.x, center.y, center.z)
             ));
-            int inner = result.getPlacementCount(EntityLiving.SpawnPlacementType.IN_WATER,
-                    PerimeterResult.EnumDistLevel.NEARBY, PerimeterResult.EnumDistLevel.NORMAL);
-            int outer = result.getPlacementCount(EntityLiving.SpawnPlacementType.IN_WATER,
-                    PerimeterResult.EnumDistLevel.DISTANT);
+            int inner = result.getPlacementCount(SpawnPlacementType.IN_WATER,
+                    EnumDistLevel.NEARBY, EnumDistLevel.NORMAL);
+            int outer = result.getPlacementCount(SpawnPlacementType.IN_WATER,
+                    EnumDistLevel.DISTANT);
             Messenger.print_server_message(CarpetServer.minecraft_server, Messenger.c(
                     "w   potential in-liquid: ", "l " + inner, "^e 24 <= dist <= 128",
                     "w  + ", "r " + outer, "^n dist > 128", "w  = ", "m " + (inner + outer), "^p dist >= 24"
             ));
-            inner = result.getPlacementCount(EntityLiving.SpawnPlacementType.ON_GROUND,
-                    PerimeterResult.EnumDistLevel.NEARBY, PerimeterResult.EnumDistLevel.NORMAL);
-            outer = result.getPlacementCount(EntityLiving.SpawnPlacementType.ON_GROUND,
-                    PerimeterResult.EnumDistLevel.DISTANT);
+            inner = result.getPlacementCount(SpawnPlacementType.ON_GROUND, EnumDistLevel.NEARBY, EnumDistLevel.NORMAL);
+            outer = result.getPlacementCount(SpawnPlacementType.ON_GROUND, EnumDistLevel.DISTANT);
             Messenger.print_server_message(CarpetServer.minecraft_server, Messenger.c(
                     "w   potential on-ground: ", "l " + inner, "^e 24 <= dist <= 128",
                     "w  + ", "r " + outer, "^n dist > 128", "w  = ", "m " + (inner + outer), "^p dist >= 24"
             ));
+            if (specific) {
+                inner = result.getSpecificCount(entityType, EnumDistLevel.NEARBY, EnumDistLevel.NORMAL);
+                outer = result.getSpecificCount(entityType, EnumDistLevel.DISTANT);
+                String name = EntityList.getTranslationName(EntityList.getKey(entityType));
+                Messenger.print_server_message(CarpetServer.minecraft_server, Messenger.c(
+                        "w   " + name + ": ", "l " + inner, "^e 24 <= dist <= 128",
+                        "w  + ", "r " + outer, "^n dist > 128", "w  = ", "m " + (inner + outer), "^p dist >= 24"
+                ));
+            }
         } catch (Exception e) {
             // failed
             Messenger.print_server_message(CarpetServer.minecraft_server, "Failed to check perimeter");
@@ -272,10 +276,10 @@ public class PerimeterCalculator implements Runnable {
                                     && WorldEntitySpawner.isValidEmptySpawnBlock(stateUp);
                         }
                         if (flagLiquid) {
-                            result.addGeneralSpot(EntityLiving.SpawnPlacementType.IN_WATER, getDistLevelOf(posTarget));
+                            result.addGeneralSpot(SpawnPlacementType.IN_WATER, getDistLevelOf(posTarget));
                         }
                         if (flagGround) {
-                            result.addGeneralSpot(EntityLiving.SpawnPlacementType.ON_GROUND, getDistLevelOf(posTarget));
+                            result.addGeneralSpot(SpawnPlacementType.ON_GROUND, getDistLevelOf(posTarget));
                         }
                         if (specific) {
                             boolean placeable = false;
@@ -310,7 +314,6 @@ public class PerimeterCalculator implements Runnable {
     }
 
     private void initSpawningRange() {
-        eligibleChunkHeightMap = new Long2IntOpenHashMap();
         int chunkX = MathHelper.floor(center.x / 16.0);
         int chunkZ = MathHelper.floor(center.z / 16.0);
         // checking player chunk map
@@ -318,9 +321,7 @@ public class PerimeterCalculator implements Runnable {
         for (int cx = -radius; cx <= radius; ++cx) {
             for (int cz = -radius; cz <= radius; ++cz) {
                 ChunkPos chunkPos = new ChunkPos(chunkX + cx, chunkZ + cz);
-                long index = ChunkPos.asLong(chunkPos.x, chunkPos.z);
                 int height = checkChunkHeight(chunkPos);
-                eligibleChunkHeightMap.put(index, height);
                 if (height > yMax) {
                     yMax = height;
                 }
@@ -333,30 +334,6 @@ public class PerimeterCalculator implements Runnable {
         xMax = MathHelper.clamp(((chunkX + radius) << 4) + 15 + expand, -worldLimit, worldLimit);
         zMin = MathHelper.clamp(((chunkZ - radius) << 4) - expand, -worldLimit, worldLimit);
         zMax = MathHelper.clamp(((chunkZ + radius) << 4) + 15 + expand, -worldLimit, worldLimit);
-    }
-
-    /**
-     * Select a random block position in the chunk
-     */
-    private void forEachChunkPosition(@Nonnull ChunkPos chunkPos, Consumer<BlockPos> consumer) {
-        final int originX = chunkPos.x * 16;
-        final int originZ = chunkPos.z * 16;
-        Chunk chunk = reader.getChunk(chunkPos);
-        int height = MathHelper.roundUp(chunk.getHeight(new BlockPos(originX + 8, 0, originZ + 8)) + 1, 16);
-        if (height <= 0) {
-            height = chunk.getTopFilledSegment() + 15;
-        }
-        BlockPos.MutableBlockPos posIter = new BlockPos.MutableBlockPos();
-        for (int y = 0; y < height; ++y) {
-            for (int dx = 0; dx < 16; ++dx) {
-                final int x = originX + dx;
-                for (int dz = 0; dz < 16; ++dz) {
-                    final int z = originZ + dz;
-                    posIter.setPos(x, y, z);
-                    consumer.accept(posIter);
-                }
-            }
-        }
     }
 
     private int checkChunkHeight(@Nonnull ChunkPos chunkPos) {
@@ -375,64 +352,11 @@ public class PerimeterCalculator implements Runnable {
     }
 
     /**
-     * Wandering from [-5, 0, -5] to [+5, 0, +5] for one round
-     */
-    private void forEachWanderingSpawn(@Nonnull BlockPos posBegin, int rounds, Consumer<BlockPos> consumer) {
-        if (rounds <= 0) {
-            return;
-        }
-        BlockPos.MutableBlockPos posTarget = new BlockPos.MutableBlockPos(posBegin);
-        int originX = posBegin.getX();
-        int originY = posBegin.getY();
-        int originZ = posBegin.getZ();
-        // positive & negative
-        for (int dxp = 0; dxp < 6; ++dxp) {
-            for (int dxn = 0; dxn < 6; ++dxn) {
-                // dyp or dzp is always 0, ignored
-                for (int dzp = 0; dzp < 6; ++dzp) {
-                    for (int dzn = 0; dzn < 6; ++dzn) {
-                        posTarget.setPos(originX + dxp - dxn, originY, originZ + dzp - dzn);
-                        consumer.accept(posTarget);
-                    }
-                }
-            }
-        }
-        if (rounds > 1) {
-            --rounds;
-            for (int dxp = 0; dxp < 6; ++dxp) {
-                for (int dxn = 0; dxn < 6; ++dxn) {
-                    // dyp or dzp is always 0, ignored
-                    for (int dzp = 0; dzp < 6; ++dzp) {
-                        for (int dzn = 0; dzn < 6; ++dzn) {
-                            posTarget.setPos(originX + dxp - dxn, originY, originZ + dzp - dzn);
-                            forEachWanderingSpawn(posBegin, rounds, consumer);
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    /**
      * The 24-meter check for the world spawn point and the closest player
      */
-    private boolean isSpawnAllowed(double mobX, double mobY, double mobZ) {
-        boolean valid = center.squareDistanceTo(mobX, mobY, mobZ) >= 576.0;
-        if (valid) {
-            if (worldSpawnPoint == null) {
-                worldSpawnPoint = reader.getSpawnPoint();
-            }
-            valid = worldSpawnPoint.distanceSq(mobX, mobY, mobZ) >= 576.0;
-        }
-        return valid;
-    }
-
-    /**
-     * The 24-meter check for the world spawn point and the closest player
-     */
-    private PerimeterResult.EnumDistLevel getDistLevelOf(@Nonnull BlockPos posTarget) {
+    private EnumDistLevel getDistLevelOf(@Nonnull BlockPos posTarget) {
         int posY = posTarget.getY();
-        Long2ObjectMap<PerimeterResult.EnumDistLevel> cacheLayer;
+        Long2ObjectMap<EnumDistLevel> cacheLayer;
         if (distanceCacheLayered.containsKey(posY)) {
             cacheLayer = distanceCacheLayered.get(posY);
         } else {
@@ -446,15 +370,15 @@ public class PerimeterCalculator implements Runnable {
         }
         float mobX = (float) posTarget.getX() + 0.5F;
         float mobZ = (float) posTarget.getZ() + 0.5F;
-        PerimeterResult.EnumDistLevel level;
+        EnumDistLevel level;
         if (worldSpawnPoint == null) {
             worldSpawnPoint = reader.getSpawnPoint();
         }
         if (worldSpawnPoint.distanceSq(mobX, posY, mobZ) >= 576.0) {
             double distSq = center.squareDistanceTo(mobX, posY, mobZ);
-            level = PerimeterResult.EnumDistLevel.getLevelOfDistSq(distSq);
+            level = EnumDistLevel.getLevelOfDistSq(distSq);
         } else {
-            level = PerimeterResult.EnumDistLevel.BANNED;
+            level = EnumDistLevel.BANNED;
         }
         cacheLayer.put(index, level);
         return level;

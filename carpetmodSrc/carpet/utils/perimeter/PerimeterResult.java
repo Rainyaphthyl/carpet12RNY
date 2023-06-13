@@ -9,7 +9,9 @@ import net.minecraft.entity.EntityLiving;
 import net.minecraft.util.math.BlockPos;
 
 import javax.annotation.Nonnull;
-import java.util.*;
+import java.util.EnumMap;
+import java.util.HashMap;
+import java.util.Map;
 
 public class PerimeterResult {
     private final Map<EntityLiving.SpawnPlacementType, Object2IntSortedMap<EnumDistLevel>> placementCounts = new HashMap<>();
@@ -85,29 +87,6 @@ public class PerimeterResult {
     public int getPlacementCount(EntityLiving.SpawnPlacementType placementType, EnumDistLevel... distLevels) {
         Object2IntSortedMap<EnumDistLevel> levelMap = placementCounts.get(placementType);
         return countLevelMap(levelMap, distLevels);
-    }
-
-    public boolean containsPos(Class<? extends EntityLiving> entityType, BlockPos pos) {
-        if (pos == null) {
-            return false;
-        }
-        long index = pos.toLong();
-        List<Map<EnumDistLevel, Long2ObjectMap<BlockPos>>> maps = new ArrayList<>();
-        if (entityType != null) {
-            maps.add(spotSampleSets.get(entityType));
-        } else {
-            maps.addAll(spotSampleSets.values());
-        }
-        for (Map<EnumDistLevel, Long2ObjectMap<BlockPos>> levelMap : maps) {
-            if (levelMap != null) {
-                for (Long2ObjectMap<BlockPos> samples : levelMap.values()) {
-                    if (samples != null && samples.containsKey(index)) {
-                        return true;
-                    }
-                }
-            }
-        }
-        return false;
     }
 
     public enum EnumDistLevel {
