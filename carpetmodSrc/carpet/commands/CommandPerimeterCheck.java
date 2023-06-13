@@ -1,7 +1,6 @@
 package carpet.commands;
 
 import carpet.utils.Messenger;
-import carpet.utils.perimeter.PerimeterCalculator;
 import carpet.utils.PerimeterDiagnostics;
 import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommandSender;
@@ -21,7 +20,7 @@ import javax.annotation.Nullable;
 import java.util.Collections;
 import java.util.List;
 
-public class CommandPerimeter extends CommandCarpetBase
+public class CommandPerimeterCheck extends CommandCarpetBase
 {
     /**
      * Gets the name of the command
@@ -44,7 +43,7 @@ public class CommandPerimeter extends CommandCarpetBase
      */
     public void execute(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException
     {
-        if (!command_enabled("commandPerimeterInfo", sender)) return;
+        if (!command_enabled("commandPerimeterCheck", sender)) return;
         if (args.length < 1)
         {
             throw new WrongUsageException(getUsage(sender));
@@ -80,12 +79,6 @@ public class CommandPerimeter extends CommandCarpetBase
                 entityType = entityliving.getClass();
                 entityliving.setDead();
             }
-            // test start
-            PerimeterCalculator.asyncSearch(world, new Vec3d(blockpos), entityType);
-            if (true) {
-                return;
-            }
-            // test end
             PerimeterDiagnostics.Result res = PerimeterDiagnostics.countSpots((WorldServer) world, blockpos, entityliving);
             if (sender instanceof EntityPlayer)
             {

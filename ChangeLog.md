@@ -17,4 +17,4 @@ Carpet 1.12 with [RNY](https://github.com/Rainyaphthyl)'s Addition
 
 # Code Details
 
-- None.
+- Rename `CommandPerimeter` to `CommandPerimeterCheck`.

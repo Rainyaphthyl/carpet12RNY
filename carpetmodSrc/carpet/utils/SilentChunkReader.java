@@ -395,22 +395,18 @@ public class SilentChunkReader implements IBlockAccess {
     /**
      * @return {@code true} if the AABB list is not empty
      */
-    public boolean optimizedGetCollisionBoxes(AxisAlignedBB aabb, boolean strictCheck, @Nullable List<AxisAlignedBB> outList) {
+    public boolean optimizedGetCollisionBoxes(@Nonnull AxisAlignedBB aabb, boolean strictCheck, @Nullable List<AxisAlignedBB> outList) {
         final int startX = MathHelper.floor(aabb.minX) - 1;
         final int endX = MathHelper.ceil(aabb.maxX) + 1;
         final int startY = MathHelper.floor(aabb.minY) - 1;
         final int endY = MathHelper.ceil(aabb.maxY) + 1;
         final int startZ = MathHelper.floor(aabb.minZ) - 1;
         final int endZ = MathHelper.ceil(aabb.maxZ) + 1;
-        WorldBorder worldborder = world.getWorldBorder();
-        boolean outsideBorder = false;
-        boolean insideBorder = false;
         BlockPos.PooledMutableBlockPos posMutable = BlockPos.PooledMutableBlockPos.retain();
         if (outList == null) {
             outList = new ArrayList<>();
         }
         try {
-            IBlockState stateStone = Objects.requireNonNull(Blocks.STONE).getDefaultState();
             final int chunkStartX = (startX >> 4);
             final int chunkStartZ = (startZ >> 4);
             final int chunkEndX = (endX >> 4);

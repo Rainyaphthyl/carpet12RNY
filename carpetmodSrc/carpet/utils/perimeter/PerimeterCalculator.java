@@ -6,7 +6,10 @@ import carpet.utils.SilentChunkReader;
 import carpet.utils.perimeter.PerimeterResult.EnumDistLevel;
 import it.unimi.dsi.fastutil.ints.Int2ObjectAVLTreeMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectSortedMap;
-import it.unimi.dsi.fastutil.longs.*;
+import it.unimi.dsi.fastutil.longs.Long2BooleanMap;
+import it.unimi.dsi.fastutil.longs.Long2BooleanOpenHashMap;
+import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockLeaves;
 import net.minecraft.block.BlockLog;
@@ -251,9 +254,8 @@ public class PerimeterCalculator implements Runnable {
     }
 
     private void countSpots() {
-        // TODO: 2023/6/1,0001 Calculate the spawning rate / probability when going through the random choices
-        // TODO: 2023/6/12,0012 Only count the possible spots. Do NOT calculate the rates.
-        //  The spawning rates can be 0 while the spot is counted as spawn-able.
+        // Only count the possible spots. Do NOT calculate the rates.
+        // The spawning rates can be 0 while the spot is counted as spawn-able.
         BlockPos.MutableBlockPos posTarget = new BlockPos.MutableBlockPos();
         for (int y = yMin; y <= yMax; ++y) {
             for (int x = xMin; x <= xMax; ++x) {
@@ -509,8 +511,7 @@ public class PerimeterCalculator implements Runnable {
             return false;
         }
         boolean liquidColliding = reader.containsAnyLiquid(boundingBox);
-        // TODO: 2023/6/13,0013 Not finished yet... 
-        boolean blockColliding = reader.optimizedGetCollisionBoxes(boundingBox, true, null);
+        boolean blockColliding = reader.optimizedGetCollisionBoxes(boundingBox, false, null);
         // entity collision check always returns "Not Colliding" in 1.12.2
         boolean entityColliding = false;
         return !liquidColliding && !blockColliding && !entityColliding;

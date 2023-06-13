@@ -129,8 +129,8 @@ public class CarpetSettings
     })
     public static boolean commandCameramode = true;
 
-    @Rule(desc = "Enables /perimeterinfo command that scans the area around the block for potential spawnable spots", category = COMMANDS)
-    public static boolean commandPerimeterInfo = true;
+    @Rule(desc = "Enables /perimetercheck command that scans the area around the block for potential spawnable spots", category = COMMANDS)
+    public static boolean commandPerimeterCheck = true;
 
     @Rule(desc = "Enables /player command to control/spawn players", category = COMMANDS)
     public static boolean commandPlayer = true;
