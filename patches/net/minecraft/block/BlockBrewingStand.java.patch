@@ -1,12 +1,21 @@
 --- ../src-base/minecraft/net/minecraft/block/BlockBrewingStand.java
 +++ ../src-work/minecraft/net/minecraft/block/BlockBrewingStand.java
-@@ -178,4 +178,10 @@
+@@ -3,6 +3,8 @@
+ import java.util.List;
+ import java.util.Random;
+ import javax.annotation.Nullable;
++
++import carpet.utils.SilentChunkReader;
+ import net.minecraft.block.material.Material;
+ import net.minecraft.block.properties.IProperty;
+ import net.minecraft.block.properties.PropertyBool;
+@@ -178,4 +180,10 @@
      {
          return BlockFaceShape.UNDEFINED;
      }
 +
 +    // carpet12RNY - SilentChunkReader
-+    public void addCollisionBoxToList_silent(IBlockState state, IBlockAccess access, BlockPos pos, AxisAlignedBB entityBox, List<AxisAlignedBB> collidingBoxes, @Nullable Entity entityIn, boolean isActualState) {
++    public void addCollisionBoxToList_silent(IBlockState state, SilentChunkReader access, BlockPos pos, AxisAlignedBB entityBox, List<AxisAlignedBB> collidingBoxes, @Nullable Entity entityIn, boolean isActualState) {
 +        func_185492_a(pos, entityBox, collidingBoxes, field_185556_c);
 +        func_185492_a(pos, entityBox, collidingBoxes, field_185555_b);
 +    }

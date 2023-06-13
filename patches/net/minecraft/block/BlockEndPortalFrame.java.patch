@@ -1,6 +1,13 @@
 --- ../src-base/minecraft/net/minecraft/block/BlockEndPortalFrame.java
 +++ ../src-work/minecraft/net/minecraft/block/BlockEndPortalFrame.java
-@@ -29,7 +29,9 @@
+@@ -1,5 +1,6 @@
+ package net.minecraft.block;
+ 
++import carpet.utils.SilentChunkReader;
+ import com.google.common.base.Predicates;
+ import java.util.List;
+ import java.util.Random;
+@@ -29,7 +30,9 @@
  import net.minecraft.world.IBlockAccess;
  import net.minecraft.world.World;
  
@@ -11,7 +18,7 @@
  {
      public static final PropertyDirection field_176508_a = BlockHorizontal.field_185512_D;
      public static final PropertyBool field_176507_b = PropertyBool.func_177716_a("eye");
-@@ -135,4 +137,18 @@
+@@ -135,4 +138,18 @@
      {
          return p_193383_4_ == EnumFacing.DOWN ? BlockFaceShape.SOLID : BlockFaceShape.UNDEFINED;
      }
@@ -23,7 +30,7 @@
 +    }
 +
 +    // carpet12RNY - SilentChunkReader
-+    public void addCollisionBoxToList_silent(IBlockState state, IBlockAccess access, BlockPos pos, AxisAlignedBB entityBox, List<AxisAlignedBB> collidingBoxes, @Nullable Entity entityIn, boolean isActualState) {
++    public void addCollisionBoxToList_silent(IBlockState state, SilentChunkReader access, BlockPos pos, AxisAlignedBB entityBox, List<AxisAlignedBB> collidingBoxes, @Nullable Entity entityIn, boolean isActualState) {
 +        func_185492_a(pos, entityBox, collidingBoxes, field_185662_c);
 +        if (access.func_180495_p(pos).func_177229_b(field_176507_b)) {
 +            func_185492_a(pos, entityBox, collidingBoxes, field_185663_d);

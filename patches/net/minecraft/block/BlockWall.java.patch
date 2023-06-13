@@ -1,12 +1,21 @@
 --- ../src-base/minecraft/net/minecraft/block/BlockWall.java
 +++ ../src-work/minecraft/net/minecraft/block/BlockWall.java
-@@ -224,4 +224,12 @@
+@@ -2,6 +2,8 @@
+ 
+ import java.util.List;
+ import javax.annotation.Nullable;
++
++import carpet.utils.SilentChunkReader;
+ import net.minecraft.block.properties.IProperty;
+ import net.minecraft.block.properties.PropertyBool;
+ import net.minecraft.block.properties.PropertyEnum;
+@@ -224,4 +226,12 @@
              }
          }
      }
 +
 +    // carpet12RNY - SilentChunkReader
-+    public void addCollisionBoxToList_silent(IBlockState state, IBlockAccess access, BlockPos pos, AxisAlignedBB entityBox, List<AxisAlignedBB> collidingBoxes, @Nullable Entity entityIn, boolean isActualState) {
++    public void addCollisionBoxToList_silent(IBlockState state, SilentChunkReader access, BlockPos pos, AxisAlignedBB entityBox, List<AxisAlignedBB> collidingBoxes, @Nullable Entity entityIn, boolean isActualState) {
 +        if (!isActualState) {
 +            state = this.func_176221_a(state, access, pos);
 +        }

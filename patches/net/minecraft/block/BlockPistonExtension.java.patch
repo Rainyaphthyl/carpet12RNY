@@ -1,12 +1,21 @@
 --- ../src-base/minecraft/net/minecraft/block/BlockPistonExtension.java
 +++ ../src-work/minecraft/net/minecraft/block/BlockPistonExtension.java
-@@ -250,4 +250,10 @@
+@@ -3,6 +3,8 @@
+ import java.util.List;
+ import java.util.Random;
+ import javax.annotation.Nullable;
++
++import carpet.utils.SilentChunkReader;
+ import net.minecraft.block.material.Material;
+ import net.minecraft.block.properties.IProperty;
+ import net.minecraft.block.properties.PropertyBool;
+@@ -250,4 +252,10 @@
              return this.field_176714_c;
          }
      }
 +
 +    // carpet12RNY - SilentChunkReader
-+    public void addCollisionBoxToList_silent(IBlockState state, IBlockAccess access, BlockPos pos, AxisAlignedBB entityBox, List<AxisAlignedBB> collidingBoxes, @Nullable Entity entityIn, boolean isActualState) {
++    public void addCollisionBoxToList_silent(IBlockState state, SilentChunkReader access, BlockPos pos, AxisAlignedBB entityBox, List<AxisAlignedBB> collidingBoxes, @Nullable Entity entityIn, boolean isActualState) {
 +        func_185492_a(pos, entityBox, collidingBoxes, state.func_185900_c(access, pos));
 +        func_185492_a(pos, entityBox, collidingBoxes, func_185633_i(state));
 +    }

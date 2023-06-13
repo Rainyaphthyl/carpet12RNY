@@ -194,6 +194,20 @@ public class PerimeterCalculator implements Runnable {
                 posX + radius, posY + (double) height, posZ + radius);
     }
 
+    @Override
+    public void run() {
+        try {
+            initialize();
+            countSpots();
+            // print result
+            Messenger.print_server_message(CarpetServer.minecraft_server, "Perimeter Info:");
+        } catch (Exception e) {
+            // failed
+            Messenger.print_server_message(CarpetServer.minecraft_server, "Failed to check perimeter");
+            e.printStackTrace();
+        }
+    }
+
     /**
      * Some non-final fields should not be null
      */
@@ -252,20 +266,6 @@ public class PerimeterCalculator implements Runnable {
         }
     }
 
-    @Override
-    public void run() {
-        try {
-            initialize();
-            countSpots();
-            // print result
-            Messenger.print_server_message(CarpetServer.minecraft_server, "Perimeter Info:");
-        } catch (Exception e) {
-            // failed
-            Messenger.print_server_message(CarpetServer.minecraft_server, "Failed to check perimeter");
-            e.printStackTrace();
-        }
-    }
-
     private boolean isLightValid(Class<? extends EntityLiving> mobClass, BlockPos pos) {
         if (!EntityMob.class.isAssignableFrom(mobClass)) {
             return false;
@@ -286,9 +286,9 @@ public class PerimeterCalculator implements Runnable {
         WorldBorder worldBorder = worldServer.getWorldBorder();
         int worldLimit = worldBorder.getSize();
         xMin = MathHelper.clamp(((chunkX - radius) << 4) - expand, -worldLimit, worldLimit);
-        xMax = MathHelper.clamp(((chunkX + radius) >> 4) + 15 + expand, -worldLimit, worldLimit);
+        xMax = MathHelper.clamp(((chunkX + radius) << 4) + 15 + expand, -worldLimit, worldLimit);
         zMin = MathHelper.clamp(((chunkZ - radius) << 4) - expand, -worldLimit, worldLimit);
-        zMax = MathHelper.clamp(((chunkZ + radius) >> 4) + 15 + expand, -worldLimit, worldLimit);
+        zMax = MathHelper.clamp(((chunkZ + radius) << 4) + 15 + expand, -worldLimit, worldLimit);
     }
 
     /**
@@ -531,6 +531,7 @@ public class PerimeterCalculator implements Runnable {
         boolean liquidColliding = reader.containsAnyLiquid(boundingBox);
         // TODO: 2023/6/13,0013 Not finished yet... 
         boolean blockColliding = reader.optimizedGetCollisionBoxes(boundingBox, true, null);
+        // entity collision check always returns "Not Colliding" in 1.12.2
         boolean entityColliding = false;
         return !liquidColliding && !blockColliding && !entityColliding;
     }
