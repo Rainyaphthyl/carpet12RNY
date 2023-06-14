@@ -15,6 +15,10 @@ import net.minecraft.block.BlockLeaves;
 import net.minecraft.block.BlockLog;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.command.CommandBase;
+import net.minecraft.command.CommandException;
+import net.minecraft.command.ICommand;
+import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.*;
 import net.minecraft.entity.EntityLiving.SpawnPlacementType;
 import net.minecraft.entity.boss.EntityDragon;
@@ -111,6 +115,8 @@ public class PerimeterCalculator implements Runnable {
     private final Class<? extends EntityLiving> entityType;
     private final WorldServer worldServer;
     private final Vec3d center;
+    private final ICommandSender sender;
+    private final ICommand command;
     private int yMax = SECTION_UNIT - 1;
     private Long2BooleanMap biomeAllowanceCache = null;
     private Int2ObjectSortedMap<Long2ObjectMap<EnumDistLevel>> distanceCacheLayered = null;
@@ -125,17 +131,21 @@ public class PerimeterCalculator implements Runnable {
     private int zMin = 0;
     private int zMax = 0;
 
-    private PerimeterCalculator(WorldServer worldServer, Vec3d center, Class<? extends EntityLiving> entityType) {
+    private PerimeterCalculator(ICommandSender sender, ICommand command, WorldServer worldServer, Vec3d center, Class<? extends EntityLiving> entityType) {
+        this.sender = sender == null ? CarpetServer.minecraft_server : sender;
+        this.command = command;
         this.worldServer = worldServer;
         this.center = center;
         this.entityType = entityType;
     }
 
-    public static void asyncSearch(World world, Vec3d center, Class<? extends EntityLiving> entityType) {
+    public static void asyncSearch(ICommandSender sender, ICommand command, World world, Vec3d center, Class<? extends EntityLiving> entityType) throws CommandException {
         if (world instanceof WorldServer) {
-            Messenger.print_server_message(world.getMinecraftServer(), "Start checking perimeter ...");
-            PerimeterCalculator calculator = new PerimeterCalculator((WorldServer) world, center, entityType);
+            CommandBase.notifyCommandListener(sender, command, "Start checking perimeter ...");
+            PerimeterCalculator calculator = new PerimeterCalculator(sender, command, (WorldServer) world, center, entityType);
             HttpUtil.DOWNLOADER_EXECUTOR.submit(calculator);
+        } else {
+            throw new CommandException("commands.compare.outOfWorld");
         }
     }
 
@@ -200,37 +210,9 @@ public class PerimeterCalculator implements Runnable {
         try {
             initialize();
             countSpots();
-            // print result
-            Messenger.print_server_message(CarpetServer.minecraft_server, "Perimeter Info:");
-            Messenger.print_server_message(CarpetServer.minecraft_server, Messenger.c(
-                    "w Spawning spaces around ", Messenger.tpa("w", center.x, center.y, center.z)
-            ));
-            int inner = result.getPlacementCount(SpawnPlacementType.IN_WATER,
-                    EnumDistLevel.NEARBY, EnumDistLevel.NORMAL);
-            int outer = result.getPlacementCount(SpawnPlacementType.IN_WATER,
-                    EnumDistLevel.DISTANT);
-            Messenger.print_server_message(CarpetServer.minecraft_server, Messenger.c(
-                    "w   potential in-liquid: ", "l " + inner, "^e 24 <= dist <= 128",
-                    "w  + ", "r " + outer, "^n dist > 128", "w  = ", "m " + (inner + outer), "^p dist >= 24"
-            ));
-            inner = result.getPlacementCount(SpawnPlacementType.ON_GROUND, EnumDistLevel.NEARBY, EnumDistLevel.NORMAL);
-            outer = result.getPlacementCount(SpawnPlacementType.ON_GROUND, EnumDistLevel.DISTANT);
-            Messenger.print_server_message(CarpetServer.minecraft_server, Messenger.c(
-                    "w   potential on-ground: ", "l " + inner, "^e 24 <= dist <= 128",
-                    "w  + ", "r " + outer, "^n dist > 128", "w  = ", "m " + (inner + outer), "^p dist >= 24"
-            ));
-            if (specific) {
-                inner = result.getSpecificCount(entityType, EnumDistLevel.NEARBY, EnumDistLevel.NORMAL);
-                outer = result.getSpecificCount(entityType, EnumDistLevel.DISTANT);
-                String name = EntityList.getTranslationName(EntityList.getKey(entityType));
-                Messenger.print_server_message(CarpetServer.minecraft_server, Messenger.c(
-                        "w   " + name + ": ", "l " + inner, "^e 24 <= dist <= 128",
-                        "w  + ", "r " + outer, "^n dist > 128", "w  = ", "m " + (inner + outer), "^p dist >= 24"
-                ));
-            }
+            printResult();
         } catch (Exception e) {
-            // failed
-            Messenger.print_server_message(CarpetServer.minecraft_server, "Failed to check perimeter");
+            CommandBase.notifyCommandListener(sender, command, "Failed to check perimeter");
             e.printStackTrace();
         }
     }
@@ -301,6 +283,31 @@ public class PerimeterCalculator implements Runnable {
                 }
             }
             distanceCacheLayered.remove(y);
+        }
+    }
+
+    private void printResult() {
+        CommandBase.notifyCommandListener(sender, command, "Finish checking perimeter info");
+        Messenger.m(sender, "w Spawning spaces around ", Messenger.tpa("w", center.x, center.y, center.z));
+        int inner = result.getPlacementCount(SpawnPlacementType.IN_WATER,
+                EnumDistLevel.NEARBY, EnumDistLevel.NORMAL);
+        int outer = result.getPlacementCount(SpawnPlacementType.IN_WATER,
+                EnumDistLevel.DISTANT);
+        int total = inner + outer;
+        Messenger.m(sender, "w   potential in-liquid: ", "l " + inner, "^e 24 <= dist <= 128",
+                "w  + ", "r " + outer, "^n dist > 128", "w  = ", "m " + total, "^p dist >= 24");
+        inner = result.getPlacementCount(SpawnPlacementType.ON_GROUND, EnumDistLevel.NEARBY, EnumDistLevel.NORMAL);
+        outer = result.getPlacementCount(SpawnPlacementType.ON_GROUND, EnumDistLevel.DISTANT);
+        total = inner + outer;
+        Messenger.m(sender, "w   potential on-ground: ", "l " + inner, "^e 24 <= dist <= 128",
+                "w  + ", "r " + outer, "^n dist > 128", "w  = ", "m " + total, "^p dist >= 24");
+        if (specific) {
+            inner = result.getSpecificCount(entityType, EnumDistLevel.NEARBY, EnumDistLevel.NORMAL);
+            outer = result.getSpecificCount(entityType, EnumDistLevel.DISTANT);
+            total = inner + outer;
+            String name = EntityList.getTranslationName(EntityList.getKey(entityType));
+            Messenger.m(sender, "w   " + name + ": ", "l " + inner, "^e 24 <= dist <= 128",
+                    "w  + ", "r " + outer, "^n dist > 128", "w  = ", "m " + total, "^p dist >= 24");
         }
     }
 

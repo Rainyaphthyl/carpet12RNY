@@ -9,6 +9,7 @@ import net.minecraft.entity.EntityLiving;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.DimensionType;
 import net.minecraft.world.World;
@@ -27,7 +28,6 @@ public class CommandPerimeterInfo extends CommandCarpetBase {
     @ParametersAreNonnullByDefault
     public static List<String> getTabCompletionCoordinateExact(ICommandSender sender, String[] inputArgs, int index, @Nullable BlockPos target) {
         Vec3d posBaseE = sender.getPositionVector();
-        BlockPos posBaseB = sender.getPosition();
         List<String> list = new ArrayList<>();
         int i = inputArgs.length - 1;
         double posCurrE;
@@ -36,26 +36,29 @@ public class CommandPerimeterInfo extends CommandCarpetBase {
         switch (i - index) {
             case 0:
                 posCurrE = posBaseE.x;
-                posCurrB = posBaseB.getX();
-                posTarget = posCurrB;
+                posCurrB = MathHelper.floor(posCurrE);
                 if (target != null) {
                     posTarget = target.getX();
+                } else {
+                    posTarget = posCurrB;
                 }
                 break;
             case 1:
                 posCurrE = posBaseE.y;
-                posCurrB = posBaseB.getY();
-                posTarget = posCurrB;
+                posCurrB = MathHelper.floor(posCurrE);
                 if (target != null) {
                     posTarget = target.getY();
+                } else {
+                    posTarget = posCurrB;
                 }
                 break;
             case 2:
                 posCurrE = posBaseE.z;
-                posCurrB = posBaseB.getZ();
-                posTarget = posCurrB;
+                posCurrB = MathHelper.floor(posCurrE);
                 if (target != null) {
                     posTarget = target.getZ();
+                } else {
+                    posTarget = posCurrB;
                 }
                 break;
             default:
@@ -97,37 +100,43 @@ public class CommandPerimeterInfo extends CommandCarpetBase {
             double posY = parseDouble(posBase.y, args[1], false);
             double posZ = parseDouble(posBase.z, args[2], true);
             Vec3d posCenter = new Vec3d(posX, posY, posZ);
-            World world = null;
+            World world;
             Class<? extends EntityLiving> entityType = null;
             if (args.length > 3) {
-                DimensionType dimension;
-                try {
-                    if ("overworld".equalsIgnoreCase(args[3])) {
-                        dimension = DimensionType.OVERWORLD;
-                    } else if ("nether".equalsIgnoreCase(args[3])) {
-                        dimension = DimensionType.NETHER;
-                    } else if ("end".equalsIgnoreCase(args[3])) {
-                        dimension = DimensionType.THE_END;
-                    } else {
-                        dimension = DimensionType.getById(parseInt(args[5], -1, 1));
+                DimensionType dimension = null;
+                if (args[3] != null && !args[3].startsWith("~")) {
+                    try {
+                        if ("overworld".equalsIgnoreCase(args[3])) {
+                            dimension = DimensionType.OVERWORLD;
+                        } else if ("nether".equalsIgnoreCase(args[3])) {
+                            dimension = DimensionType.NETHER;
+                        } else if ("end".equalsIgnoreCase(args[3])) {
+                            dimension = DimensionType.THE_END;
+                        } else {
+                            dimension = DimensionType.getById(parseInt(args[5], -1, 1));
+                        }
+                    } catch (NumberInvalidException e) {
+                        throw new WrongUsageException(USAGE);
                     }
-                } catch (NumberInvalidException e) {
-                    throw new WrongUsageException(USAGE);
                 }
-                world = server.getWorld(dimension.getId());
+                if (dimension == null) {
+                    world = sender.getEntityWorld();
+                } else {
+                    world = server.getWorld(dimension.getId());
+                }
                 if (args.length > 4) {
                     ResourceLocation resourcelocation = new ResourceLocation(args[4]);
                     Class<? extends Entity> rawClass = EntityList.REGISTRY.getObject(resourcelocation);
                     if (rawClass != null && EntityLiving.class.isAssignableFrom(rawClass)) {
                         entityType = rawClass.asSubclass(EntityLiving.class);
                     } else {
-                        throw new EntityNotFoundException(args[4] + " is not a valid creature class");
+                        throw new EntityNotFoundException(args[4]);
                     }
                 }
             } else {
                 world = sender.getEntityWorld();
             }
-            PerimeterCalculator.asyncSearch(world, posCenter, entityType);
+            PerimeterCalculator.asyncSearch(sender, this, world, posCenter, entityType);
         }
     }
 
@@ -144,7 +153,9 @@ public class CommandPerimeterInfo extends CommandCarpetBase {
                 case 3:
                     return getTabCompletionCoordinateExact(sender, args, 0, targetPos);
                 case 4:
-                    return getListOfStringsMatchingLastWord(args, "nether", "overworld", "end");
+                    List<String> list = getListOfStringsMatchingLastWord(args, "nether", "overworld", "end");
+                    list.add("~");
+                    return list;
                 case 5:
                     return getListOfStringsMatchingLastWord(args, EntityList.getEntityNameList());
                 default:
