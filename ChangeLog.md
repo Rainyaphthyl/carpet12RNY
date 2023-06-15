@@ -10,6 +10,7 @@ Carpet 1.12 with [RNY](https://github.com/Rainyaphthyl)'s Addition
 - Make command `/spawn list` smarter: parsing the block position above the floor.
 - Add a spawning rate calculator.
 - Define and throw `ChunkNotGeneratedException`.
+- Make command `/perimeterinfo` check multiple entities.
 
 # Feature Modifications
 

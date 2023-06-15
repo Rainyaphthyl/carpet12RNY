@@ -1,17 +1,16 @@
 package carpet.utils.perimeter;
 
+import carpet.utils.Messenger;
 import it.unimi.dsi.fastutil.longs.Long2ObjectAVLTreeMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
-import it.unimi.dsi.fastutil.objects.Object2IntAVLTreeMap;
-import it.unimi.dsi.fastutil.objects.Object2IntMap;
-import it.unimi.dsi.fastutil.objects.Object2IntSortedMap;
+import it.unimi.dsi.fastutil.objects.*;
+import net.minecraft.entity.EntityList;
 import net.minecraft.entity.EntityLiving;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.text.ITextComponent;
 
 import javax.annotation.Nonnull;
-import java.util.EnumMap;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public class PerimeterResult {
     private final Map<EntityLiving.SpawnPlacementType, Object2IntSortedMap<EnumDistLevel>> placementCounts = new HashMap<>();
@@ -35,10 +34,10 @@ public class PerimeterResult {
 
     private static int countLevelMap(Object2IntMap<EnumDistLevel> levelMap, EnumDistLevel... distLevels) {
         int count = 0;
-        if (distLevels == null) {
-            distLevels = EnumDistLevel.values();
-        }
         if (levelMap != null) {
+            if (distLevels == null) {
+                distLevels = EnumDistLevel.values();
+            }
             for (EnumDistLevel distLevel : distLevels) {
                 if (levelMap.containsKey(distLevel)) {
                     count += levelMap.getInt(distLevel);
@@ -79,14 +78,134 @@ public class PerimeterResult {
         }
     }
 
-    public int getSpecificCount(Class<? extends EntityLiving> entityType, EnumDistLevel... distLevels) {
+    public int getSpotCountForDist(Class<? extends EntityLiving> entityType, EnumDistLevel... distLevels) {
         Object2IntSortedMap<EnumDistLevel> levelMap = specificCounts.get(entityType);
         return countLevelMap(levelMap, distLevels);
     }
 
-    public int getPlacementCount(EntityLiving.SpawnPlacementType placementType, EnumDistLevel... distLevels) {
+    public int getSpotCountForDist(EntityLiving.SpawnPlacementType placementType, EnumDistLevel... distLevels) {
         Object2IntSortedMap<EnumDistLevel> levelMap = placementCounts.get(placementType);
         return countLevelMap(levelMap, distLevels);
+    }
+
+    public ITextComponent[] createBannedSampleReports(Class<? extends EntityLiving> entityType, int maxSampleNum) {
+        List<ITextComponent> components = new ArrayList<>(Math.max(maxSampleNum, 0));
+        Map<EnumDistLevel, Long2ObjectMap<BlockPos>> levelMap = spotSampleSets.get(entityType);
+        if (levelMap != null) {
+            ObjectSet<BlockPos> totalSampleSet = new ObjectOpenHashSet<>();
+            Long2ObjectMap<BlockPos> sampleSet = levelMap.get(EnumDistLevel.BANNED);
+            if (sampleSet != null) {
+                totalSampleSet.addAll(sampleSet.values());
+            }
+            ObjectIterator<BlockPos> iterator = totalSampleSet.iterator();
+            for (int i = 0; i < maxSampleNum && iterator.hasNext(); ++i) {
+                BlockPos sample = iterator.next();
+                if (sample != null) {
+                    components.add(Messenger.c("w   ",
+                            Messenger.tpa("m", sample.getX(), sample.getY(), sample.getZ())));
+                }
+            }
+            if (iterator.hasNext()) {
+                components.add(Messenger.c("m   ..."));
+            }
+        }
+        return components.toArray(new ITextComponent[0]);
+    }
+
+    public ITextComponent[] createSpawningSampleReports(Class<? extends EntityLiving> entityType, int maxSampleNum) {
+        List<ITextComponent> components = new ArrayList<>(Math.max(maxSampleNum, 0));
+        Map<EnumDistLevel, Long2ObjectMap<BlockPos>> levelMap = spotSampleSets.get(entityType);
+        if (levelMap != null) {
+            Set<EnumDistLevel> distRange = new TreeSet<>();
+            distRange.add(EnumDistLevel.NORMAL);
+            distRange.add(EnumDistLevel.NEARBY);
+            String color, note;
+            if (PerimeterCalculator.canImmediatelyDespawn(entityType)) {
+                color = "e";
+                note = "within r=128 sphere";
+            } else {
+                distRange.add(EnumDistLevel.DISTANT);
+                color = "q";
+                note = "persistent creatures";
+            }
+            ObjectSet<BlockPos> totalSampleSet = new ObjectOpenHashSet<>();
+            for (EnumDistLevel distLevel : distRange) {
+                Long2ObjectMap<BlockPos> sampleSet = levelMap.get(distLevel);
+                if (sampleSet != null) {
+                    totalSampleSet.addAll(sampleSet.values());
+                }
+            }
+            ObjectIterator<BlockPos> iterator = totalSampleSet.iterator();
+            components.add(Messenger.c("w Sample of effective locations (" + note + "):"));
+            for (int i = 0; i < maxSampleNum && iterator.hasNext(); ++i) {
+                BlockPos sample = iterator.next();
+                if (sample != null) {
+                    components.add(Messenger.c("w   ",
+                            Messenger.tpa(color, sample.getX(), sample.getY(), sample.getZ())));
+                }
+            }
+            if (iterator.hasNext()) {
+                components.add(Messenger.c(color + "   ..."));
+            }
+        }
+        return components.toArray(new ITextComponent[0]);
+    }
+
+    public ITextComponent createStandardReport(Class<? extends EntityLiving> entityType) {
+        int[] counts = new int[5];
+        counts[0] = getSpotCountForDist(entityType, EnumDistLevel.NEARBY, EnumDistLevel.NORMAL);
+        counts[1] = getSpotCountForDist(entityType, EnumDistLevel.DISTANT);
+        counts[2] = counts[0] + counts[1];
+        counts[3] = getSpotCountForDist(entityType, EnumDistLevel.CLOSE);
+        counts[4] = getSpotCountForDist(entityType, EnumDistLevel.BANNED);
+        String name = EntityList.getTranslationName(EntityList.getKey(entityType));
+        String[] colors = new String[5];
+        colors[0] = counts[0] > 0 ? "l " : "e ";
+        colors[1] = counts[1] > 0 ? "y " : "d ";
+        colors[2] = counts[2] > 0 ? "c " : "q ";
+        colors[3] = counts[3] > 0 ? "r " : "n ";
+        colors[4] = counts[4] > 0 ? "m " : "p ";
+        return Messenger.c("w   " + name + ": ",
+                colors[0] + " " + counts[0], "^e 24 <= dist <= 128",
+                "g  + ", colors[1] + counts[1], "^d dist > 128",
+                "g  = ", colors[2] + counts[2], "^q dist >= 24",
+                "g  ; ", colors[3] + counts[3], "^n dist < 24",
+                "g  ; ", colors[4] + counts[4], "^p banned by world spawn point");
+    }
+
+    public ITextComponent createStandardReport(EntityLiving.SpawnPlacementType placementType) {
+        int[] counts = new int[5];
+        counts[0] = getSpotCountForDist(placementType, EnumDistLevel.NEARBY, EnumDistLevel.NORMAL);
+        counts[1] = getSpotCountForDist(placementType, EnumDistLevel.DISTANT);
+        counts[2] = counts[0] + counts[1];
+        counts[3] = getSpotCountForDist(placementType, EnumDistLevel.CLOSE);
+        counts[4] = getSpotCountForDist(placementType, EnumDistLevel.BANNED);
+        String name;
+        switch (placementType) {
+            case IN_WATER:
+                name = "in-liquid";
+                break;
+            case ON_GROUND:
+                name = "on-ground";
+                break;
+            case IN_AIR:
+                name = "in-air";
+                break;
+            default:
+                name = "unknown";
+        }
+        String[] colors = new String[5];
+        colors[0] = counts[0] > 0 ? "l " : "e ";
+        colors[1] = counts[1] > 0 ? "y " : "d ";
+        colors[2] = counts[2] > 0 ? "c " : "q ";
+        colors[3] = counts[3] > 0 ? "r " : "n ";
+        colors[4] = counts[4] > 0 ? "m " : "p ";
+        return Messenger.c("w   potential " + name + ": ",
+                colors[0] + " " + counts[0], "^e 24 <= dist <= 128",
+                "g  + ", colors[1] + counts[1], "^d dist > 128",
+                "g  = ", colors[2] + counts[2], "^q dist >= 24",
+                "g  ; ", colors[3] + counts[3], "^n dist < 24",
+                "g  ; ", colors[4] + counts[4], "^p banned by world spawn point");
     }
 
     public enum EnumDistLevel {
@@ -107,7 +226,7 @@ public class PerimeterResult {
          */
         CLOSE,
         /**
-         * {@code r < 24} (to the World Spawn), Not Spawning
+         * {@code r < 24} (to the World Spawn Point), Not Spawning
          */
         BANNED;
 

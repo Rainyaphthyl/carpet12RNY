@@ -19,8 +19,11 @@ import net.minecraft.command.CommandBase;
 import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommand;
 import net.minecraft.command.ICommandSender;
-import net.minecraft.entity.*;
+import net.minecraft.entity.EntityCreature;
+import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.EntityLiving.SpawnPlacementType;
+import net.minecraft.entity.EntitySpawnPlacementRegistry;
+import net.minecraft.entity.EnumCreatureType;
 import net.minecraft.entity.boss.EntityDragon;
 import net.minecraft.entity.boss.EntityWither;
 import net.minecraft.entity.monster.*;
@@ -30,6 +33,7 @@ import net.minecraft.init.Blocks;
 import net.minecraft.util.HttpUtil;
 import net.minecraft.util.Tuple;
 import net.minecraft.util.math.*;
+import net.minecraft.util.text.ITextComponent;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldEntitySpawner;
 import net.minecraft.world.WorldServer;
@@ -53,6 +57,7 @@ public class PerimeterCalculator implements Runnable {
      */
     private static final Map<Class<? extends EntityLiving>, Tuple<Float, Float>> CREATURE_SIZE_MAP = new HashMap<>();
     private static final int SECTION_UNIT = 16;
+    private static final int SAMPLE_REPORT_NUM = 10;
     private static final int yMin = 0;
 
     static {
@@ -205,6 +210,12 @@ public class PerimeterCalculator implements Runnable {
                 posX + radius, posY + (double) height, posZ + radius);
     }
 
+    public static boolean canImmediatelyDespawn(Class<? extends EntityLiving> entityClass) {
+        return !EntityAnimal.class.isAssignableFrom(entityClass)
+                && !EntityGolem.class.isAssignableFrom(entityClass)
+                && !EntityVillager.class.isAssignableFrom(entityClass);
+    }
+
     @Override
     public void run() {
         try {
@@ -235,6 +246,9 @@ public class PerimeterCalculator implements Runnable {
         biomeAllowanceCache = new Long2BooleanOpenHashMap();
     }
 
+    /**
+     * {@link net.minecraft.world.WorldEntitySpawner#findChunksForSpawning}
+     */
     private void countSpots() {
         // Only count the possible spots. Do NOT calculate the rates.
         // The spawning rates can be 0 while the spot is counted as spawn-able.
@@ -243,41 +257,39 @@ public class PerimeterCalculator implements Runnable {
             for (int x = xMin; x <= xMax; ++x) {
                 for (int z = zMin; z <= zMax; ++z) {
                     posTarget.setPos(x, y, z);
-                    if (!specific || isBiomeAllowing(posTarget)) {
-                        IBlockState stateTarget = reader.getBlockState(posTarget);
-                        IBlockState stateDown = reader.getBlockState(x, y - 1, z);
-                        IBlockState stateUp = reader.getBlockState(x, y + 1, z);
-                        // check placement in liquid
-                        boolean flagLiquid = stateTarget.getMaterial() == Material.WATER
-                                && stateDown.getMaterial() == Material.WATER && !stateUp.isNormalCube();
-                        boolean flagGround;
-                        if (!stateDown.isTopSolid()) {
-                            flagGround = false;
-                        } else {
-                            Block blockDown = stateDown.getBlock();
-                            boolean flag = blockDown != Blocks.BEDROCK && blockDown != Blocks.BARRIER;
-                            flagGround = flag && WorldEntitySpawner.isValidEmptySpawnBlock(stateTarget)
-                                    && WorldEntitySpawner.isValidEmptySpawnBlock(stateUp);
+                    IBlockState stateTarget = reader.getBlockState(posTarget);
+                    IBlockState stateDown = reader.getBlockState(x, y - 1, z);
+                    IBlockState stateUp = reader.getBlockState(x, y + 1, z);
+                    // check placement in liquid
+                    boolean flagLiquid = stateTarget.getMaterial() == Material.WATER
+                            && stateDown.getMaterial() == Material.WATER && !stateUp.isNormalCube();
+                    boolean flagGround;
+                    if (!stateDown.isTopSolid()) {
+                        flagGround = false;
+                    } else {
+                        Block blockDown = stateDown.getBlock();
+                        boolean flag = blockDown != Blocks.BEDROCK && blockDown != Blocks.BARRIER;
+                        flagGround = flag && WorldEntitySpawner.isValidEmptySpawnBlock(stateTarget)
+                                && WorldEntitySpawner.isValidEmptySpawnBlock(stateUp);
+                    }
+                    if (flagLiquid) {
+                        result.addGeneralSpot(SpawnPlacementType.IN_WATER, getDistLevelOf(posTarget));
+                    }
+                    if (flagGround) {
+                        result.addGeneralSpot(SpawnPlacementType.ON_GROUND, getDistLevelOf(posTarget));
+                    }
+                    if (specific && isBiomeAllowing(posTarget)) {
+                        boolean placeable = false;
+                        switch (placementType) {
+                            case ON_GROUND:
+                                placeable = flagGround;
+                                break;
+                            case IN_WATER:
+                                placeable = flagLiquid;
+                                break;
                         }
-                        if (flagLiquid) {
-                            result.addGeneralSpot(SpawnPlacementType.IN_WATER, getDistLevelOf(posTarget));
-                        }
-                        if (flagGround) {
-                            result.addGeneralSpot(SpawnPlacementType.ON_GROUND, getDistLevelOf(posTarget));
-                        }
-                        if (specific) {
-                            boolean placeable = false;
-                            switch (placementType) {
-                                case ON_GROUND:
-                                    placeable = flagGround;
-                                    break;
-                                case IN_WATER:
-                                    placeable = flagLiquid;
-                                    break;
-                            }
-                            if (placeable && isPositionAllowing(entityType, posTarget) && isNotColliding(entityType, posTarget)) {
-                                result.addSpecificSpot(entityType, getDistLevelOf(posTarget), posTarget);
-                            }
+                        if (placeable && isPositionAllowing(entityType, posTarget) && isNotColliding(entityType, posTarget)) {
+                            result.addSpecificSpot(entityType, getDistLevelOf(posTarget), posTarget);
                         }
                     }
                 }
@@ -288,26 +300,28 @@ public class PerimeterCalculator implements Runnable {
 
     private void printResult() {
         CommandBase.notifyCommandListener(sender, command, "Finish checking perimeter info");
-        Messenger.m(sender, "w Spawning spaces around ", Messenger.tpa("w", center.x, center.y, center.z));
-        int inner = result.getPlacementCount(SpawnPlacementType.IN_WATER,
-                EnumDistLevel.NEARBY, EnumDistLevel.NORMAL);
-        int outer = result.getPlacementCount(SpawnPlacementType.IN_WATER,
-                EnumDistLevel.DISTANT);
-        int total = inner + outer;
-        Messenger.m(sender, "w   potential in-liquid: ", "l " + inner, "^e 24 <= dist <= 128",
-                "w  + ", "r " + outer, "^n dist > 128", "w  = ", "m " + total, "^p dist >= 24");
-        inner = result.getPlacementCount(SpawnPlacementType.ON_GROUND, EnumDistLevel.NEARBY, EnumDistLevel.NORMAL);
-        outer = result.getPlacementCount(SpawnPlacementType.ON_GROUND, EnumDistLevel.DISTANT);
-        total = inner + outer;
-        Messenger.m(sender, "w   potential on-ground: ", "l " + inner, "^e 24 <= dist <= 128",
-                "w  + ", "r " + outer, "^n dist > 128", "w  = ", "m " + total, "^p dist >= 24");
+        Messenger.m(sender, "g format: <normal> + <despawning> = <spawning> ; <banned>...");
+        Messenger.m(sender, "w Spawning spaces around ", Messenger.tpa("y", center.x, center.y, center.z, 2));
+        Messenger.m(sender, result.createStandardReport(SpawnPlacementType.IN_WATER));
+        Messenger.m(sender, result.createStandardReport(SpawnPlacementType.ON_GROUND));
         if (specific) {
-            inner = result.getSpecificCount(entityType, EnumDistLevel.NEARBY, EnumDistLevel.NORMAL);
-            outer = result.getSpecificCount(entityType, EnumDistLevel.DISTANT);
-            total = inner + outer;
-            String name = EntityList.getTranslationName(EntityList.getKey(entityType));
-            Messenger.m(sender, "w   " + name + ": ", "l " + inner, "^e 24 <= dist <= 128",
-                    "w  + ", "r " + outer, "^n dist > 128", "w  = ", "m " + total, "^p dist >= 24");
+            Messenger.m(sender, result.createStandardReport(entityType));
+            ITextComponent[] bannedSampleList = result.createBannedSampleReports(entityType, SAMPLE_REPORT_NUM);
+            if (bannedSampleList.length > 0) {
+                if (worldSpawnPoint == null) {
+                    worldSpawnPoint = reader.getSpawnPoint();
+                }
+                Messenger.m(sender, "w Current ", "w WSP", "^g World Spawn Point", "w  in use: ",
+                        Messenger.tpa("m", (double) worldSpawnPoint.getX(), worldSpawnPoint.getY(), worldSpawnPoint.getZ()));
+                Messenger.m(sender, "w Forbidden locations around the World Spawn Point:");
+                for (ITextComponent sample : bannedSampleList) {
+                    Messenger.m(sender, sample);
+                }
+            }
+            ITextComponent[] normalSampleList = result.createSpawningSampleReports(entityType, SAMPLE_REPORT_NUM);
+            for (ITextComponent sample : normalSampleList) {
+                Messenger.m(sender, sample);
+            }
         }
     }
 
