@@ -5,17 +5,20 @@ Carpet 1.12 with [RNY](https://github.com/Rainyaphthyl)'s Addition
 # TO-DO List
 
 - Bump to release versions after merging pathfinding-logger?
-- Improve SpawnReporter: to report passive mob cap every tick.
 - Add another mode of mob-cap logger.
+- Make command `/spawn list` smarter: parsing the block position above the floor.
+- Add a spawning rate calculator.
+- Define and throw `ChunkNotGeneratedException`.
+- Make command `/perimeterinfo` check multiple entities.
 
 # Feature Modifications
 
-- Fix a display bug about symbol `%` of command `/spawn` on the server console.
-- Add `pathFinding` logger, displaying entity AI paths with particle lines.
-- Display the actual default option when setting logger with null options, i.e. `Subscribed to <logger> \(<option>\)`.
-- Add command `/log copy <player>`, to copy logger configurations from other players.
-- Fix a null-pointer bug of command `/log reset`.
+- Add command `/perimeterinfo <x> <y> <z> [<dimension> [<target_entity>]]`, checking the spawning areas inside or outside the despawning range.
+- Spawn Reporter reports passive mob cap every tick, no need to wait for the next spawning.
 
 # Code Details
 
-- Add field `NAME` for logHelpers of `lightCheck` and `rngManip`.
+- Rename `CommandPerimeter` to `CommandPerimeterCheck`.
+- Add static method `tpa` in class `Messenger`.
+- Add spawning check stuffs into `SilentChunkReader`: biomes, world spawn points, sky visibility, etc.
+- Add method `addCollisionBoxToList_silent` in `IBlockProperties`.

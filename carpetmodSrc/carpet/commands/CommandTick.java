@@ -32,7 +32,7 @@ public class CommandTick extends CommandCarpetBase
      */
     public String getUsage(ICommandSender sender)
     {
-        return "Usage: tick rate <tps>" +
+        return "/tick rate <tps>" +
                 "\n | tick warp (<ticks>|interrupt|status)" +
                 "\n | tick (freeze|step [<steps>])" +
                 "\n | tick superHot [start|stop]";

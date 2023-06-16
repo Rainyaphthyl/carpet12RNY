@@ -25,7 +25,7 @@ public class CommandEndermelon extends CommandCarpetBase {
     @Nonnull
     @ParametersAreNonnullByDefault
     public String getUsage(ICommandSender sender) {
-        return "Usage: \"/endermelon <instant|once> [verbose|brief]\"";
+        return "/endermelon (instant|once) [verbose|brief]";
     }
 
     @Override

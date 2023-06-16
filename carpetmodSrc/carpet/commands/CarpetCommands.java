@@ -33,7 +33,7 @@ public class CarpetCommands {
         handler.registerCommand(new CommandLog());
         handler.registerCommand(new CommandLogMenu());
         handler.registerCommand(new CommandPalette());
-        handler.registerCommand(new CommandPerimeter());
+        handler.registerCommand(new CommandPerimeterCheck());
         handler.registerCommand(new CommandPing());
         handler.registerCommand(new CommandPlayer());
         handler.registerCommand(new CommandProfile());
@@ -61,6 +61,7 @@ public class CarpetCommands {
 
         // ----- Naftalluvia ----- //
         handler.registerCommand(new CommandEndermelon());
+        handler.registerCommand(new CommandPerimeterInfo());
         handler.registerCommand(new CommandPortal());
     }
 }

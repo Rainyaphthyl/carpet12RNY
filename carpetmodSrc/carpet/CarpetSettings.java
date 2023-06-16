@@ -129,8 +129,8 @@ public class CarpetSettings
     })
     public static boolean commandCameramode = true;
 
-    @Rule(desc = "Enables /perimeterinfo command that scans the area around the block for potential spawnable spots", category = COMMANDS)
-    public static boolean commandPerimeterInfo = true;
+    @Rule(desc = "Enables /perimetercheck command that scans the area around the block for potential spawnable spots", category = COMMANDS)
+    public static boolean commandPerimeterCheck = true;
 
     @Rule(desc = "Enables /player command to control/spawn players", category = COMMANDS)
     public static boolean commandPlayer = true;
@@ -1015,10 +1015,8 @@ public class CarpetSettings
     // ===== Naftalluvia ===== //
     // carpet-RNY-addition options and options ported from other forks
 
-    @Rule(desc = "Makes invulnerable crystals really invulnerable in creative mode, as if in survival.",
-            category = {CREATIVE, NAFTALLUVIA},
-            extra = "Otherwise, you may accidentally blow it up.")
-    public static boolean creativeInvulnerableCrystal = false;
+    @Rule(desc = "Enables command \"/perimeterinfo\".", category = {COMMANDS, NAFTALLUVIA})
+    public static boolean commandPerimeterInfo = true;
 
     @Rule(desc = "Enables command \"/portal\" to query and search portal maps.",
             category = {COMMANDS, NAFTALLUVIA})
@@ -1026,6 +1024,11 @@ public class CarpetSettings
 
     @Rule(desc = "Enables \"/endermelon\" to track endermelon farms running.", category = {COMMANDS, NAFTALLUVIA})
     public static boolean commandEndermelon = true;
+
+    @Rule(desc = "Makes invulnerable crystals really invulnerable in creative mode, as if in survival.",
+            category = {CREATIVE, NAFTALLUVIA},
+            extra = "Otherwise, you may accidentally blow it up.")
+    public static boolean creativeInvulnerableCrystal = false;
 
     @Rule(desc = "The range of previous gameticks to track the world RNG seeds, applied for \"/log rngManip\"", options = {"0", "4", "8", "20", "40", "80"}, category = {CREATIVE, SURVIVAL, NAFTALLUVIA}, validator = "validateRNGTrackingRange", extra = "Set to 0 to use the value of HUDUpdateInterval")
     public static int rngTrackingRange = 0;

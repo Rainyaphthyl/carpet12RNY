@@ -353,4 +353,34 @@ public class Messenger {
             entityplayer.sendMessage(message);
         }
     }
+
+    /**
+     * Using "/tp" instead of "!/tp"
+     */
+    @Nonnull
+    public static ITextComponent tpa(String style, double x, double y, double z, int decimals) {
+        String formatter = String.format("%%.%df", decimals);
+        String display = String.format("%s [" + formatter + ", " + formatter + ", " + formatter + "]", style, x, y, z);
+        String detail = "^g " + x + ", " + y + ", " + z;
+        String suggest = "/tp " + x + ' ' + y + ' ' + z;
+        return m(null, display, detail, suggest);
+    }
+
+    /**
+     * Using "/tp" instead of "!/tp"
+     */
+    @Nonnull
+    public static ITextComponent tpa(String style, double x, double y, double z) {
+        return tpa(style, x, y, z, 1);
+    }
+
+    /**
+     * Using "/tp" instead of "!/tp"
+     */
+    @Nonnull
+    public static ITextComponent tpa(String style, int x, int y, int z) {
+        String display = String.format("%s [%d, %d, %d]", style, x, y, z);
+        String suggest = "/tp " + x + ' ' + y + ' ' + z;
+        return m(null, display, "^g click to teleport", suggest);
+    }
 }

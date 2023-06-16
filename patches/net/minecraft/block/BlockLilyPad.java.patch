@@ -1,0 +1,23 @@
+--- ../src-base/minecraft/net/minecraft/block/BlockLilyPad.java
++++ ../src-work/minecraft/net/minecraft/block/BlockLilyPad.java
+@@ -2,6 +2,8 @@
+ 
+ import java.util.List;
+ import javax.annotation.Nullable;
++
++import carpet.utils.SilentChunkReader;
+ import net.minecraft.block.material.Material;
+ import net.minecraft.block.state.IBlockState;
+ import net.minecraft.creativetab.CreativeTabs;
+@@ -68,4 +70,11 @@
+     {
+         return 0;
+     }
++
++    // carpet12RNY - SilentChunkReader
++    public void addCollisionBoxToList_silent(IBlockState state, SilentChunkReader access, BlockPos pos, AxisAlignedBB entityBox, List<AxisAlignedBB> collidingBoxes, @Nullable Entity entityIn, boolean isActualState) {
++        if (!(entityIn instanceof EntityBoat)) {
++            func_185492_a(pos, entityBox, collidingBoxes, field_185523_a);
++        }
++    }
+ }

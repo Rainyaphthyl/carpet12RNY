@@ -20,7 +20,7 @@ import javax.annotation.Nullable;
 import java.util.Collections;
 import java.util.List;
 
-public class CommandPerimeter extends CommandCarpetBase
+public class CommandPerimeterCheck extends CommandCarpetBase
 {
     /**
      * Gets the name of the command
@@ -35,7 +35,7 @@ public class CommandPerimeter extends CommandCarpetBase
      */
     public String getUsage(ICommandSender sender)
     {
-        return "/perimetercheck <X> <Y> <Z> <target_entity?>";
+        return "/perimetercheck <X> <Y> <Z> [<target_entity>]";
     }
 
     /**
@@ -43,7 +43,7 @@ public class CommandPerimeter extends CommandCarpetBase
      */
     public void execute(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException
     {
-        if (!command_enabled("commandPerimeterInfo", sender)) return;
+        if (!command_enabled("commandPerimeterCheck", sender)) return;
         if (args.length < 1)
         {
             throw new WrongUsageException(getUsage(sender));
@@ -66,15 +66,18 @@ public class CommandPerimeter extends CommandCarpetBase
             World world = sender.getEntityWorld();
             NBTTagCompound nbttagcompound = new NBTTagCompound();
             EntityLiving entityliving = null;
+            Class<? extends EntityLiving> entityType = null;
             if (args.length >= 4)
             {
                 s = args[3];
                 nbttagcompound.setString("id", s);
-                entityliving = (EntityLiving) AnvilChunkLoader.readWorldEntityPos(nbttagcompound, world, d0, d1+2, d2, true);
+                entityliving = (EntityLiving) AnvilChunkLoader.readWorldEntityPos(nbttagcompound, world, d0, d1+256, d2, true);
                 if (entityliving == null)
                 {
                     throw new CommandException("Failed to test entity");
                 }
+                entityType = entityliving.getClass();
+                entityliving.setDead();
             }
             PerimeterDiagnostics.Result res = PerimeterDiagnostics.countSpots((WorldServer) world, blockpos, entityliving);
             if (sender instanceof EntityPlayer)

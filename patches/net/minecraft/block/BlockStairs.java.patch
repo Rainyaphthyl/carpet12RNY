@@ -1,0 +1,24 @@
+--- ../src-base/minecraft/net/minecraft/block/BlockStairs.java
++++ ../src-work/minecraft/net/minecraft/block/BlockStairs.java
+@@ -1,5 +1,6 @@
+ package net.minecraft.block;
+ 
++import carpet.utils.SilentChunkReader;
+ import com.google.common.collect.Lists;
+ import java.util.List;
+ import java.util.Random;
+@@ -504,4 +505,14 @@
+             return this.field_176699_f;
+         }
+     }
++
++    // carpet12RNY - SilentChunkReader
++    public void addCollisionBoxToList_silent(IBlockState state, SilentChunkReader access, BlockPos pos, AxisAlignedBB entityBox, List<AxisAlignedBB> collidingBoxes, @Nullable Entity entityIn, boolean isActualState) {
++        if (!isActualState) {
++            state = this.func_176221_a(state, access, pos);
++        }
++        for (AxisAlignedBB axisalignedbb : func_185708_x(state)) {
++            func_185492_a(pos, entityBox, collidingBoxes, axisalignedbb);
++        }
++    }
+ }

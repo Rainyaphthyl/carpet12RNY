@@ -4,21 +4,32 @@ import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.entity.EnumCreatureType;
 import net.minecraft.init.Blocks;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
+import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.EnumSkyBlock;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.WorldServer;
+import net.minecraft.world.biome.Biome;
+import net.minecraft.world.border.WorldBorder;
 import net.minecraft.world.chunk.Chunk;
+import net.minecraft.world.gen.ChunkGeneratorOverworld;
 import net.minecraft.world.gen.ChunkProviderServer;
+import net.minecraft.world.gen.IChunkGenerator;
+import net.minecraft.world.storage.WorldInfo;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -32,6 +43,7 @@ public class SilentChunkReader implements IBlockAccess {
     // TODO: 2023/5/12,0012 Use Task ChunkReader instead of Permanent ChunkReader
     private final Long2ObjectMap<Chunk> chunkCache;
     private final WorldServer world;
+    private BlockPos cachedWorldSpawn = null;
 
     {
         chunkCache = new Long2ObjectOpenHashMap<>();
@@ -42,14 +54,36 @@ public class SilentChunkReader implements IBlockAccess {
         this.world = world;
     }
 
+    public static long chunkAsLong(@Nonnull ChunkPos chunkPos) {
+        return ChunkPos.asLong(chunkPos.x, chunkPos.z);
+    }
+
+    /**
+     * Only uses the X and Z, as if using {@link ChunkPos#asLong}
+     */
+    public static long blockHorizonLong(@Nonnull BlockPos blockPos) {
+        return ChunkPos.asLong(blockPos.getX(), blockPos.getZ());
+    }
+
     @Nonnull
-    public IBlockState getBlockState(int x, int y, int z) throws NullPointerException {
-        if (y < 0 || y >= 256) {
-            return Objects.requireNonNull(Blocks.AIR).getDefaultState();
-        } else {
-            Chunk chunk = getChunk(x >> 4, z >> 4);
-            return Objects.requireNonNull(chunk).getBlockState(x, y, z);
+    public static ChunkPos chunkFromLong(long index) {
+        int x = (int) (index & 0xFFFFFFFFL);
+        int z = (int) ((index >>> 32) & 0xFFFFFFFFL);
+        return new ChunkPos(x, z);
+    }
+
+    @Nonnull
+    public IBlockState getBlockState(int x, int y, int z) {
+        try {
+            if (y < 0 || y >= 256) {
+                return Objects.requireNonNull(Blocks.AIR).getDefaultState();
+            } else {
+                Chunk chunk = getChunk(x >> 4, z >> 4);
+                return Objects.requireNonNull(chunk).getBlockState(x, y, z);
+            }
+        } catch (NullPointerException ignored) {
         }
+        return BlockNull.STATE;
     }
 
     public boolean isChunkValid(BlockPos blockPos, boolean allowRemote) {
@@ -94,8 +128,14 @@ public class SilentChunkReader implements IBlockAccess {
         return chunk;
     }
 
-    private Chunk getChunk(@Nonnull BlockPos pos) {
-        return getChunk(pos.getX() >> 4, pos.getZ() >> 4);
+    @Nullable
+    public Chunk getChunk(@Nonnull BlockPos blockPos) {
+        return getChunk(blockPos.getX() >> 4, blockPos.getZ() >> 4);
+    }
+
+    @Nullable
+    public Chunk getChunk(@Nonnull ChunkPos chunkPos) {
+        return getChunk(chunkPos.x, chunkPos.z);
     }
 
     public int getLightFor(EnumSkyBlock lightType, @Nonnull BlockPos pos) {
@@ -178,12 +218,7 @@ public class SilentChunkReader implements IBlockAccess {
     @Override
     @Nonnull
     public IBlockState getBlockState(@Nonnull BlockPos pos) {
-        IBlockState state = BlockNull.STATE;
-        try {
-            state = getBlockState(pos.getX(), pos.getY(), pos.getZ());
-        } catch (NullPointerException ignored) {
-        }
-        return state;
+        return getBlockState(pos.getX(), pos.getY(), pos.getZ());
     }
 
     /**
@@ -242,5 +277,179 @@ public class SilentChunkReader implements IBlockAccess {
     public int getRedstonePower(BlockPos pos, EnumFacing facing) {
         IBlockState state = getBlockState(pos);
         return state.isNormalCube() ? getStrongPower(pos) : state.getWeakPower(this, pos, facing);
+    }
+
+    public List<Biome.SpawnListEntry> getPossibleCreatures(EnumCreatureType creatureType, BlockPos blockPos) {
+        Biome biome = getBiome(blockPos);
+        List<Biome.SpawnListEntry> entryList = biome == null ? Collections.emptyList() : biome.getSpawnableList(creatureType);
+        // structure check for dimensions...
+        IChunkGenerator generator = world.getChunkProvider().chunkGenerator;
+        if (generator instanceof ChunkGeneratorOverworld) {
+        }
+        return entryList;
+    }
+
+    @Nullable
+    public Biome getBiome(final BlockPos pos) {
+        Chunk chunk = getChunk(pos);
+        Biome biome = null;
+        if (chunk != null) {
+            int i = pos.getX() & 15;
+            int j = pos.getZ() & 15;
+            byte[] biomeArray = chunk.getBiomeArray();
+            int k = biomeArray[j << 4 | i] & 255;
+            biome = Biome.getBiome(k);
+        }
+        return biome;
+    }
+
+    /**
+     * @return the spawn point in the world
+     */
+    public BlockPos getSpawnPoint() {
+        if (cachedWorldSpawn == null) {
+            WorldInfo worldInfo = world.getWorldInfo();
+            BlockPos posWorldSpawn = new BlockPos(worldInfo.getSpawnX(), worldInfo.getSpawnY(), worldInfo.getSpawnZ());
+            WorldBorder worldBorder = world.getWorldBorder();
+            if (!worldBorder.contains(posWorldSpawn)) {
+                int centerX = MathHelper.floor(worldBorder.getCenterX());
+                int centerZ = MathHelper.floor(worldBorder.getCenterZ());
+                posWorldSpawn = new BlockPos(centerX, getHeight(centerX, centerZ), centerZ);
+            }
+            cachedWorldSpawn = posWorldSpawn;
+        }
+        return cachedWorldSpawn;
+    }
+
+    /**
+     * {@link net.minecraft.world.World#getHeight}
+     *
+     * @return from the height map, the height of the highest block at this x and z coordinate.
+     */
+    public int getHeight(int blockX, int blockZ) {
+        int height;
+        if (blockX >= -30000000 && blockZ >= -30000000 && blockX < 30000000 && blockZ < 30000000) {
+            Chunk chunk = getChunk(blockX >> 4, blockZ >> 4);
+            if (chunk == null) {
+                height = 0;
+            } else {
+                height = chunk.getHeightValue(blockX & 15, blockZ & 15);
+            }
+        } else {
+            height = world.getSeaLevel() + 1;
+        }
+        return height;
+    }
+
+    public boolean canBlockSeeSky(@Nonnull BlockPos pos) {
+        int targetX = pos.getX();
+        int targetZ = pos.getZ();
+        int targetY = pos.getY();
+        int seaLevel = world.getSeaLevel();
+        if (targetY >= seaLevel) {
+            return canSeeSky(pos);
+        } else {
+            BlockPos seaPos = new BlockPos(targetX, seaLevel, targetZ);
+            if (!canSeeSky(seaPos)) {
+                return false;
+            } else {
+                for (int y = seaLevel - 1; y > targetY; --y) {
+                    IBlockState iblockstate = getBlockState(targetX, y, targetZ);
+                    if (iblockstate.getLightOpacity() > 0 && !iblockstate.getMaterial().isLiquid()) {
+                        return false;
+                    }
+                }
+                return true;
+            }
+        }
+    }
+
+    public boolean canSeeSky(@Nonnull BlockPos pos) {
+        Chunk chunk = getChunk(pos);
+        return chunk != null && chunk.canSeeSky(pos);
+    }
+
+    /**
+     * Checks if any of the blocks within the aabb are liquids.
+     */
+    public boolean containsAnyLiquid(@Nonnull AxisAlignedBB bb) {
+        int minX = MathHelper.floor(bb.minX);
+        int maxX = MathHelper.ceil(bb.maxX);
+        int minY = MathHelper.floor(bb.minY);
+        int maxY = MathHelper.ceil(bb.maxY);
+        int minZ = MathHelper.floor(bb.minZ);
+        int maxZ = MathHelper.ceil(bb.maxZ);
+        for (int x = minX; x < maxX; ++x) {
+            for (int y = minY; y < maxY; ++y) {
+                for (int z = minZ; z < maxZ; ++z) {
+                    IBlockState state = getBlockState(x, y, z);
+                    if (state.getMaterial().isLiquid()) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * @return {@code true} if the AABB list is not empty
+     */
+    public boolean optimizedGetCollisionBoxes(@Nonnull AxisAlignedBB aabb, boolean strictCheck, @Nullable List<AxisAlignedBB> outList) {
+        final int startX = MathHelper.floor(aabb.minX) - 1;
+        final int endX = MathHelper.ceil(aabb.maxX) + 1;
+        final int startY = MathHelper.floor(aabb.minY) - 1;
+        final int endY = MathHelper.ceil(aabb.maxY) + 1;
+        final int startZ = MathHelper.floor(aabb.minZ) - 1;
+        final int endZ = MathHelper.ceil(aabb.maxZ) + 1;
+        BlockPos.PooledMutableBlockPos posMutable = BlockPos.PooledMutableBlockPos.retain();
+        if (outList == null) {
+            outList = new ArrayList<>();
+        }
+        try {
+            final int chunkStartX = (startX >> 4);
+            final int chunkStartZ = (startZ >> 4);
+            final int chunkEndX = (endX >> 4);
+            final int chunkEndZ = (endZ >> 4);
+            final int yMin = Math.max(0, startY);
+            for (int cx = chunkStartX; cx <= chunkEndX; cx++) {
+                for (int cz = chunkStartZ; cz <= chunkEndZ; cz++) {
+                    Chunk chunk = getChunk(cx, cz);
+                    if (chunk != null) {
+                        final int xMin = Math.max(cx << 4, startX);
+                        final int zMin = Math.max(cz << 4, startZ);
+                        final int xMax = Math.min((cx << 4) + 15, endX - 1);
+                        final int zMax = Math.min((cz << 4) + 15, endZ - 1);
+                        final int yMax = Math.min(chunk.getTopFilledSegment() + 15, endY - 1);
+                        for (int x = xMin; x <= xMax; ++x) {
+                            for (int z = zMin; z <= zMax; ++z) {
+                                boolean xIsEdge = x == startX || x == endX - 1;
+                                boolean zIsEdge = z == startZ || z == endZ - 1;
+                                if (!xIsEdge || !zIsEdge) {
+                                    for (int y = yMin; y <= yMax; ++y) {
+                                        if (!xIsEdge && !zIsEdge || y != endY - 1) {
+                                            if (strictCheck) {
+                                                if (x < -30000000 || x >= 30000000 || z < -30000000 || z >= 30000000) {
+                                                    return true;
+                                                }
+                                            }
+                                            posMutable.setPos(x, y, z);
+                                            IBlockState state = chunk.getBlockState(posMutable);
+                                            state.addCollisionBoxToList_silent(this, posMutable.toImmutable(), aabb, outList, null, false);
+                                            if (strictCheck && !outList.isEmpty()) {
+                                                return true;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } finally {
+            posMutable.release();
+        }
+        return !outList.isEmpty();
     }
 }

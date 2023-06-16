@@ -23,7 +23,7 @@ import java.util.List;
 
 public class CommandPortal extends CommandCarpetBase
 {
-    private static final String USAGE = "Usage: /portal (from|to) (point|range) <x> <y> <z> [dimension]";
+    private static final String USAGE = "/portal (from|to) (point|range) <x> <y> <z> [<dimension>]";
 
     @Nonnull
     @Override

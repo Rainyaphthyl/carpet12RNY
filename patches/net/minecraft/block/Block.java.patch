@@ -7,6 +7,7 @@
 +import carpet.CarpetSettings;
 +import carpet.helpers.lifetime.spawning.LiteralSpawningReason;
 +import carpet.logging.LoggerRegistry;
++import carpet.utils.SilentChunkReader;
  import com.google.common.collect.Sets;
  import com.google.common.collect.UnmodifiableIterator;
  import java.util.List;
@@ -14,11 +15,10 @@
  import java.util.Set;
  import javax.annotation.Nullable;
 +
-+import net.minecraft.advancements.critereon.PlacedBlockTrigger;
  import net.minecraft.block.material.EnumPushReaction;
  import net.minecraft.block.material.MapColor;
  import net.minecraft.block.material.Material;
-@@ -23,20 +29,16 @@
+@@ -23,20 +29,15 @@
  import net.minecraft.init.Blocks;
  import net.minecraft.init.Enchantments;
  import net.minecraft.init.Items;
@@ -27,9 +27,9 @@
  import net.minecraft.item.Item;
  import net.minecraft.item.ItemBlock;
  import net.minecraft.item.ItemStack;
+-import net.minecraft.stats.StatList;
 +import net.minecraft.network.play.server.SPacketSoundEffect;
 +import net.minecraft.server.management.PlayerInteractionManager;
- import net.minecraft.stats.StatList;
  import net.minecraft.tileentity.TileEntity;
 -import net.minecraft.util.EnumBlockRenderType;
 -import net.minecraft.util.EnumFacing;
@@ -43,7 +43,7 @@
  import net.minecraft.util.math.AxisAlignedBB;
  import net.minecraft.util.math.BlockPos;
  import net.minecraft.util.math.MathHelper;
-@@ -48,7 +50,13 @@
+@@ -48,7 +49,13 @@
  import net.minecraft.world.IBlockAccess;
  import net.minecraft.world.World;
  
@@ -58,7 +58,7 @@
  {
      private static final ResourceLocation field_176230_a = new ResourceLocation("air");
      public static final RegistryNamespacedDefaultedByKey<ResourceLocation, Block> field_149771_c = new RegistryNamespacedDefaultedByKey<ResourceLocation, Block>(field_176230_a);
-@@ -74,7 +82,7 @@
+@@ -74,7 +81,7 @@
      public float field_149765_K;
      protected final BlockStateContainer field_176227_L;
      private IBlockState field_176228_M;
@@ -67,7 +67,7 @@
  
      public static int func_149682_b(Block p_149682_0_)
      {
-@@ -236,7 +244,7 @@
+@@ -236,7 +243,7 @@
          return this;
      }
  
@@ -76,7 +76,7 @@
      {
          this.field_149786_r = p_149713_1_;
          return this;
-@@ -328,7 +336,7 @@
+@@ -328,7 +335,7 @@
          return this.field_149782_v;
      }
  
@@ -85,7 +85,7 @@
      {
          this.field_149789_z = p_149675_1_;
          return this;
-@@ -400,7 +408,10 @@
+@@ -400,7 +407,10 @@
  
      public void func_180645_a(World p_180645_1_, BlockPos p_180645_2_, IBlockState p_180645_3_, Random p_180645_4_)
      {
@@ -96,7 +96,7 @@
      }
  
      public void func_180650_b(World p_180650_1_, BlockPos p_180650_2_, IBlockState p_180650_3_, Random p_180650_4_)
-@@ -489,8 +500,18 @@
+@@ -489,8 +499,18 @@
              double d1 = (double)(p_180635_0_.field_73012_v.nextFloat() * 0.5F) + 0.25D;
              double d2 = (double)(p_180635_0_.field_73012_v.nextFloat() * 0.5F) + 0.25D;
              EntityItem entityitem = new EntityItem(p_180635_0_, (double)p_180635_1_.func_177958_n() + d0, (double)p_180635_1_.func_177956_o() + d1, (double)p_180635_1_.func_177952_p() + d2, p_180635_2_);
@@ -115,7 +115,7 @@
          }
      }
  
-@@ -594,7 +615,10 @@
+@@ -594,7 +614,10 @@
  
      public void func_180657_a(World p_180657_1_, EntityPlayer p_180657_2_, BlockPos p_180657_3_, IBlockState p_180657_4_, @Nullable TileEntity p_180657_5_, ItemStack p_180657_6_)
      {
@@ -127,7 +127,7 @@
          p_180657_2_.func_71020_j(0.005F);
  
          if (this.func_149700_E() && EnchantmentHelper.func_77506_a(Enchantments.field_185306_r, p_180657_6_) > 0)
-@@ -849,7 +873,8 @@
+@@ -849,7 +872,8 @@
          func_176219_a(32, "deadbush", (new BlockDeadBush()).func_149711_c(0.0F).func_149672_a(SoundType.field_185850_c).func_149663_c("deadbush"));
          func_176219_a(33, "piston", (new BlockPistonBase(false)).func_149663_c("pistonBase"));
          func_176219_a(34, "piston_head", (new BlockPistonExtension()).func_149663_c("pistonBase"));
@@ -137,3 +137,12 @@
          func_176219_a(36, "piston_extension", new BlockPistonMoving());
          func_176219_a(37, "yellow_flower", (new BlockYellowFlower()).func_149711_c(0.0F).func_149672_a(SoundType.field_185850_c).func_149663_c("flower1"));
          func_176219_a(38, "red_flower", (new BlockRedFlower()).func_149711_c(0.0F).func_149672_a(SoundType.field_185850_c).func_149663_c("flower2"));
+@@ -1148,4 +1172,8 @@
+         XZ,
+         XYZ;
+     }
++
++    public void addCollisionBoxToList_silent(IBlockState state, SilentChunkReader access, BlockPos pos, AxisAlignedBB entityBox, List<AxisAlignedBB> collidingBoxes, @Nullable Entity entityIn, boolean isActualState) {
++        func_185492_a(pos, entityBox, collidingBoxes, state.func_185890_d(access, pos));
++    }
+ }
