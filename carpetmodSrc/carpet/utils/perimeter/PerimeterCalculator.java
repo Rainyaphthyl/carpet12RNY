@@ -323,6 +323,7 @@ public class PerimeterCalculator implements Runnable {
                 Messenger.m(sender, sample);
             }
         }
+        Messenger.m(sender, "g ------------------------");
     }
 
     private boolean isLightValid(Class<? extends EntityLiving> mobClass, BlockPos pos) {

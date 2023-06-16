@@ -136,7 +136,9 @@ public class PerimeterResult {
                 }
             }
             ObjectIterator<BlockPos> iterator = totalSampleSet.iterator();
-            components.add(Messenger.c("w Sample of effective locations (" + note + "):"));
+            if (iterator.hasNext()) {
+                components.add(Messenger.c("w Sample of effective locations (" + note + "):"));
+            }
             for (int i = 0; i < maxSampleNum && iterator.hasNext(); ++i) {
                 BlockPos sample = iterator.next();
                 if (sample != null) {

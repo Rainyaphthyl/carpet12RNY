@@ -26,7 +26,7 @@ public class CommandPerimeterInfo extends CommandCarpetBase {
 
     @Nonnull
     @ParametersAreNonnullByDefault
-    public static List<String> getTabCompletionCoordinateExact(ICommandSender sender, String[] inputArgs, int index, @Nullable BlockPos target) {
+    public static List<String> getTabCompletionCoordinateExact(ICommandSender sender, String[] inputArgs, int index, @Nullable BlockPos target, int decimals) {
         Vec3d posBaseE = sender.getPositionVector();
         List<String> list = new ArrayList<>();
         int i = inputArgs.length - 1;
@@ -65,12 +65,23 @@ public class CommandPerimeterInfo extends CommandCarpetBase {
                 return list;
         }
         list.add("~");
+        if (decimals > 0 && decimals < 8) {
+            String formatter = "%." + decimals + 'f';
+            list.add(String.format(formatter, posCurrE));
+        }
         list.add(Double.toString(posCurrE));
         list.add(Integer.toString(posCurrB));
         if (posTarget != posCurrB) {
             list.add(Integer.toString(posTarget));
         }
         return list;
+    }
+
+    @SuppressWarnings("unused")
+    @Nonnull
+    @ParametersAreNonnullByDefault
+    public static List<String> getTabCompletionCoordinateExact(ICommandSender sender, String[] inputArgs, int index, @Nullable BlockPos target) {
+        return getTabCompletionCoordinateExact(sender, inputArgs, index, target, -1);
     }
 
     @Override
@@ -151,7 +162,7 @@ public class CommandPerimeterInfo extends CommandCarpetBase {
                 case 1:
                 case 2:
                 case 3:
-                    return getTabCompletionCoordinateExact(sender, args, 0, targetPos);
+                    return getTabCompletionCoordinateExact(sender, args, 0, targetPos, 4);
                 case 4:
                     List<String> list = getListOfStringsMatchingLastWord(args, "nether", "overworld", "end");
                     list.add("~");

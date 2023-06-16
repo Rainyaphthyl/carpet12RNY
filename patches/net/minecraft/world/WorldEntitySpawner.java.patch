@@ -126,7 +126,7 @@
                                                      }
                                                      else
                                                      {
-@@ -173,7 +248,30 @@
+@@ -173,8 +248,38 @@
                                  }
                              }
                          }
@@ -155,5 +155,13 @@
 +                    }
 +                    /* end */
                  }
++                // CM start
++                else if (LoggerRegistry.__mobcaps && enumcreaturetype.func_82705_e() && !p_77192_4_) {
++                    int k4 = p_77192_1_.func_72907_a(enumcreaturetype.func_75598_a());
++                    int l4 = (int) (Math.pow(2.0, (SpawnReporter.mobcap_exponent / 4)) * enumcreaturetype.func_75601_b() * i / field_180268_a);
++                    SpawnReporter.mobcaps.get(did).put(enumcreaturetype, new Tuple<>(k4, l4));
++                }
++                // CM end
              }
  
+             return j4;
