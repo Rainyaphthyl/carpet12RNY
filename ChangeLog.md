@@ -1,6 +1,6 @@
 Carpet 1.12 with [RNY](https://github.com/Rainyaphthyl)'s Addition
 
-[version](src/carpet/CarpetSettings.java): `RNY-build-5-20230616`
+[version](src/carpet/CarpetSettings.java): `RNY-build-5-20230616-plus`
 
 # TO-DO List
 
@@ -13,12 +13,8 @@ Carpet 1.12 with [RNY](https://github.com/Rainyaphthyl)'s Addition
 
 # Feature Modifications
 
-- Add command `/perimeterinfo <x> <y> <z> [<dimension> [<target_entity>]]`, checking the spawning areas inside or outside the despawning range.
-- Spawn Reporter reports passive mob cap every tick, no need to wait for the next spawning.
+- Improve help info of command `/spawn`.
 
 # Code Details
 
-- Rename `CommandPerimeter` to `CommandPerimeterCheck`.
-- Add static method `tpa` in class `Messenger`.
-- Add spawning check stuffs into `SilentChunkReader`: biomes, world spawn points, sky visibility, etc.
-- Add method `addCollisionBoxToList_silent` in `IBlockProperties`.
+- *None*
