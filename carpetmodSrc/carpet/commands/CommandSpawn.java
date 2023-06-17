@@ -32,7 +32,24 @@ public class CommandSpawn extends CommandCarpetBase {
             "\n| /spawn tracking [re]start [<X1> <Y1> <Z1> <X2> <Y2> <Z2>]";
     private static final String USAGE_TEST = "/spawn test [<ticks> [<counter>]]";
     private static final String USAGE_MOCKING = "/spawn mocking (true|false)";
-    private static final String DETAILED_USAGE = USAGE_LIST + "\n| " + USAGE_ENTITIES + "\n| " + USAGE_MOBCAPS + "\n| " + USAGE_TRACKING + "\n| " + USAGE_TEST + "\n| " + USAGE_MOCKING;
+    private static final String USAGE_PREDICT = "/spawn predict perimeter <X> <Y> <Z>" +
+            "\n| /spawn predict block <X> <Y> <Z>" +
+            "\n| /spawn predict range <X1> <Y1> <Z1> <X2> <Y2> <Z2>";
+    private static final String[] ALL_USAGES = new String[]{
+            USAGE_LIST, USAGE_ENTITIES, USAGE_MOBCAPS, USAGE_TRACKING, USAGE_TEST, USAGE_MOCKING, USAGE_PREDICT
+    };
+    private static final String DETAILED_USAGE;
+
+    static {
+        StringBuilder builder = new StringBuilder();
+        for (int i = 0; i < ALL_USAGES.length; ++i) {
+            if (i > 0) {
+                builder.append("\n| ");
+            }
+            builder.append(ALL_USAGES[i]);
+        }
+        DETAILED_USAGE = builder.toString();
+    }
 
     /**
      * Gets the name of the command
@@ -195,7 +212,7 @@ public class CommandSpawn extends CommandCarpetBase {
             return Collections.emptyList();
         }
         if (args.length == 1) {
-            return getListOfStringsMatchingLastWord(args, "list", "mocking", "tracking", "mobcaps", "rates", "entities", "test");
+            return getListOfStringsMatchingLastWord(args, "list", "mocking", "tracking", "mobcaps", "rates", "entities", "test", "predict");
         }
         if ("list".equalsIgnoreCase(args[0]) && args.length <= 4) {
             return getTabCompletionCoordinate(args, 1, pos);
@@ -219,6 +236,9 @@ public class CommandSpawn extends CommandCarpetBase {
             if ("test".equalsIgnoreCase(args[0])) {
                 return getListOfStringsMatchingLastWord(args, "24000", "72000");
             }
+            if ("predict".equalsIgnoreCase(args[0])) {
+                return getListOfStringsMatchingLastWord(args, "perimeter", "block", "range");
+            }
         }
         if ("test".equalsIgnoreCase(args[0]) && (args.length == 3)) {
             List<String> lst = new ArrayList<>();
@@ -232,11 +252,26 @@ public class CommandSpawn extends CommandCarpetBase {
         if ("mobcaps".equalsIgnoreCase(args[0]) && "set".equalsIgnoreCase(args[1]) && (args.length == 3)) {
             return getListOfStringsMatchingLastWord(args, "70");
         }
-        if ("tracking".equalsIgnoreCase(args[0]) && ("start".equalsIgnoreCase(args[1]) || "restart".equalsIgnoreCase(args[1])) && args.length > 2 && args.length <= 5) {
-            return getTabCompletionCoordinate(args, 2, pos);
+        if ("tracking".equalsIgnoreCase(args[0]) && ("start".equalsIgnoreCase(args[1]) || "restart".equalsIgnoreCase(args[1]))) {
+            switch (args.length) {
+                case 3:
+                case 4:
+                case 5:
+                    return getTabCompletionCoordinate(args, 2, pos);
+                case 6:
+                case 7:
+                case 8:
+                    return getTabCompletionCoordinate(args, 5, pos);
+            }
         }
-        if ("tracking".equalsIgnoreCase(args[0]) && ("start".equalsIgnoreCase(args[1]) || "restart".equalsIgnoreCase(args[1])) && args.length > 5 && args.length <= 8) {
-            return getTabCompletionCoordinate(args, 5, pos);
+        if ("predict".equalsIgnoreCase(args[0])) {
+            if ("perimeter".equalsIgnoreCase(args[1])) {
+
+            } else if ("block".equalsIgnoreCase(args[1])) {
+
+            } else if ("range".equalsIgnoreCase(args[1])) {
+
+            }
         }
         return Collections.emptyList();
     }
