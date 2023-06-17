@@ -1,9 +1,11 @@
 package carpet.utils;
 
+import carpet.utils.perimeter.PerimeterCalculator;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.EnumCreatureType;
 import net.minecraft.init.Blocks;
 import net.minecraft.tileentity.TileEntity;
@@ -54,6 +56,7 @@ public class SilentChunkReader implements IBlockAccess {
         this.world = world;
     }
 
+    @SuppressWarnings("unused")
     public static long chunkAsLong(@Nonnull ChunkPos chunkPos) {
         return ChunkPos.asLong(chunkPos.x, chunkPos.z);
     }
@@ -65,6 +68,7 @@ public class SilentChunkReader implements IBlockAccess {
         return ChunkPos.asLong(blockPos.getX(), blockPos.getZ());
     }
 
+    @SuppressWarnings("unused")
     @Nonnull
     public static ChunkPos chunkFromLong(long index) {
         int x = (int) (index & 0xFFFFFFFFL);
@@ -451,5 +455,13 @@ public class SilentChunkReader implements IBlockAccess {
             posMutable.release();
         }
         return !outList.isEmpty();
+    }
+
+    @ParametersAreNonnullByDefault
+    public boolean isCreaturePlaceable( BlockPos posTarget,EntityLiving.SpawnPlacementType placementType) {
+        IBlockState stateDown = getBlockState(posTarget.getX(), posTarget.getY() - 1, posTarget.getZ());
+        IBlockState stateTarget = getBlockState(posTarget);
+        IBlockState stateUp = getBlockState(posTarget.getX(), posTarget.getY() + 1, posTarget.getZ());
+        return PerimeterCalculator.isEntityPlaceable(placementType, stateDown, stateTarget, stateUp);
     }
 }

@@ -10,6 +10,8 @@ import net.minecraft.command.ICommand;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.server.MinecraftServer;
 
+import javax.annotation.ParametersAreNonnullByDefault;
+
 class CommandWrapper extends CommandCarpetBase {
     private CommandMapping command;
 
@@ -41,6 +43,7 @@ class CommandWrapper extends CommandCarpetBase {
     }
 
     @Override
+    @ParametersAreNonnullByDefault
     public boolean checkPermission(MinecraftServer server, ICommandSender sender) {
         return command_enabled("worldEdit", sender); // Will send an extra vanilla permission message but that's the best we can do
     }

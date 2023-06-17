@@ -3,6 +3,7 @@ package carpet.commands;
 import carpet.CarpetSettings;
 import carpet.helpers.HopperCounter;
 import carpet.helpers.TickSpeed;
+import carpet.utils.Messenger;
 import carpet.utils.SpawnReporter;
 import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommandSender;
@@ -200,6 +201,8 @@ public class CommandSpawn extends CommandCarpetBase {
                 msgFormatted(sender, SpawnReporter.printEntitiesByType(args[1], world));
             }
             return;
+        } else if ("predict".equalsIgnoreCase(args[0])) {
+            Messenger.print_server_message(server, Messenger.c("r command ", "rbi /spawn predict", "r  is not implemented"));
         }
         throw new WrongUsageException(DETAILED_USAGE);
     }
@@ -265,12 +268,25 @@ public class CommandSpawn extends CommandCarpetBase {
             }
         }
         if ("predict".equalsIgnoreCase(args[0])) {
-            if ("perimeter".equalsIgnoreCase(args[1])) {
-
-            } else if ("block".equalsIgnoreCase(args[1])) {
-
-            } else if ("range".equalsIgnoreCase(args[1])) {
-
+            switch (args.length) {
+                case 3:
+                case 4:
+                case 5:
+                    if ("perimeter".equalsIgnoreCase(args[1])) {
+                        return getTabCompletionCoordinateExact(sender, args, 2, pos, 4);
+                    } else if ("block".equalsIgnoreCase(args[1])) {
+                        return getTabCompletionMobPlace(sender, args, 2, pos);
+                    } else if ("range".equalsIgnoreCase(args[1])) {
+                        return getTabCompletionCoordinate(args, 2, pos);
+                    }
+                    break;
+                case 6:
+                case 7:
+                case 8:
+                    if ("range".equalsIgnoreCase(args[1])) {
+                        return getTabCompletionCoordinate(args, 5, pos);
+                    }
+                    break;
             }
         }
         return Collections.emptyList();

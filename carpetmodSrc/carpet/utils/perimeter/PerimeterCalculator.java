@@ -216,6 +216,26 @@ public class PerimeterCalculator implements Runnable {
                 && !EntityVillager.class.isAssignableFrom(entityClass);
     }
 
+    @ParametersAreNonnullByDefault
+    public static boolean isEntityPlaceable(SpawnPlacementType placementType, IBlockState stateDown, IBlockState stateTarget, IBlockState stateUp) {
+        switch (placementType) {
+            case IN_WATER:
+                return stateTarget.getMaterial() == Material.WATER
+                        && stateDown.getMaterial() == Material.WATER && !stateUp.isNormalCube();
+            case ON_GROUND:
+                if (!stateDown.isTopSolid()) {
+                    return false;
+                } else {
+                    Block blockDown = stateDown.getBlock();
+                    boolean flag = blockDown != Blocks.BEDROCK && blockDown != Blocks.BARRIER;
+                    return flag && WorldEntitySpawner.isValidEmptySpawnBlock(stateTarget)
+                            && WorldEntitySpawner.isValidEmptySpawnBlock(stateUp);
+                }
+            default:
+                return false;
+        }
+    }
+
     @Override
     public void run() {
         try {
