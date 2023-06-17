@@ -25,17 +25,16 @@ import java.util.Collections;
 import java.util.List;
 
 public class CommandSpawn extends CommandCarpetBase {
-    private static final String MAIN_USAGE = "/spawn (list|entities|rates|mobcaps|tracking|test|mocking) <option>...";
+    private static final String MAIN_USAGE = "/spawn (list | entities | rates | mobcaps | tracking | test | mocking) <option>...";
     private static final String USAGE_LIST = "/spawn list <X> <Y> <Z>";
-    private static final String USAGE_ENTITIES = "/spawn entities [passive|hostile|ambient|water]";
-    private static final String USAGE_MOBCAPS = "/spawn mobcaps [(set <num>)|nether|overworld|end]]";
-    private static final String USAGE_TRACKING = "/spawn tracking [stop|hostile|passive|water|ambient]" +
+    private static final String USAGE_ENTITIES = "/spawn entities [passive | hostile | ambient | water]";
+    private static final String USAGE_MOBCAPS = "/spawn mobcaps [(set <num>) | nether | overworld | end]]";
+    private static final String USAGE_TRACKING = "/spawn tracking [stop | hostile | passive | water | ambient]" +
             "\n| /spawn tracking [re]start [<X1> <Y1> <Z1> <X2> <Y2> <Z2>]";
     private static final String USAGE_TEST = "/spawn test [<ticks> [<counter>]]";
     private static final String USAGE_MOCKING = "/spawn mocking (true|false)";
-    private static final String USAGE_PREDICT = "/spawn predict perimeter <X> <Y> <Z>" +
-            "\n| /spawn predict block <X> <Y> <Z>" +
-            "\n| /spawn predict range <X1> <Y1> <Z1> <X2> <Y2> <Z2>";
+    private static final String USAGE_PREDICT = "/spawn predict (perimeter | block) <X> <Y> <Z> [<dimension>]" +
+            "\n| /spawn predict range <X1> <Y1> <Z1> <X2> <Y2> <Z2> [<dimension>]";
     private static final String[] ALL_USAGES = new String[]{
             USAGE_LIST, USAGE_ENTITIES, USAGE_MOBCAPS, USAGE_TRACKING, USAGE_TEST, USAGE_MOCKING, USAGE_PREDICT
     };
@@ -203,6 +202,7 @@ public class CommandSpawn extends CommandCarpetBase {
             return;
         } else if ("predict".equalsIgnoreCase(args[0])) {
             Messenger.print_server_message(server, Messenger.c("r command ", "rbi /spawn predict", "r  is not implemented"));
+            return;
         }
         throw new WrongUsageException(DETAILED_USAGE);
     }
@@ -268,25 +268,32 @@ public class CommandSpawn extends CommandCarpetBase {
             }
         }
         if ("predict".equalsIgnoreCase(args[0])) {
-            switch (args.length) {
-                case 3:
-                case 4:
-                case 5:
-                    if ("perimeter".equalsIgnoreCase(args[1])) {
-                        return getTabCompletionCoordinateExact(sender, args, 2, pos, 4);
-                    } else if ("block".equalsIgnoreCase(args[1])) {
-                        return getTabCompletionMobPlace(sender, args, 2, pos);
-                    } else if ("range".equalsIgnoreCase(args[1])) {
-                        return getTabCompletionCoordinate(args, 2, pos);
-                    }
-                    break;
-                case 6:
-                case 7:
-                case 8:
-                    if ("range".equalsIgnoreCase(args[1])) {
-                        return getTabCompletionCoordinate(args, 5, pos);
-                    }
-                    break;
+            boolean suggestDim = false;
+            if ("perimeter".equalsIgnoreCase(args[1])) {
+                if (args.length >= 3 && args.length <= 5) {
+                    return getTabCompletionCoordinateExact(sender, args, 2, pos, 4);
+                } else if (args.length == 6) {
+                    suggestDim = true;
+                }
+            } else if ("block".equalsIgnoreCase(args[1])) {
+                if (args.length >= 3 && args.length <= 5) {
+                    return getTabCompletionMobPlace(sender, args, 2, pos);
+                } else if (args.length == 6) {
+                    suggestDim = true;
+                }
+            } else if ("range".equalsIgnoreCase(args[1])) {
+                if (args.length >= 3 && args.length <= 5) {
+                    return getTabCompletionMobPlace(sender, args, 2, pos);
+                } else if (args.length >= 6 && args.length <= 8) {
+                    return getTabCompletionMobPlace(sender, args, 5, pos);
+                } else if (args.length == 9) {
+                    suggestDim = true;
+                }
+            }
+            if (suggestDim) {
+                List<String> list = getListOfStringsMatchingLastWord(args, "nether", "overworld", "end");
+                list.add("~");
+                return list;
             }
         }
         return Collections.emptyList();
