@@ -33,7 +33,6 @@ import net.minecraft.world.WorldEntitySpawner;
 import net.minecraft.world.WorldServer;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.border.WorldBorder;
-import net.minecraft.world.chunk.Chunk;
 
 import javax.annotation.Nonnull;
 import java.util.Objects;
@@ -42,7 +41,7 @@ import java.util.Objects;
  * {@link net.minecraft.world.WorldEntitySpawner#findChunksForSpawning}
  */
 public class PerimeterCalculator {
-    private static final int SECTION_UNIT = 16;
+    public static final int SECTION_UNIT = 16;
     private static final int SAMPLE_REPORT_NUM = 10;
     private static final int yMin = 0;
     private final Class<? extends EntityLiving> entityType;
@@ -54,7 +53,7 @@ public class PerimeterCalculator {
     private Int2ObjectSortedMap<Long2ObjectMap<EnumDistLevel>> distanceCacheLayered = null;
     private EnumCreatureType creatureType = null;
     private SpawnPlacementType placementType = null;
-    private SilentChunkReader reader = null;
+    private SilentChunkReader access = null;
     private PerimeterResult resultCached = null;
     private BlockPos worldSpawnPoint = null;
     private boolean specific = false;
@@ -95,7 +94,7 @@ public class PerimeterCalculator {
      */
     private synchronized void initialize() {
         if (!initialized) {
-            reader = worldServer.silentChunkReader;
+            access = worldServer.silentChunkReader;
             if (entityType != null) {
                 specific = true;
                 creatureType = SpawnChecker.checkCreatureType(entityType);
@@ -123,9 +122,9 @@ public class PerimeterCalculator {
             for (int x = xMin; x <= xMax; ++x) {
                 for (int z = zMin; z <= zMax; ++z) {
                     posTarget.setPos(x, y, z);
-                    IBlockState stateTarget = reader.getBlockState(posTarget);
-                    IBlockState stateDown = reader.getBlockState(x, y - 1, z);
-                    IBlockState stateUp = reader.getBlockState(x, y + 1, z);
+                    IBlockState stateTarget = access.getBlockState(posTarget);
+                    IBlockState stateDown = access.getBlockState(x, y - 1, z);
+                    IBlockState stateUp = access.getBlockState(x, y + 1, z);
                     // check placement in liquid
                     boolean flagLiquid = stateTarget.getMaterial() == Material.WATER
                             && stateDown.getMaterial() == Material.WATER && !stateUp.isNormalCube();
@@ -185,7 +184,7 @@ public class PerimeterCalculator {
             ITextComponent[] bannedSampleList = result.createBannedSampleReports(entityType, SAMPLE_REPORT_NUM);
             if (bannedSampleList.length > 0) {
                 if (worldSpawnPoint == null) {
-                    worldSpawnPoint = reader.getSpawnPoint();
+                    worldSpawnPoint = access.getSpawnPoint();
                 }
                 Messenger.m(sender, "w Current ", "w WSP", "^g World Spawn Point", "w  in use: ",
                         Messenger.tpa("m", (double) worldSpawnPoint.getX(), worldSpawnPoint.getY(), worldSpawnPoint.getZ()));
@@ -210,7 +209,7 @@ public class PerimeterCalculator {
         for (int cx = -radius; cx <= radius; ++cx) {
             for (int cz = -radius; cz <= radius; ++cz) {
                 ChunkPos chunkPos = new ChunkPos(chunkX + cx, chunkZ + cz);
-                int height = checkChunkHeight(chunkPos);
+                int height = access.getSpawningHeight(chunkPos);
                 if (height > yMax) {
                     yMax = height;
                 }
@@ -223,21 +222,6 @@ public class PerimeterCalculator {
         xMax = MathHelper.clamp(((chunkX + radius) << 4) + 15 + expand, -worldLimit, worldLimit);
         zMin = MathHelper.clamp(((chunkZ - radius) << 4) - expand, -worldLimit, worldLimit);
         zMax = MathHelper.clamp(((chunkZ + radius) << 4) + 15 + expand, -worldLimit, worldLimit);
-    }
-
-    private int checkChunkHeight(@Nonnull ChunkPos chunkPos) {
-        final int originX = chunkPos.x * 16;
-        final int originZ = chunkPos.z * 16;
-        Chunk chunk = reader.getChunk(chunkPos);
-        if (chunk == null) {
-            return SECTION_UNIT - 1;
-        } else {
-            int height = MathHelper.roundUp(chunk.getHeight(new BlockPos(originX + 8, 0, originZ + 8)) + 1, SECTION_UNIT);
-            if (height <= 0) {
-                height = chunk.getTopFilledSegment() + (SECTION_UNIT - 1);
-            }
-            return height;
-        }
     }
 
     /**
@@ -261,7 +245,7 @@ public class PerimeterCalculator {
         float mobZ = (float) posTarget.getZ() + 0.5F;
         EnumDistLevel level;
         if (worldSpawnPoint == null) {
-            worldSpawnPoint = reader.getSpawnPoint();
+            worldSpawnPoint = access.getSpawnPoint();
         }
         if (worldSpawnPoint.distanceSq(mobX, posY, mobZ) >= 576.0) {
             double distSq = center.squareDistanceTo(mobX, posY, mobZ);
@@ -279,7 +263,7 @@ public class PerimeterCalculator {
             return biomeAllowanceCache.get(index);
         }
         boolean allowing = false;
-        for (Biome.SpawnListEntry entryOption : reader.getPossibleCreatures(creatureType, posTarget)) {
+        for (Biome.SpawnListEntry entryOption : access.getPossibleCreatures(creatureType, posTarget)) {
             if (Objects.equals(entryOption.entityClass, entityType)) {
                 allowing = true;
                 break;

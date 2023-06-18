@@ -1,5 +1,6 @@
 package carpet.utils;
 
+import carpet.utils.perimeter.PerimeterCalculator;
 import carpet.utils.perimeter.SpawnChecker;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
@@ -343,6 +344,21 @@ public class SilentChunkReader implements IBlockAccess {
             height = world.getSeaLevel() + 1;
         }
         return height;
+    }
+
+    public int getSpawningHeight(@Nonnull ChunkPos chunkPos) {
+        final int originX = chunkPos.x * 16;
+        final int originZ = chunkPos.z * 16;
+        Chunk chunk = getChunk(chunkPos);
+        if (chunk == null) {
+            return PerimeterCalculator.SECTION_UNIT - 1;
+        } else {
+            int height = MathHelper.roundUp(chunk.getHeight(new BlockPos(originX + 8, 0, originZ + 8)) + 1, PerimeterCalculator.SECTION_UNIT);
+            if (height <= 0) {
+                height = chunk.getTopFilledSegment() + (PerimeterCalculator.SECTION_UNIT - 1);
+            }
+            return height;
+        }
     }
 
     public boolean canBlockSeeSky(@Nonnull BlockPos pos) {
