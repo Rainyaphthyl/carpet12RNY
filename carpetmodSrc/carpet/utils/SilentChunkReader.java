@@ -1,6 +1,6 @@
 package carpet.utils;
 
-import carpet.utils.perimeter.PerimeterCalculator;
+import carpet.utils.perimeter.SpawnChecker;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import net.minecraft.block.material.Material;
@@ -458,10 +458,10 @@ public class SilentChunkReader implements IBlockAccess {
     }
 
     @ParametersAreNonnullByDefault
-    public boolean isCreaturePlaceable( BlockPos posTarget,EntityLiving.SpawnPlacementType placementType) {
+    public boolean isCreaturePlaceable(BlockPos posTarget, EntityLiving.SpawnPlacementType placementType) {
         IBlockState stateDown = getBlockState(posTarget.getX(), posTarget.getY() - 1, posTarget.getZ());
         IBlockState stateTarget = getBlockState(posTarget);
         IBlockState stateUp = getBlockState(posTarget.getX(), posTarget.getY() + 1, posTarget.getZ());
-        return PerimeterCalculator.isEntityPlaceable(placementType, stateDown, stateTarget, stateUp);
+        return SpawnChecker.isEntityPlaceable(placementType, stateDown, stateTarget, stateUp);
     }
 }

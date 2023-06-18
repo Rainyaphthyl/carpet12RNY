@@ -120,7 +120,7 @@ public class PerimeterResult {
             distRange.add(EnumDistLevel.NORMAL);
             distRange.add(EnumDistLevel.NEARBY);
             String color, note;
-            if (PerimeterCalculator.canImmediatelyDespawn(entityType)) {
+            if (SpawnChecker.canImmediatelyDespawn(entityType)) {
                 color = "e";
                 note = "within r=128 sphere";
             } else {
