@@ -12,7 +12,7 @@ import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 import java.util.Objects;
 
-public class SpawnRateCalculator implements Runnable {
+public class SpawnRateCalculator {
     private final WorldServer world;
     private final SilentChunkReader access;
     /**
@@ -64,11 +64,6 @@ public class SpawnRateCalculator implements Runnable {
         } catch (NullPointerException e) {
             return null;
         }
-    }
-
-    @Override
-    public void run() {
-        initialize();
     }
 
     private synchronized void initialize() {

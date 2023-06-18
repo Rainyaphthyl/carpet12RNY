@@ -51,7 +51,7 @@ import java.util.Objects;
 /**
  * {@link net.minecraft.world.WorldEntitySpawner#findChunksForSpawning}
  */
-public class PerimeterCalculator implements Runnable {
+public class PerimeterCalculator {
     /**
      * Default value: {@code <0.6F, 1.8F>}
      */
@@ -120,25 +120,22 @@ public class PerimeterCalculator implements Runnable {
     private final Class<? extends EntityLiving> entityType;
     private final WorldServer worldServer;
     private final Vec3d center;
-    private final ICommandSender sender;
-    private final ICommand command;
     private int yMax = SECTION_UNIT - 1;
     private Long2BooleanMap biomeAllowanceCache = null;
     private Int2ObjectSortedMap<Long2ObjectMap<EnumDistLevel>> distanceCacheLayered = null;
     private EnumCreatureType creatureType = null;
     private SpawnPlacementType placementType = null;
     private SilentChunkReader reader = null;
-    private PerimeterResult result = null;
+    private PerimeterResult resultCached = null;
     private BlockPos worldSpawnPoint = null;
     private boolean specific = false;
     private int xMin = 0;
     private int xMax = 0;
     private int zMin = 0;
     private int zMax = 0;
+    private boolean initialized = false;
 
-    private PerimeterCalculator(ICommandSender sender, ICommand command, WorldServer worldServer, Vec3d center, Class<? extends EntityLiving> entityType) {
-        this.sender = sender == null ? CarpetServer.minecraft_server : sender;
-        this.command = command;
+    private PerimeterCalculator(WorldServer worldServer, Vec3d center, Class<? extends EntityLiving> entityType) {
         this.worldServer = worldServer;
         this.center = center;
         this.entityType = entityType;
@@ -147,8 +144,17 @@ public class PerimeterCalculator implements Runnable {
     public static void asyncSearch(ICommandSender sender, ICommand command, World world, Vec3d center, Class<? extends EntityLiving> entityType) throws CommandException {
         if (world instanceof WorldServer) {
             CommandBase.notifyCommandListener(sender, command, "Start checking perimeter ...");
-            PerimeterCalculator calculator = new PerimeterCalculator(sender, command, (WorldServer) world, center, entityType);
-            HttpUtil.DOWNLOADER_EXECUTOR.submit(calculator);
+            HttpUtil.DOWNLOADER_EXECUTOR.submit(() -> {
+                try {
+                    PerimeterCalculator calculator = new PerimeterCalculator((WorldServer) world, center, entityType);
+                    PerimeterResult result = calculator.countSpots();
+                    CommandBase.notifyCommandListener(sender, command, "Finish checking perimeter info");
+                    calculator.printResult(sender, result);
+                } catch (Exception e) {
+                    CommandBase.notifyCommandListener(sender, command, "Failed to check perimeter");
+                    e.printStackTrace();
+                }
+            });
         } else {
             throw new CommandException("commands.compare.outOfWorld");
         }
@@ -236,42 +242,34 @@ public class PerimeterCalculator implements Runnable {
         }
     }
 
-    @Override
-    public void run() {
-        try {
-            initialize();
-            countSpots();
-            printResult();
-        } catch (Exception e) {
-            CommandBase.notifyCommandListener(sender, command, "Failed to check perimeter");
-            e.printStackTrace();
-        }
-    }
-
     /**
      * Some non-final fields should not be null
      */
-    private void initialize() {
-        reader = worldServer.silentChunkReader;
-        result = PerimeterResult.createEmptyResult();
-        if (entityType != null) {
-            specific = true;
-            creatureType = checkCreatureType(entityType);
-            placementType = EntitySpawnPlacementRegistry.getPlacementForEntity(entityType);
-        } else {
-            specific = false;
+    private synchronized void initialize() {
+        if (!initialized) {
+            reader = worldServer.silentChunkReader;
+            if (entityType != null) {
+                specific = true;
+                creatureType = checkCreatureType(entityType);
+                placementType = EntitySpawnPlacementRegistry.getPlacementForEntity(entityType);
+            } else {
+                specific = false;
+            }
+            initSpawningRange();
+            distanceCacheLayered = new Int2ObjectAVLTreeMap<>();
+            biomeAllowanceCache = new Long2BooleanOpenHashMap();
+            initialized = true;
         }
-        initSpawningRange();
-        distanceCacheLayered = new Int2ObjectAVLTreeMap<>();
-        biomeAllowanceCache = new Long2BooleanOpenHashMap();
     }
 
     /**
      * {@link net.minecraft.world.WorldEntitySpawner#findChunksForSpawning}
      */
-    private void countSpots() {
+    public PerimeterResult countSpots() {
         // Only count the possible spots. Do NOT calculate the rates.
         // The spawning rates can be 0 while the spot is counted as spawn-able.
+        initialize();
+        PerimeterResult result = PerimeterResult.createEmptyResult();
         BlockPos.MutableBlockPos posTarget = new BlockPos.MutableBlockPos();
         for (int y = yMin; y <= yMax; ++y) {
             for (int x = xMin; x <= xMax; ++x) {
@@ -316,10 +314,20 @@ public class PerimeterCalculator implements Runnable {
             }
             distanceCacheLayered.remove(y);
         }
+        resultCached = result;
+        return result;
     }
 
-    private void printResult() {
-        CommandBase.notifyCommandListener(sender, command, "Finish checking perimeter info");
+    public void printResult(ICommandSender sender, PerimeterResult result) {
+        if (result == null) {
+            synchronized (this) {
+                if (resultCached != null) {
+                    result = resultCached;
+                } else {
+                    return;
+                }
+            }
+        }
         Messenger.m(sender, "g format: <normal> + <despawning> = <spawning> ; <banned>...");
         Messenger.m(sender, "w Spawning spaces around ", Messenger.tpa("y", center.x, center.y, center.z, 2));
         Messenger.m(sender, result.createStandardReport(SpawnPlacementType.IN_WATER));
