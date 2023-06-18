@@ -1,5 +1,6 @@
 package carpet.utils.perimeter;
 
+import carpet.utils.LRUCache;
 import carpet.utils.SilentChunkReader;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
@@ -23,13 +24,11 @@ public class SpawningCalculator {
     private final WorldServer world;
     private final SilentChunkReader access;
     private final SpawnChecker checker;
-    /**
-     * Overrides the {@code posCorner*} fields if {@code posPeriCenter} is nonnull.
-     */
     private final Vec3d posPeriCenter;
     private final BlockPos.MutableBlockPos posCornerMin = new BlockPos.MutableBlockPos();
     private final BlockPos.MutableBlockPos posCornerMax = new BlockPos.MutableBlockPos();
     private final Long2ObjectMap<BlockPos> possibleTargetSet = new Long2ObjectOpenHashMap<>();
+    private final LRUCache<BlockPos, Double> distSqCache = new LRUCache<>(64);
     private boolean initialized = false;
     private boolean running = false;
     private boolean finished = false;
@@ -164,21 +163,28 @@ public class SpawningCalculator {
             if (posPeriCenter == null) {
                 return true;
             } else {
-                // TODO: 2023/6/18,0018 Cache the distance
-                return posPeriCenter.squareDistanceTo(mobX, posY, mobZ) >= 576.0;
+                return getDistSqToPlayer(posTarget) >= 576.0;
             }
         } else {
             return false;
         }
     }
 
-    public boolean isMobNotDespawning(@Nonnull BlockPos posTarget, Class<? extends EntityLiving> mobClass) {
-        if (posPeriCenter != null && SpawnChecker.canImmediatelyDespawn(mobClass)) {
+    public double getDistSqToPlayer(@Nonnull BlockPos posTarget) {
+        Double distSq = distSqCache.get(posTarget);
+        if (distSq == null) {
             int posY = posTarget.getY();
             float mobX = (float) posTarget.getX() + 0.5F;
             float mobZ = (float) posTarget.getZ() + 0.5F;
-            // TODO: 2023/6/18,0018 Cache the distance
-            return posPeriCenter.squareDistanceTo(mobX, posY, mobZ) <= 16384.0;
+            distSq = posPeriCenter.squareDistanceTo(mobX, posY, mobZ);
+            distSqCache.put(posTarget.toImmutable(), distSq);
+        }
+        return distSq;
+    }
+
+    public boolean isMobNotDespawning(@Nonnull BlockPos posTarget, Class<? extends EntityLiving> mobClass) {
+        if (posPeriCenter != null && SpawnChecker.canImmediatelyDespawn(mobClass)) {
+            return getDistSqToPlayer(posTarget) <= 16384.0;
         } else {
             return true;
         }
