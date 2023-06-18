@@ -315,8 +315,29 @@ public class SpawningCalculator {
         }
     }
 
-    public double getTargetSpawningRate(@Nonnull BlockPos posTarget, Class<? extends EntityLiving> mobClass) {
-        return 0.0;
+    public double getSpawningRate(@Nonnull BlockPos posTarget, Class<? extends EntityLiving> mobClass) {
+        double rateTotal = 0.0;
+        for (int c = MIN_GROUP_NUM; c <= MAX_GROUP_NUM; ++c) {
+            rateTotal += getSpawningStepRate(mobClass, posTarget, 0, c);
+        }
+        return rateTotal;
+    }
+
+    /**
+     * @param mobClass    {@code m}
+     * @param posCurr     {@code \vec{r}}
+     * @param roundsLeft  {@code w}
+     * @param roundsTotal {@code c}
+     * @return {@code s_m(r, w, c)}
+     */
+    public double getSpawningStepRate(Class<? extends EntityLiving> mobClass, @Nonnull BlockPos posCurr, int roundsLeft, int roundsTotal) {
+        double rateCurr = 0.0;
+        // TODO: 2023/6/18,0018 Add the cache 
+        if (roundsLeft >= 0 && roundsLeft <= roundsTotal - 2) {
+        } else if (roundsLeft == roundsTotal - 1) {
+        } else if (roundsLeft == roundsTotal) {
+        }
+        return rateCurr;
     }
 
     public enum CheckStage {
