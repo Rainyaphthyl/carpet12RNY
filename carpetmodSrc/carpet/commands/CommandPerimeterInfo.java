@@ -85,7 +85,7 @@ public class CommandPerimeterInfo extends CommandCarpetBase {
             } else {
                 world = sender.getEntityWorld();
             }
-            PerimeterCalculator.asyncSearch(sender, this, world, posCenter, entityType);
+            PerimeterCalculator.asyncExecute(sender, this, world, posCenter, entityType);
         }
     }
 

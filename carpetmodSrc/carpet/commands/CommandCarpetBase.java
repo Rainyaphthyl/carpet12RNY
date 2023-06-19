@@ -75,6 +75,7 @@ public abstract class CommandCarpetBase extends CommandBase {
     @ParametersAreNonnullByDefault
     public static List<String> getTabCompletionCoordinateExact(ICommandSender sender, String[] inputArgs, int index, @Nullable BlockPos target, int decimals) {
         Vec3d posBaseE = sender.getPositionVector();
+        BlockPos posBaseB = sender.getPosition();
         List<String> list = new ArrayList<>();
         int i = inputArgs.length - 1;
         double posCurrE;
@@ -83,7 +84,7 @@ public abstract class CommandCarpetBase extends CommandBase {
         switch (i - index) {
             case 0:
                 posCurrE = posBaseE.x;
-                posCurrB = MathHelper.floor(posCurrE);
+                posCurrB = posBaseB.getX();
                 if (target != null) {
                     posTarget = target.getX();
                 } else {
@@ -92,7 +93,7 @@ public abstract class CommandCarpetBase extends CommandBase {
                 break;
             case 1:
                 posCurrE = posBaseE.y;
-                posCurrB = MathHelper.floor(posCurrE);
+                posCurrB = posBaseB.getY();
                 if (target != null) {
                     posTarget = target.getY();
                 } else {
@@ -101,7 +102,7 @@ public abstract class CommandCarpetBase extends CommandBase {
                 break;
             case 2:
                 posCurrE = posBaseE.z;
-                posCurrB = MathHelper.floor(posCurrE);
+                posCurrB = posBaseB.getZ();
                 if (target != null) {
                     posTarget = target.getZ();
                 } else {
