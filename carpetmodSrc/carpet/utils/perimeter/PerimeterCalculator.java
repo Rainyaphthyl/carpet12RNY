@@ -66,7 +66,7 @@ public class PerimeterCalculator {
         checker = new SpawnChecker(worldServer, center);
     }
 
-    public static void asyncSearch(ICommandSender sender, ICommand command, World world, Vec3d center, Class<? extends EntityLiving> entityType) throws CommandException {
+    public static void asyncExecute(ICommandSender sender, ICommand command, World world, Vec3d center, Class<? extends EntityLiving> entityType) throws CommandException {
         if (world instanceof WorldServer) {
             CommandBase.notifyCommandListener(sender, command, "Start checking perimeter ...");
             HttpUtil.DOWNLOADER_EXECUTOR.submit(() -> {

@@ -5,6 +5,7 @@ import carpet.helpers.HopperCounter;
 import carpet.helpers.TickSpeed;
 import carpet.utils.Messenger;
 import carpet.utils.SpawnReporter;
+import carpet.utils.perimeter.SpawningCalculator;
 import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.command.NumberInvalidException;
@@ -15,6 +16,8 @@ import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.EnumDyeColor;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.DimensionType;
 import net.minecraft.world.World;
 
 import javax.annotation.Nonnull;
@@ -202,6 +205,7 @@ public class CommandSpawn extends CommandCarpetBase {
             return;
         } else if ("predict".equalsIgnoreCase(args[0])) {
             Messenger.print_server_message(server, Messenger.c("r command ", "rbi /spawn predict", "r  is not implemented"));
+            parseLaunchPredict(server, sender, args);
             return;
         }
         throw new WrongUsageException(DETAILED_USAGE);
@@ -329,5 +333,62 @@ public class CommandSpawn extends CommandCarpetBase {
         SpawnReporter.track_spawns = 0L;
         SpawnReporter.lower_spawning_limit = null;
         SpawnReporter.upper_spawning_limit = null;
+    }
+
+    private void parseLaunchPredict(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
+        try {
+            SpawningCalculator.EnumMode mode;
+            List<Object> options = new ArrayList<>();
+            int iDim;
+            if ("block".equalsIgnoreCase(args[1])) {
+                mode = SpawningCalculator.EnumMode.BLOCK;
+                BlockPos posTarget = parseBlockPos(sender, args, 2, true);
+                options.add(posTarget);
+                iDim = 5;
+            } else if ("range".equalsIgnoreCase(args[1])) {
+                mode = SpawningCalculator.EnumMode.RANGE;
+                BlockPos posCorner = parseBlockPos(sender, args, 2, true);
+                options.add(posCorner);
+                posCorner = parseBlockPos(sender, args, 5, true);
+                options.add(posCorner);
+                iDim = 8;
+            } else if ("perimeter".equalsIgnoreCase(args[1])) {
+                mode = SpawningCalculator.EnumMode.PERIMETER;
+                Vec3d posBase = sender.getPositionVector();
+                double posX = parseDouble(posBase.x, args[2], true);
+                double posY = parseDouble(posBase.y, args[3], false);
+                double posZ = parseDouble(posBase.z, args[4], true);
+                Vec3d posCenter = new Vec3d(posX, posY, posZ);
+                options.add(posCenter);
+                iDim = 5;
+            } else {
+                throw new WrongUsageException(USAGE_PREDICT);
+            }
+            DimensionType dimension = null;
+            if (iDim < args.length && !"~".equals(args[iDim])) {
+                if ("overworld".equalsIgnoreCase(args[iDim])) {
+                    dimension = DimensionType.OVERWORLD;
+                } else if ("nether".equalsIgnoreCase(args[iDim])) {
+                    dimension = DimensionType.NETHER;
+                } else if ("end".equalsIgnoreCase(args[iDim])) {
+                    dimension = DimensionType.THE_END;
+                } else {
+                    dimension = DimensionType.getById(parseInt(args[iDim], -1, 1));
+                }
+            }
+            World world;
+            if (dimension == null) {
+                world = sender.getEntityWorld();
+            } else {
+                world = server.getWorld(dimension.getId());
+            }
+            SpawningCalculator.asyncExecute(sender, this, world, mode, options.toArray(new Object[0]));
+        } catch (Exception e) {
+            if (e instanceof CommandException) {
+                throw (CommandException) e;
+            } else {
+                throw new WrongUsageException(USAGE_PREDICT);
+            }
+        }
     }
 }

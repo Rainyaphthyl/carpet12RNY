@@ -3,11 +3,17 @@ package carpet.utils.perimeter;
 import carpet.CarpetServer;
 import carpet.utils.LRUCache;
 import carpet.utils.SilentChunkReader;
+import net.minecraft.command.CommandBase;
+import net.minecraft.command.CommandException;
+import net.minecraft.command.ICommand;
+import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.EntityList;
 import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.EntitySpawnPlacementRegistry;
 import net.minecraft.entity.EnumCreatureType;
+import net.minecraft.util.HttpUtil;
 import net.minecraft.util.math.*;
+import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.border.WorldBorder;
@@ -54,7 +60,7 @@ public class SpawningCalculator {
 
     @Nullable
     @ParametersAreNonnullByDefault
-    public SpawningCalculator createInstance(WorldServer world, Vec3d posPeriCenter) {
+    public static SpawningCalculator createInstance(WorldServer world, Vec3d posPeriCenter) {
         try {
             return new SpawningCalculator(world, posPeriCenter, null, null);
         } catch (NullPointerException e) {
@@ -64,7 +70,7 @@ public class SpawningCalculator {
 
     @Nullable
     @ParametersAreNonnullByDefault
-    public SpawningCalculator createInstance(WorldServer world, BlockPos posTarget) {
+    public static SpawningCalculator createInstance(WorldServer world, BlockPos posTarget) {
         try {
             return new SpawningCalculator(world, null, posTarget, posTarget);
         } catch (NullPointerException e) {
@@ -74,11 +80,40 @@ public class SpawningCalculator {
 
     @Nullable
     @ParametersAreNonnullByDefault
-    public SpawningCalculator createInstance(WorldServer world, BlockPos posCorner1, BlockPos posCorner2) {
+    public static SpawningCalculator createInstance(WorldServer world, BlockPos posCorner1, BlockPos posCorner2) {
         try {
             return new SpawningCalculator(world, null, posCorner1, posCorner2);
         } catch (NullPointerException e) {
             return null;
+        }
+    }
+
+    @ParametersAreNonnullByDefault
+    public static void asyncExecute(ICommandSender sender, ICommand command, World world, EnumMode mode, Object... options) throws CommandException {
+        if (world instanceof WorldServer) {
+            CommandBase.notifyCommandListener(sender, command, "Calculating rates of mob spawning ...");
+            HttpUtil.DOWNLOADER_EXECUTOR.submit(() -> {
+                try {
+                    SpawningCalculator calculator = null;
+                    switch (mode) {
+                        case BLOCK:
+                            calculator = createInstance((WorldServer) world, (BlockPos) options[0]);
+                            break;
+                        case RANGE:
+                            calculator = createInstance((WorldServer) world, (BlockPos) options[0], (BlockPos) options[1]);
+                            break;
+                        case PERIMETER:
+                            calculator = createInstance((WorldServer) world, (Vec3d) options[0]);
+                    }
+                    Objects.requireNonNull(calculator);
+                    CommandBase.notifyCommandListener(sender, command, "Finished mob-spawn-rate calculation");
+                } catch (Throwable e) {
+                    CommandBase.notifyCommandListener(sender, command, "Failed to calculate mob-spawn-rate");
+                    e.printStackTrace();
+                }
+            });
+        } else {
+            throw new CommandException("commands.compare.outOfWorld");
         }
     }
 
@@ -378,5 +413,11 @@ public class SpawningCalculator {
          * Distance > 128
          */
         DESPAWNING
+    }
+
+    public enum EnumMode {
+        BLOCK,
+        RANGE,
+        PERIMETER
     }
 }
