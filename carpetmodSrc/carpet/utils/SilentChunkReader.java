@@ -111,15 +111,15 @@ public class SilentChunkReader implements IBlockAccess {
     }
 
     @Nullable
-    private Chunk getChunk(int x, int z) {
-        long index = ChunkPos.asLong(x, z);
+    public Chunk getChunk(int chunkX, int chunkZ) {
+        long index = ChunkPos.asLong(chunkX, chunkZ);
         ChunkProviderServer provider = world.getChunkProvider();
         Chunk chunk = provider.loadedChunks.get(index);
         if (chunk == null) {
             chunk = chunkCache.get(index);
-            if (chunk == null && provider.chunkLoader.isChunkGeneratedAt(x, z)) {
+            if (chunk == null && provider.chunkLoader.isChunkGeneratedAt(chunkX, chunkZ)) {
                 try {
-                    chunk = provider.chunkLoader.loadChunk_silent(world, x, z);
+                    chunk = provider.chunkLoader.loadChunk_silent(world, chunkX, chunkZ);
                 } catch (IOException ignored) {
                 }
                 if (chunk != null) {
