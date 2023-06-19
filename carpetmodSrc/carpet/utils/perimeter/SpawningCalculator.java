@@ -3,8 +3,7 @@ package carpet.utils.perimeter;
 import carpet.CarpetServer;
 import carpet.utils.LRUCache;
 import carpet.utils.SilentChunkReader;
-import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
-import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
+import net.minecraft.entity.EntityList;
 import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.EntitySpawnPlacementRegistry;
 import net.minecraft.entity.EnumCreatureType;
@@ -16,7 +15,7 @@ import net.minecraft.world.border.WorldBorder;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
-import java.util.Objects;
+import java.util.*;
 
 public class SpawningCalculator {
     public static final int MIN_GROUP_NUM = 1;
@@ -28,8 +27,9 @@ public class SpawningCalculator {
     private final boolean fullArea;
     private final BlockPos.MutableBlockPos posCornerMin = new BlockPos.MutableBlockPos();
     private final BlockPos.MutableBlockPos posCornerMax = new BlockPos.MutableBlockPos();
-    private final Long2ObjectMap<BlockPos> possibleTargetSet = new Long2ObjectOpenHashMap<>();
-    private final LRUCache<BlockPos, Double> distSqCache = new LRUCache<>(64);
+    private final Set<BlockPos> possibleTargetSet = new HashSet<>();
+    private final Map<BlockPos, Double> distSqCache = new LRUCache<>(64);
+    private final Map<PredictorKey, Double> spawningRateCache = new HashMap<>();
     private boolean targetCheckFinished = false;
     private boolean rangeCheckFinished = false;
     private int minChunkX = 0;
@@ -112,7 +112,7 @@ public class SpawningCalculator {
             z1 = temp;
         }
         if (changed) {
-            posCornerMin.setPos(x1, y1, z1);
+            posCornerMin.setPos(x1, Math.max(y1, 0), z1);
             posCornerMax.setPos(x2, y2, z2);
         }
     }
@@ -131,43 +131,45 @@ public class SpawningCalculator {
             int chunkZ = MathHelper.floor(posPeriCenter.z / 16.0);
             // checking player chunk map
             int radius = Math.min(CarpetServer.minecraft_server.getPlayerList().getViewDistance(), 7);
-            int yMax = PerimeterCalculator.SECTION_UNIT - 1;
             WorldBorder worldBorder = world.getWorldBorder();
-            minChunkX = chunkX - radius;
-            maxChunkX = chunkX + radius;
-            minChunkZ = chunkZ - radius;
-            maxChunkZ = chunkZ + radius;
+            int borderCenterX = MathHelper.floor(worldBorder.getCenterX() / 16.0);
+            int borderCenterZ = MathHelper.floor(worldBorder.getCenterZ() / 16.0);
+            minChunkX = chunkX + radius;
+            maxChunkX = chunkX - radius;
             for (int cx = -radius; cx <= radius; ++cx) {
-                for (int cz = -radius; cz <= radius; ++cz) {
-                    ChunkPos chunkPos = new ChunkPos(chunkX + cx, chunkZ + cz);
-                    if (worldBorder.contains(chunkPos)) {
-                        if (minChunkX < chunkPos.x) {
-                            minChunkX = chunkPos.x;
-                        }
-                        if (maxChunkX > chunkPos.x) {
-                            maxChunkX = chunkPos.x;
-                        }
-                        if (minChunkZ < chunkPos.z) {
-                            minChunkZ = chunkPos.z;
-                        }
-                        if (maxChunkZ > chunkPos.z) {
-                            maxChunkZ = chunkPos.z;
-                        }
-                        int height = access.getSpawningHeight(chunkPos);
-                        if (height > yMax) {
-                            yMax = height;
-                        }
+                ChunkPos chunkPos = new ChunkPos(chunkX + cx, borderCenterZ);
+                if (worldBorder.contains(chunkPos)) {
+                    if (minChunkX < chunkPos.x) {
+                        minChunkX = chunkPos.x;
+                    }
+                    if (maxChunkX > chunkPos.x) {
+                        maxChunkX = chunkPos.x;
+                    }
+                }
+            }
+            minChunkZ = chunkZ + radius;
+            maxChunkZ = chunkZ - radius;
+            for (int cz = -radius; cz <= radius; ++cz) {
+                ChunkPos chunkPos = new ChunkPos(borderCenterX, chunkZ + cz);
+                if (worldBorder.contains(chunkPos)) {
+                    if (minChunkZ < chunkPos.z) {
+                        minChunkZ = chunkPos.z;
+                    }
+                    if (maxChunkZ > chunkPos.z) {
+                        maxChunkZ = chunkPos.z;
                     }
                 }
             }
             if (fullArea) {
                 int expand = 20;
                 int worldLimit = worldBorder.getSize();
+                int yMin = 0;
+                int yMax = world.getHeight() - 1;
                 int xMin = MathHelper.clamp(((chunkX - radius) << 4) - expand, -worldLimit, worldLimit);
                 int xMax = MathHelper.clamp(((chunkX + radius) << 4) + 15 + expand, -worldLimit, worldLimit);
                 int zMin = MathHelper.clamp(((chunkZ - radius) << 4) - expand, -worldLimit, worldLimit);
                 int zMax = MathHelper.clamp(((chunkZ + radius) << 4) + 15 + expand, -worldLimit, worldLimit);
-                posCornerMin.setPos(xMin, 0, zMin);
+                posCornerMin.setPos(xMin, yMin, zMin);
                 posCornerMax.setPos(xMax, yMax, zMax);
             }
         }
@@ -183,10 +185,11 @@ public class SpawningCalculator {
         for (int x = posCornerMin.getX(); x <= posCornerMax.getX(); ++x) {
             for (int z = posCornerMin.getZ(); z <= posCornerMax.getZ(); ++z) {
                 posIter.setPos(x, -1, z);
-                for (int y = posCornerMin.getY(); y <= posCornerMax.getY(); ++y) {
+                int height = Math.min(access.getSpawningColumnHeight(posIter), posCornerMax.getY() + 1);
+                for (int y = posCornerMin.getY(); y < height; ++y) {
                     posIter.setY(y);
                     if (checkSpawningChance(posIter, null)) {
-                        possibleTargetSet.put(posIter.toLong(), posIter.toImmutable());
+                        possibleTargetSet.add(posIter.toImmutable());
                     }
                 }
             }
@@ -317,27 +320,49 @@ public class SpawningCalculator {
 
     public double getSpawningRate(@Nonnull BlockPos posTarget, Class<? extends EntityLiving> mobClass) {
         double rateTotal = 0.0;
+        int mobId = EntityList.REGISTRY.getIDForObject(mobClass);
         for (int c = MIN_GROUP_NUM; c <= MAX_GROUP_NUM; ++c) {
-            rateTotal += getSpawningStepRate(mobClass, posTarget, 0, c);
+            rateTotal += getSpawningStepRate(mobId, posTarget, 0, c);
         }
         return rateTotal;
     }
 
     /**
-     * @param mobClass    {@code m}
+     * @param mobId       {@code m}
      * @param posCurr     {@code \vec{r}}
      * @param roundsLeft  {@code w}
      * @param roundsTotal {@code c}
      * @return {@code s_m(r, w, c)}
      */
-    public double getSpawningStepRate(Class<? extends EntityLiving> mobClass, @Nonnull BlockPos posCurr, int roundsLeft, int roundsTotal) {
+    public double getSpawningStepRate(int mobId, @Nonnull BlockPos posCurr, int roundsLeft, int roundsTotal) {
+        PredictorKey key = new PredictorKey(mobId, posCurr, roundsLeft, roundsTotal);
+        Double value;
+        synchronized (spawningRateCache) {
+            value = spawningRateCache.get(key);
+        }
+        if (value != null) {
+            return value;
+        }
         double rateCurr = 0.0;
-        // TODO: 2023/6/18,0018 Add the cache 
         if (roundsLeft >= 0 && roundsLeft <= roundsTotal - 2) {
+            // 0 <= w <= c-2
         } else if (roundsLeft == roundsTotal - 1) {
+            // w == c-1
         } else if (roundsLeft == roundsTotal) {
+            // w == c
+        } else {
+            return Double.NaN;
+        }
+        value = rateCurr;
+        synchronized (spawningRateCache) {
+            spawningRateCache.put(key, value);
         }
         return rateCurr;
+    }
+
+    public double getChancePosInChunk(@Nonnull BlockPos posTarget) {
+        int height = access.getSpawningColumnHeight(posTarget);
+        return 1.0 / (height * SpawnChecker.SECTION_UNIT * SpawnChecker.SECTION_UNIT);
     }
 
     public enum CheckStage {

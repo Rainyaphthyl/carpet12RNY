@@ -34,6 +34,7 @@ public class SpawnChecker {
     public static final float MIN_HEIGHT;
     public static final float DEFAULT_WIDTH = 0.6F;
     public static final float DEFAULT_HEIGHT = 1.8F;
+    public static final int SECTION_UNIT = 16;
     /**
      * Default value: {@code <0.6F, 1.8F>}
      */

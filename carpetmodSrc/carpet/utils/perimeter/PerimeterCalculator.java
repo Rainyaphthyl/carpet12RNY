@@ -24,7 +24,6 @@ import net.minecraft.entity.EnumCreatureType;
 import net.minecraft.init.Blocks;
 import net.minecraft.util.HttpUtil;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.text.ITextComponent;
@@ -41,16 +40,13 @@ import java.util.Objects;
  * {@link net.minecraft.world.WorldEntitySpawner#findChunksForSpawning}
  */
 public class PerimeterCalculator {
-    public static final int SECTION_UNIT = 16;
     private static final int SAMPLE_REPORT_NUM = 10;
-    private static final int yMin = 0;
     private final Class<? extends EntityLiving> entityType;
     private final WorldServer worldServer;
     private final Vec3d center;
     private final SpawnChecker checker;
-    private int yMax = SECTION_UNIT - 1;
     private Long2BooleanMap biomeAllowanceCache = null;
-    private Int2ObjectSortedMap<Long2ObjectMap<EnumDistLevel>> distanceCacheLayered = null;
+    private Long2ObjectMap<Int2ObjectSortedMap<EnumDistLevel>> distanceCacheSliced = null;
     private EnumCreatureType creatureType = null;
     private SpawnPlacementType placementType = null;
     private SilentChunkReader access = null;
@@ -103,7 +99,7 @@ public class PerimeterCalculator {
                 specific = false;
             }
             initSpawningRange();
-            distanceCacheLayered = new Int2ObjectAVLTreeMap<>();
+            distanceCacheSliced = new Long2ObjectOpenHashMap<>();
             biomeAllowanceCache = new Long2BooleanOpenHashMap();
             initialized = true;
         }
@@ -118,10 +114,12 @@ public class PerimeterCalculator {
         initialize();
         PerimeterResult result = PerimeterResult.createEmptyResult();
         BlockPos.MutableBlockPos posTarget = new BlockPos.MutableBlockPos();
-        for (int y = yMin; y <= yMax; ++y) {
-            for (int x = xMin; x <= xMax; ++x) {
-                for (int z = zMin; z <= zMax; ++z) {
-                    posTarget.setPos(x, y, z);
+        for (int x = xMin; x <= xMax; ++x) {
+            for (int z = zMin; z <= zMax; ++z) {
+                posTarget.setPos(x, 0, z);
+                int height = access.getSpawningColumnHeight(posTarget);
+                for (int y = 0; y < height; ++y) {
+                    posTarget.setY(y);
                     IBlockState stateTarget = access.getBlockState(posTarget);
                     IBlockState stateDown = access.getBlockState(x, y - 1, z);
                     IBlockState stateUp = access.getBlockState(x, y + 1, z);
@@ -158,8 +156,8 @@ public class PerimeterCalculator {
                         }
                     }
                 }
+                distanceCacheSliced.remove(SilentChunkReader.blockHorizonLong(posTarget));
             }
-            distanceCacheLayered.remove(y);
         }
         resultCached = result;
         return result;
@@ -206,15 +204,6 @@ public class PerimeterCalculator {
         int chunkZ = MathHelper.floor(center.z / 16.0);
         // checking player chunk map
         int radius = Math.min(CarpetServer.minecraft_server.getPlayerList().getViewDistance(), 7);
-        for (int cx = -radius; cx <= radius; ++cx) {
-            for (int cz = -radius; cz <= radius; ++cz) {
-                ChunkPos chunkPos = new ChunkPos(chunkX + cx, chunkZ + cz);
-                int height = access.getSpawningHeight(chunkPos);
-                if (height > yMax) {
-                    yMax = height;
-                }
-            }
-        }
         int expand = 20;
         WorldBorder worldBorder = worldServer.getWorldBorder();
         int worldLimit = worldBorder.getSize();
@@ -229,17 +218,17 @@ public class PerimeterCalculator {
      */
     private EnumDistLevel getDistLevelOf(@Nonnull BlockPos posTarget) {
         int posY = posTarget.getY();
-        Long2ObjectMap<EnumDistLevel> cacheLayer;
-        if (distanceCacheLayered.containsKey(posY)) {
-            cacheLayer = distanceCacheLayered.get(posY);
-        } else {
-            cacheLayer = new Long2ObjectOpenHashMap<>();
-            cacheLayer.defaultReturnValue(null);
-            distanceCacheLayered.put(posY, cacheLayer);
-        }
+        Int2ObjectSortedMap<EnumDistLevel> cacheColumn;
         long index = SilentChunkReader.blockHorizonLong(posTarget);
-        if (cacheLayer.containsKey(index)) {
-            return cacheLayer.get(index);
+        if (distanceCacheSliced.containsKey(index)) {
+            cacheColumn = distanceCacheSliced.get(index);
+        } else {
+            cacheColumn = new Int2ObjectAVLTreeMap<>();
+            cacheColumn.defaultReturnValue(null);
+            distanceCacheSliced.put(index, cacheColumn);
+        }
+        if (cacheColumn.containsKey(posY)) {
+            return cacheColumn.get(posY);
         }
         float mobX = (float) posTarget.getX() + 0.5F;
         float mobZ = (float) posTarget.getZ() + 0.5F;
@@ -253,7 +242,7 @@ public class PerimeterCalculator {
         } else {
             level = EnumDistLevel.BANNED;
         }
-        cacheLayer.put(index, level);
+        cacheColumn.put(posY, level);
         return level;
     }
 

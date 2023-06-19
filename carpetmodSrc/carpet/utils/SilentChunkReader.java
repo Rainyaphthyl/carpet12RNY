@@ -1,6 +1,5 @@
 package carpet.utils;
 
-import carpet.utils.perimeter.PerimeterCalculator;
 import carpet.utils.perimeter.SpawnChecker;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
@@ -346,16 +345,25 @@ public class SilentChunkReader implements IBlockAccess {
         return height;
     }
 
-    public int getSpawningHeight(@Nonnull ChunkPos chunkPos) {
-        final int originX = chunkPos.x * 16;
-        final int originZ = chunkPos.z * 16;
-        Chunk chunk = getChunk(chunkPos);
+    /**
+     * This "height" is one-block above the actual topmost spawnable block, e.g. the returned value is {@code 16*n} while the actual range is {@code [0, 16*n-1]}
+     */
+    public int getSpawningColumnHeight(@Nonnull BlockPos blockPos) {
+        return getSpawningColumnHeight(blockPos.getX(), blockPos.getZ());
+    }
+
+    /**
+     * This "height" is one-block above the actual topmost spawnable block, e.g. the returned value is {@code 16*n} while the actual range is {@code [0, 16*n-1]}
+     */
+    public int getSpawningColumnHeight(int blockX, int blockZ) {
+        Chunk chunk = getChunk(blockX >> 4, blockZ >> 4);
         if (chunk == null) {
-            return PerimeterCalculator.SECTION_UNIT - 1;
+            return 0;
         } else {
-            int height = MathHelper.roundUp(chunk.getHeight(new BlockPos(originX + 8, 0, originZ + 8)) + 1, PerimeterCalculator.SECTION_UNIT);
+            int top = chunk.getHeightValue(blockX & 15, blockZ & 15);
+            int height = MathHelper.roundUp(top + 1, SpawnChecker.SECTION_UNIT);
             if (height <= 0) {
-                height = chunk.getTopFilledSegment() + (PerimeterCalculator.SECTION_UNIT - 1);
+                height = chunk.getTopFilledSegment() + (SpawnChecker.SECTION_UNIT - 1);
             }
             return height;
         }

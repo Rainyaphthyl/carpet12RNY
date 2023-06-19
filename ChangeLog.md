@@ -14,6 +14,7 @@ Carpet 1.12 with [RNY](https://github.com/Rainyaphthyl)'s Addition
 # Feature Modifications
 
 - Improve help info of command `/spawn`.
+- Fix the bug that the calculation of mob spawning height map uses chunk-based algorithm.
 
 # Code Details
 
