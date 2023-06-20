@@ -14,24 +14,28 @@ public class PredictorKey implements Comparable<PredictorKey> {
      * {@link EntityList#init()}
      */
     public final int mobId;
-    public final int roundsLeft;
-    public final int roundsTotal;
+    public final int rounds;
+    public final int groupSize;
 
-    private PredictorKey(int mobId, int blockX, int blockY, int blockZ, int roundsLeft, int roundsTotal) {
+    private PredictorKey(int mobId, int blockX, int blockY, int blockZ, int rounds, int groupSize) {
         this.blockX = blockX;
         this.blockY = blockY;
         this.blockZ = blockZ;
-        this.mobId = roundsLeft == roundsTotal ? -1 : mobId;
-        this.roundsLeft = roundsLeft;
-        this.roundsTotal = roundsTotal;
+        if (rounds == groupSize) {
+            this.mobId = -1;
+        } else {
+            this.mobId = mobId;
+        }
+        this.rounds = rounds;
+        this.groupSize = groupSize;
     }
 
-    public PredictorKey(Class<? extends EntityLiving> mobClass, @Nonnull BlockPos blockPos, int roundsLeft, int roundsTotal) {
-        this(blockPos.getZ(), EntityList.REGISTRY.getIDForObject(mobClass), blockPos.getX(), blockPos.getY(), roundsLeft, roundsTotal);
+    public PredictorKey(Class<? extends EntityLiving> mobClass, @Nonnull BlockPos blockPos, int rounds, int groupSize) {
+        this(blockPos.getZ(), EntityList.REGISTRY.getIDForObject(mobClass), blockPos.getX(), blockPos.getY(), rounds, groupSize);
     }
 
-    public PredictorKey(int mobId, @Nonnull BlockPos blockPos, int roundsLeft, int roundsTotal) {
-        this(blockPos.getZ(), mobId, blockPos.getX(), blockPos.getY(), roundsLeft, roundsTotal);
+    public PredictorKey(int mobId, @Nonnull BlockPos blockPos, int rounds, int groupSize) {
+        this(blockPos.getZ(), mobId, blockPos.getX(), blockPos.getY(), rounds, groupSize);
     }
 
     @Override
@@ -40,7 +44,7 @@ public class PredictorKey implements Comparable<PredictorKey> {
             return true;
         } else if (o instanceof PredictorKey) {
             PredictorKey that = (PredictorKey) o;
-            return mobId == that.mobId && roundsLeft == that.roundsLeft && roundsTotal == that.roundsTotal
+            return mobId == that.mobId && rounds == that.rounds && groupSize == that.groupSize
                     && blockX == that.blockX && blockY == that.blockY && blockZ == that.blockZ;
         } else {
             return false;
@@ -53,8 +57,8 @@ public class PredictorKey implements Comparable<PredictorKey> {
         hash = 31 * hash + blockX;
         hash = 31 * hash + blockY;
         hash = 31 * hash + blockZ;
-        hash = 31 * hash + roundsLeft;
-        hash = 31 * hash + roundsTotal;
+        hash = 31 * hash + rounds;
+        hash = 31 * hash + groupSize;
         return hash;
     }
 
@@ -64,10 +68,10 @@ public class PredictorKey implements Comparable<PredictorKey> {
             return 0;
         } else if (mobId != o.mobId) {
             return mobId < o.mobId ? -1 : 1;
-        } else if (roundsTotal != o.roundsTotal) {
-            return roundsTotal < o.roundsTotal ? -1 : 1;
-        } else if (roundsLeft != o.roundsLeft) {
-            return roundsLeft < o.roundsLeft ? -1 : 1;
+        } else if (groupSize != o.groupSize) {
+            return groupSize < o.groupSize ? -1 : 1;
+        } else if (rounds != o.rounds) {
+            return rounds < o.rounds ? -1 : 1;
         } else if (blockY != o.blockY) {
             return blockY < o.blockY ? -1 : 1;
         } else if (blockX != o.blockX) {

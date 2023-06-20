@@ -283,6 +283,9 @@ public class SilentChunkReader implements IBlockAccess {
         return state.isNormalCube() ? getStrongPower(pos) : state.getWeakPower(this, pos, facing);
     }
 
+    /**
+     * Checks biomes and structures
+     */
     public List<Biome.SpawnListEntry> getPossibleCreatures(EnumCreatureType creatureType, BlockPos blockPos) {
         Biome biome = getBiome(blockPos);
         List<Biome.SpawnListEntry> entryList = biome == null ? Collections.emptyList() : biome.getSpawnableList(creatureType);

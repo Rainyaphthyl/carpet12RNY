@@ -3,14 +3,12 @@ package carpet.utils.perimeter;
 import carpet.CarpetServer;
 import carpet.utils.LRUCache;
 import carpet.utils.SilentChunkReader;
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommand;
 import net.minecraft.command.ICommandSender;
-import net.minecraft.entity.EntityList;
-import net.minecraft.entity.EntityLiving;
-import net.minecraft.entity.EntitySpawnPlacementRegistry;
-import net.minecraft.entity.EnumCreatureType;
+import net.minecraft.entity.*;
 import net.minecraft.util.HttpUtil;
 import net.minecraft.util.math.*;
 import net.minecraft.world.World;
@@ -36,6 +34,7 @@ public class SpawningCalculator {
     private final Set<BlockPos> possibleTargetSet = new HashSet<>();
     private final Map<BlockPos, Double> distSqCache = new LRUCache<>(64);
     private final Map<PredictorKey, Double> spawningRateCache = new HashMap<>();
+    private final Map<Integer, Map<BlockPos, Double>> biomeChanceCache = new HashMap<>();
     private boolean targetCheckFinished = false;
     private boolean rangeCheckFinished = false;
     private int minChunkX = 0;
@@ -223,7 +222,7 @@ public class SpawningCalculator {
                 int height = Math.min(access.getSpawningColumnHeight(posIter), posCornerMax.getY() + 1);
                 for (int y = posCornerMin.getY(); y < height; ++y) {
                     posIter.setY(y);
-                    if (checkSpawningChance(posIter, null)) {
+                    if (checkSpawningPossibility(posIter, null)) {
                         possibleTargetSet.add(posIter.toImmutable());
                     }
                 }
@@ -233,12 +232,12 @@ public class SpawningCalculator {
     }
 
     @ParametersAreNonnullByDefault
-    public boolean checkSpawningChance(BlockPos posTarget, @Nullable Class<? extends EntityLiving> mobClass, CheckStage... steps) {
+    public boolean checkSpawningPossibility(BlockPos posTarget, @Nullable Class<? extends EntityLiving> mobClass, CheckStage... steps) {
         if (steps.length == 0) {
             steps = CheckStage.values();
         }
         for (CheckStage step : steps) {
-            if (!checkSpawningChance(posTarget, mobClass, step)) {
+            if (!checkSpawningPossibility(posTarget, mobClass, step)) {
                 return false;
             }
         }
@@ -246,7 +245,7 @@ public class SpawningCalculator {
     }
 
     @ParametersAreNonnullByDefault
-    public boolean checkSpawningChance(BlockPos posTarget, @Nullable Class<? extends EntityLiving> mobClass, CheckStage step) {
+    public boolean checkSpawningPossibility(BlockPos posTarget, @Nullable Class<? extends EntityLiving> mobClass, CheckStage step) {
         switch (step) {
             case PROTECTION:
                 return isMobNotProtected(posTarget);
@@ -282,13 +281,14 @@ public class SpawningCalculator {
     }
 
     public double getDistSqToPlayer(@Nonnull BlockPos posTarget) {
+        posTarget = posTarget.toImmutable();
         Double distSq = distSqCache.get(posTarget);
         if (distSq == null) {
             int posY = posTarget.getY();
             float mobX = (float) posTarget.getX() + 0.5F;
             float mobZ = (float) posTarget.getZ() + 0.5F;
             distSq = posPeriCenter.squareDistanceTo(mobX, posY, mobZ);
-            distSqCache.put(posTarget.toImmutable(), distSq);
+            distSqCache.put(posTarget, distSq);
         }
         return distSq;
     }
@@ -363,41 +363,111 @@ public class SpawningCalculator {
     }
 
     /**
-     * @param mobId       {@code m}
-     * @param posCurr     {@code \vec{r}}
-     * @param roundsLeft  {@code w}
-     * @param roundsTotal {@code c}
+     * @param mobId     {@code m}
+     * @param posCurr   {@code \vec{r}}
+     * @param rounds    {@code w}
+     * @param groupSize {@code c}
      * @return {@code s_m(r, w, c)}
      */
-    public double getSpawningStepRate(int mobId, @Nonnull BlockPos posCurr, int roundsLeft, int roundsTotal) {
-        PredictorKey key = new PredictorKey(mobId, posCurr, roundsLeft, roundsTotal);
+    public double getSpawningStepRate(int mobId, @Nonnull BlockPos posCurr, int rounds, int groupSize) {
+        PredictorKey key = new PredictorKey(mobId, posCurr, rounds, groupSize);
         Double value;
-        synchronized (spawningRateCache) {
-            value = spawningRateCache.get(key);
-        }
+        value = spawningRateCache.get(key);
         if (value != null) {
             return value;
         }
-        double rateCurr = 0.0;
-        if (roundsLeft >= 0 && roundsLeft <= roundsTotal - 2) {
-            // 0 <= w <= c-2
-        } else if (roundsLeft == roundsTotal - 1) {
-            // w == c-1
-        } else if (roundsLeft == roundsTotal) {
-            // w == c
+        double rateCurr;
+        if (rounds == groupSize) {
+            rateCurr = getChancePosInChunk(posCurr) * getChanceGroupSize(groupSize);
+        } else if (rounds == groupSize - 1) {
+            rateCurr = 0.0;
+            for (int dx = -5; dx <= 5; ++dx) {
+                for (int dz = -5; dz <= 5; ++dz) {
+                    double biomeChance = getChanceMobAtBiome(mobId, posCurr);
+                    double unit = getSpawningStepRate(mobId, posCurr.add(dx, 0, dz), groupSize, groupSize);
+                    rateCurr += biomeChance * unit * getChancePackDeviation(-dx, -dz);
+                }
+            }
+        } else if (rounds >= 0 && rounds <= groupSize - 2) {
+            int roundsPrev = rounds + 1;
+            rateCurr = 0.0;
+            for (int dx = -5; dx <= 5; ++dx) {
+                for (int dz = -5; dz <= 5; ++dz) {
+                    double unit = getSpawningStepRate(mobId, posCurr.add(dx, 0, dz), roundsPrev, groupSize);
+                    rateCurr += unit * getChancePackDeviation(-dx, -dz);
+                }
+            }
         } else {
             return Double.NaN;
         }
         value = rateCurr;
-        synchronized (spawningRateCache) {
-            spawningRateCache.put(key, value);
-        }
+        spawningRateCache.put(key, value);
         return rateCurr;
     }
 
     public double getChancePosInChunk(@Nonnull BlockPos posTarget) {
-        int height = access.getSpawningColumnHeight(posTarget);
-        return 1.0 / (height * SpawnChecker.SECTION_UNIT * SpawnChecker.SECTION_UNIT);
+        return getChancePosInChunk(posTarget.getX(), posTarget.getY(), posTarget.getZ());
+    }
+
+    public double getChancePosInChunk(int blockX, int blockY, int blockZ) {
+        IBlockState stateTarget = access.getBlockState(blockX, blockY, blockZ);
+        if (stateTarget.isNormalCube()) {
+            return 0.0;
+        }
+        int height = access.getSpawningColumnHeight(blockX, blockZ);
+        if (blockY >= 0 && blockY < height) {
+            return 1.0 / (SpawnChecker.SECTION_UNIT * SpawnChecker.SECTION_UNIT * height);
+        } else {
+            return 0.0;
+        }
+    }
+
+    public double getChanceGroupSize(int groupSize) {
+        if (groupSize >= MIN_GROUP_NUM && groupSize <= MAX_GROUP_NUM) {
+            return 3.0 / (MAX_GROUP_NUM - MIN_GROUP_NUM + 1);
+        } else {
+            return 0.0;
+        }
+    }
+
+    public double getChancePackDeviation(int dx, int dz) {
+        int adx = Math.abs(dx);
+        int adz = Math.abs(dz);
+        if (adx > 5 || adz > 5) {
+            return 0.0;
+        }
+        int weightX = 6 - adx;
+        int weightZ = 6 - adz;
+        return (weightX * weightZ) / 1296.0;
+    }
+
+    /**
+     * Checks biomes and structures
+     */
+    public double getChanceMobAtBiome(int mobId, @Nonnull BlockPos posTarget) {
+        Map<BlockPos, Double> blockMap = biomeChanceCache.computeIfAbsent(mobId, lambdaMobId -> new HashMap<>());
+        posTarget = posTarget.toImmutable();
+        Double value = blockMap.get(posTarget);
+        if (value != null) {
+            return value;
+        }
+        Class<? extends Entity> mobClass = EntityList.REGISTRY.getObjectById(mobId);
+        EnumCreatureType creatureType = SpawnChecker.checkCreatureType(mobClass);
+        List<Biome.SpawnListEntry> spawnList = access.getPossibleCreatures(creatureType, posTarget);
+        int range = 0;
+        int interest = 0;
+        for (Biome.SpawnListEntry entry : spawnList) {
+            int weight = entry.getWeight();
+            int otherId = EntityList.REGISTRY.getIDForObject(entry.entityClass);
+            if (mobId == otherId) {
+                interest += weight;
+            }
+            range += weight;
+        }
+        double chance = (double) interest / range;
+        value = chance;
+        blockMap.put(posTarget, value);
+        return chance;
     }
 
     public enum CheckStage {

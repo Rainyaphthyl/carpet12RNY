@@ -6,6 +6,7 @@ import net.minecraft.block.BlockLeaves;
 import net.minecraft.block.BlockLog;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityCreature;
 import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.EnumCreatureType;
@@ -16,7 +17,9 @@ import net.minecraft.entity.passive.*;
 import net.minecraft.init.Biomes;
 import net.minecraft.init.Blocks;
 import net.minecraft.util.Tuple;
-import net.minecraft.util.math.*;
+import net.minecraft.util.math.AxisAlignedBB;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.WorldEntitySpawner;
 import net.minecraft.world.WorldServer;
 import net.minecraft.world.biome.Biome;
@@ -154,19 +157,22 @@ public class SpawnChecker {
         return createBoundingBox(blockPos, MIN_WIDTH, MIN_HEIGHT);
     }
 
-    public static EnumCreatureType checkCreatureType(Class<? extends EntityLiving> entityType) {
+    public static EnumCreatureType checkCreatureType(Class<? extends Entity> entityType) {
         if (entityType == null) {
             return null;
+        } else if (EntityLiving.class.isAssignableFrom(entityType)) {
+            EnumCreatureType creatureType = EnumCreatureType.MONSTER;
+            if (EntityAnimal.class.isAssignableFrom(entityType)) {
+                creatureType = EnumCreatureType.CREATURE;
+            } else if (EntityWaterMob.class.isAssignableFrom(entityType)) {
+                creatureType = EnumCreatureType.WATER_CREATURE;
+            } else if (EntityAmbientCreature.class.isAssignableFrom(entityType)) {
+                creatureType = EnumCreatureType.AMBIENT;
+            }
+            return creatureType;
+        } else {
+            return null;
         }
-        EnumCreatureType creatureType = EnumCreatureType.MONSTER;
-        if (EntityAnimal.class.isAssignableFrom(entityType)) {
-            creatureType = EnumCreatureType.CREATURE;
-        } else if (EntityWaterMob.class.isAssignableFrom(entityType)) {
-            creatureType = EnumCreatureType.WATER_CREATURE;
-        } else if (EntityAmbientCreature.class.isAssignableFrom(entityType)) {
-            creatureType = EnumCreatureType.AMBIENT;
-        }
-        return creatureType;
     }
 
     public static boolean isImmuneToFire(Class<? extends EntityLiving> entityType) {
