@@ -31,11 +31,11 @@ public class PredictorKey implements Comparable<PredictorKey> {
     }
 
     public PredictorKey(Class<? extends EntityLiving> mobClass, @Nonnull BlockPos blockPos, int rounds, int groupSize) {
-        this(blockPos.getZ(), EntityList.REGISTRY.getIDForObject(mobClass), blockPos.getX(), blockPos.getY(), rounds, groupSize);
+        this(EntityList.REGISTRY.getIDForObject(mobClass), blockPos.getX(), blockPos.getY(), blockPos.getZ(), rounds, groupSize);
     }
 
     public PredictorKey(int mobId, @Nonnull BlockPos blockPos, int rounds, int groupSize) {
-        this(blockPos.getZ(), mobId, blockPos.getX(), blockPos.getY(), rounds, groupSize);
+        this(mobId, blockPos.getX(), blockPos.getY(), blockPos.getZ(), rounds, groupSize);
     }
 
     @Override
@@ -81,5 +81,10 @@ public class PredictorKey implements Comparable<PredictorKey> {
         } else {
             return 0;
         }
+    }
+
+    @Override
+    public String toString() {
+        return "[" + mobId + ",(" + blockX + "," + blockY + "," + blockZ + ")," + rounds + "/" + groupSize + "]";
     }
 }

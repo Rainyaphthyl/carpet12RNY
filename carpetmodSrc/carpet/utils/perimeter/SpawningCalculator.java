@@ -2,6 +2,7 @@ package carpet.utils.perimeter;
 
 import carpet.CarpetServer;
 import carpet.utils.LRUCache;
+import carpet.utils.Messenger;
 import carpet.utils.SilentChunkReader;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.command.CommandBase;
@@ -9,6 +10,7 @@ import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommand;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.*;
+import net.minecraft.entity.monster.EntitySkeleton;
 import net.minecraft.util.HttpUtil;
 import net.minecraft.util.math.*;
 import net.minecraft.world.World;
@@ -32,8 +34,8 @@ public class SpawningCalculator {
     private final BlockPos.MutableBlockPos posCornerMin = new BlockPos.MutableBlockPos();
     private final BlockPos.MutableBlockPos posCornerMax = new BlockPos.MutableBlockPos();
     private final Set<BlockPos> possibleTargetSet = new HashSet<>();
-    private final Map<BlockPos, Double> distSqCache = new LRUCache<>(64);
-    private final Map<PredictorKey, Double> spawningRateCache = new HashMap<>();
+    private final Map<BlockPos, Double> distSqCache = new LRUCache<>(1024);
+    private final Map<PredictorKey, Double> spawningRateCache = new LRUCache<>(4096);
     private final Map<Integer, Map<BlockPos, Double>> biomeChanceCache = new HashMap<>();
     private boolean targetCheckFinished = false;
     private boolean rangeCheckFinished = false;
@@ -41,6 +43,8 @@ public class SpawningCalculator {
     private int maxChunkX = 0;
     private int minChunkZ = 0;
     private int maxChunkZ = 0;
+    private long recursionCount = 0;
+    private long cachingCount = 0;
 
     private SpawningCalculator(@Nonnull WorldServer world, Vec3d posPeriCenter, BlockPos posCorner1, BlockPos posCorner2) throws NullPointerException {
         this.world = Objects.requireNonNull(world);
@@ -93,6 +97,7 @@ public class SpawningCalculator {
             CommandBase.notifyCommandListener(sender, command, "Calculating rates of mob spawning ...");
             HttpUtil.DOWNLOADER_EXECUTOR.submit(() -> {
                 try {
+                    long timeStart = System.currentTimeMillis();
                     SpawningCalculator calculator = null;
                     switch (mode) {
                         case BLOCK:
@@ -105,6 +110,20 @@ public class SpawningCalculator {
                             calculator = createInstance((WorldServer) world, (Vec3d) options[0]);
                     }
                     Objects.requireNonNull(calculator);
+                    if (mode == EnumMode.BLOCK) {
+                        calculator.recursionCount = 0;
+                        calculator.cachingCount = 0;
+                        double rate = calculator.getSpawningRate((BlockPos) options[0], EntitySkeleton.class);
+                        long timeFinish = System.currentTimeMillis();
+                        long duration = timeFinish - timeStart;
+                        calculator.spawningRateCache.forEach((k, v) -> System.out.println(k + " -> " + v));
+                        Messenger.m(sender, "w Spawning rate = " + rate);
+                        Messenger.m(sender, "w Average spawning period = " + (1.0 / rate) + " gt");
+                        Messenger.m(sender, "g Duration = " + duration + " ms");
+                        Messenger.m(sender, "g Recursion count = " + calculator.recursionCount);
+                        Messenger.m(sender, "g Cached result count = " + calculator.cachingCount);
+                        Messenger.m(sender, "g Cache size = " + calculator.spawningRateCache.size());
+                    }
                     CommandBase.notifyCommandListener(sender, command, "Finished mob-spawn-rate calculation");
                 } catch (Throwable e) {
                     CommandBase.notifyCommandListener(sender, command, "Failed to calculate mob-spawn-rate");
@@ -222,7 +241,7 @@ public class SpawningCalculator {
                 int height = Math.min(access.getSpawningColumnHeight(posIter), posCornerMax.getY() + 1);
                 for (int y = posCornerMin.getY(); y < height; ++y) {
                     posIter.setY(y);
-                    if (checkSpawningPossibility(posIter, null)) {
+                    if (isSpawningPossible(posIter, null)) {
                         possibleTargetSet.add(posIter.toImmutable());
                     }
                 }
@@ -232,12 +251,15 @@ public class SpawningCalculator {
     }
 
     @ParametersAreNonnullByDefault
-    public boolean checkSpawningPossibility(BlockPos posTarget, @Nullable Class<? extends EntityLiving> mobClass, CheckStage... steps) {
+    public boolean isSpawningPossible(BlockPos posTarget, @Nullable Class<? extends EntityLiving> mobClass, CheckStage... steps) {
         if (steps.length == 0) {
             steps = CheckStage.values();
+            if (targetCheckFinished && !possibleTargetSet.contains(posTarget.toImmutable())) {
+                return false;
+            }
         }
         for (CheckStage step : steps) {
-            if (!checkSpawningPossibility(posTarget, mobClass, step)) {
+            if (!isSpawningPossible(posTarget, mobClass, step)) {
                 return false;
             }
         }
@@ -245,7 +267,7 @@ public class SpawningCalculator {
     }
 
     @ParametersAreNonnullByDefault
-    public boolean checkSpawningPossibility(BlockPos posTarget, @Nullable Class<? extends EntityLiving> mobClass, CheckStage step) {
+    public boolean isSpawningPossible(BlockPos posTarget, @Nullable Class<? extends EntityLiving> mobClass, CheckStage step) {
         switch (step) {
             case PROTECTION:
                 return isMobNotProtected(posTarget);
@@ -353,11 +375,14 @@ public class SpawningCalculator {
         }
     }
 
-    public double getSpawningRate(@Nonnull BlockPos posTarget, Class<? extends EntityLiving> mobClass) {
+    @ParametersAreNonnullByDefault
+    public double getSpawningRate(BlockPos posTarget, Class<? extends EntityLiving> mobClass) {
         double rateTotal = 0.0;
-        int mobId = EntityList.REGISTRY.getIDForObject(mobClass);
-        for (int c = MIN_GROUP_NUM; c <= MAX_GROUP_NUM; ++c) {
-            rateTotal += getSpawningStepRate(mobId, posTarget, 0, c);
+        if (isSpawningPossible(posTarget, mobClass)) {
+            int mobId = EntityList.REGISTRY.getIDForObject(mobClass);
+            for (int c = MIN_GROUP_NUM; c <= MAX_GROUP_NUM; ++c) {
+                rateTotal += getSpawningStepRate(mobId, posTarget, 0, c);
+            }
         }
         return rateTotal;
     }
@@ -374,6 +399,7 @@ public class SpawningCalculator {
         Double value;
         value = spawningRateCache.get(key);
         if (value != null) {
+            ++cachingCount;
             return value;
         }
         double rateCurr;
@@ -398,8 +424,9 @@ public class SpawningCalculator {
                 }
             }
         } else {
-            return Double.NaN;
+            rateCurr = Double.NaN;
         }
+        ++recursionCount;
         value = rateCurr;
         spawningRateCache.put(key, value);
         return rateCurr;
@@ -445,7 +472,7 @@ public class SpawningCalculator {
      * Checks biomes and structures
      */
     public double getChanceMobAtBiome(int mobId, @Nonnull BlockPos posTarget) {
-        Map<BlockPos, Double> blockMap = biomeChanceCache.computeIfAbsent(mobId, lambdaMobId -> new HashMap<>());
+        Map<BlockPos, Double> blockMap = biomeChanceCache.computeIfAbsent(mobId, lambdaMobId -> new LRUCache<>(1024));
         posTarget = posTarget.toImmutable();
         Double value = blockMap.get(posTarget);
         if (value != null) {

@@ -189,14 +189,14 @@ public class SpawnChecker {
 
     @Nullable
     public static Block getSpawnableBlock(Class<? extends EntityLiving> entityType) {
-        if (!EntityAnimal.class.isAssignableFrom(entityType)) {
+        if (entityType == null || !EntityAnimal.class.isAssignableFrom(entityType)) {
             return null;
         }
         return EntityMooshroom.class.isAssignableFrom(entityType) ? Blocks.MYCELIUM : Blocks.GRASS;
     }
 
     public static boolean canImmediatelyDespawn(Class<? extends EntityLiving> entityClass) {
-        return !EntityAnimal.class.isAssignableFrom(entityClass)
+        return entityClass != null && !EntityAnimal.class.isAssignableFrom(entityClass)
                 && !EntityGolem.class.isAssignableFrom(entityClass)
                 && !EntityVillager.class.isAssignableFrom(entityClass);
     }
