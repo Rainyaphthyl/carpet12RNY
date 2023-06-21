@@ -158,21 +158,14 @@ public class SpawnChecker {
     }
 
     public static EnumCreatureType checkCreatureType(Class<? extends Entity> entityType) {
-        if (entityType == null) {
-            return null;
-        } else if (EntityLiving.class.isAssignableFrom(entityType)) {
-            EnumCreatureType creatureType = EnumCreatureType.MONSTER;
-            if (EntityAnimal.class.isAssignableFrom(entityType)) {
-                creatureType = EnumCreatureType.CREATURE;
-            } else if (EntityWaterMob.class.isAssignableFrom(entityType)) {
-                creatureType = EnumCreatureType.WATER_CREATURE;
-            } else if (EntityAmbientCreature.class.isAssignableFrom(entityType)) {
-                creatureType = EnumCreatureType.AMBIENT;
+        if (entityType != null) {
+            for (EnumCreatureType creatureType : EnumCreatureType.values()) {
+                if (creatureType.getCreatureClass().isAssignableFrom(entityType)) {
+                    return creatureType;
+                }
             }
-            return creatureType;
-        } else {
-            return null;
         }
+        return null;
     }
 
     public static boolean isImmuneToFire(Class<? extends EntityLiving> entityType) {
@@ -223,6 +216,7 @@ public class SpawnChecker {
 
     public boolean isNotColliding(Class<? extends EntityLiving> entityClass, BlockPos posTarget) {
         AxisAlignedBB boundingBox = getEntityBoundingBox(entityClass, posTarget);
+        // TODO: 2023/6/22,0022 Override for Guardian, MagmaCube, Ocelot
         return isNotColliding(boundingBox);
     }
 

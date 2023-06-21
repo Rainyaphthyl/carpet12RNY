@@ -10,8 +10,8 @@ import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommand;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.*;
-import net.minecraft.entity.monster.EntitySkeleton;
 import net.minecraft.util.HttpUtil;
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.*;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
@@ -35,7 +35,7 @@ public class SpawningCalculator {
     private final BlockPos.MutableBlockPos posCornerMax = new BlockPos.MutableBlockPos();
     private final Set<BlockPos> possibleTargetSet = new HashSet<>();
     private final Map<BlockPos, Double> distSqCache = new LRUCache<>(1024);
-    private final Map<PredictorKey, Double> spawningRateCache = new LRUCache<>(4096);
+    private final Map<PredictorKey, Double> spawningRateCache = new LRUCache<>(32768);
     private final Map<Integer, Map<BlockPos, Double>> biomeChanceCache = new HashMap<>();
     private boolean targetCheckFinished = false;
     private boolean rangeCheckFinished = false;
@@ -113,16 +113,24 @@ public class SpawningCalculator {
                     if (mode == EnumMode.BLOCK) {
                         calculator.recursionCount = 0;
                         calculator.cachingCount = 0;
-                        double rate = calculator.getSpawningRate((BlockPos) options[0], EntitySkeleton.class);
+                        Map<Class<? extends EntityLiving>, Double> resultMap = calculator.getCumulativeResult((BlockPos) options[0], null);
                         long timeFinish = System.currentTimeMillis();
                         long duration = timeFinish - timeStart;
                         calculator.spawningRateCache.forEach((k, v) -> System.out.println(k + " -> " + v));
-                        Messenger.m(sender, "w Spawning rate = " + rate);
-                        Messenger.m(sender, "w Average spawning period = " + (1.0 / rate) + " gt");
-                        Messenger.m(sender, "g Duration = " + duration + " ms");
-                        Messenger.m(sender, "g Recursion count = " + calculator.recursionCount);
-                        Messenger.m(sender, "g Cached result count = " + calculator.cachingCount);
-                        Messenger.m(sender, "g Cache size = " + calculator.spawningRateCache.size());
+                        for (Map.Entry<Class<? extends EntityLiving>, Double> entry : resultMap.entrySet()) {
+                            Class<? extends EntityLiving> mobClass = entry.getKey();
+                            Double value = entry.getValue();
+                            ResourceLocation resource = EntityList.REGISTRY.getNameForObject(mobClass);
+                            String name = resource == null ? mobClass.getSimpleName() : resource.getPath();
+                            Double period = value == null ? null : (1.0 / value);
+                            Messenger.m(sender, "w " + name, "g : ",
+                                    "c " + String.format("%.2f", period), "^g " + period, "w  rounds",
+                                    "g , or ", "w " + value);
+                        }
+                        Messenger.m(sender, "gi Duration = " + duration + " ms");
+                        Messenger.m(sender, "gi Recursion count = " + calculator.recursionCount);
+                        Messenger.m(sender, "gi Cached result count = " + calculator.cachingCount);
+                        Messenger.m(sender, "gi Cache size = " + calculator.spawningRateCache.size());
                     }
                     CommandBase.notifyCommandListener(sender, command, "Finished mob-spawn-rate calculation");
                 } catch (Throwable e) {
@@ -375,16 +383,49 @@ public class SpawningCalculator {
         }
     }
 
+    /**
+     * For all mobs
+     */
+    @ParametersAreNonnullByDefault
+    public Map<Class<? extends EntityLiving>, Double> getCumulativeResult(
+            BlockPos posTarget, @Nullable Map<Class<? extends EntityLiving>, Double> resultMap) {
+        Set<Class<? extends EntityLiving>> mobClassSet = new HashSet<>();
+        for (EnumCreatureType creatureType : EnumCreatureType.values()) {
+            List<Biome.SpawnListEntry> spawnList = access.getPossibleCreatures(creatureType, posTarget);
+            for (Biome.SpawnListEntry entry : spawnList) {
+                mobClassSet.add(entry.entityClass);
+            }
+        }
+        if (resultMap == null) {
+            resultMap = new HashMap<>();
+        }
+        for (Class<? extends EntityLiving> mobClass : mobClassSet) {
+            double rate = getSpawningRate(posTarget, mobClass);
+            Double oldValue = resultMap.get(mobClass);
+            if (oldValue != null && !oldValue.equals(0.0)) {
+                rate += oldValue;
+            }
+            if (rate == 0.0) {
+                resultMap.remove(mobClass);
+            } else {
+                resultMap.put(mobClass, rate);
+            }
+        }
+        return resultMap;
+    }
+
     @ParametersAreNonnullByDefault
     public double getSpawningRate(BlockPos posTarget, Class<? extends EntityLiving> mobClass) {
-        double rateTotal = 0.0;
+        double rate = 0.0;
         if (isSpawningPossible(posTarget, mobClass)) {
             int mobId = EntityList.REGISTRY.getIDForObject(mobClass);
             for (int c = MIN_GROUP_NUM; c <= MAX_GROUP_NUM; ++c) {
-                rateTotal += getSpawningStepRate(mobId, posTarget, 0, c);
+                // TODO: 2023/6/22,0022 Add special check for random failure, e.g. slimes
+                //  EntityLiving#getCanSpawnHere() and isNotColliding()
+                rate += getSpawningStepRate(mobId, posTarget, 0, c);
             }
         }
-        return rateTotal;
+        return rate;
     }
 
     /**
