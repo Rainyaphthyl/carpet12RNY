@@ -259,11 +259,13 @@ public class SpawnChecker {
                     return block == Blocks.GRASS || iblockstate.getMaterial() == Material.LEAVES;
                 }
                 return false;
+            } else {
+                liquidColliding = access.containsAnyLiquid(boundingBox);
+                blockColliding = access.optimizedGetCollisionBoxes(boundingBox, false, null);
+                return !liquidColliding && !blockColliding && !entityColliding;
             }
         }
-        liquidColliding = access.containsAnyLiquid(boundingBox);
-        blockColliding = access.optimizedGetCollisionBoxes(boundingBox, false, null);
-        return !liquidColliding && !blockColliding && !entityColliding;
+        return true;
     }
 
     public boolean isPositionAllowing(Class<? extends EntityLiving> entityClass, @Nonnull BlockPos posTarget) {
