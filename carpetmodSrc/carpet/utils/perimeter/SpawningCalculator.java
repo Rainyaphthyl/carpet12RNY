@@ -378,7 +378,7 @@ public class SpawningCalculator {
         } else {
             EnumCreatureType creatureType = SpawnChecker.checkCreatureType(mobClass);
             for (Biome.SpawnListEntry entryOption : access.getPossibleCreatures(creatureType, posTarget)) {
-                if (Objects.equals(entryOption.entityClass, mobClass)) {
+                if (mobClass.equals(entryOption.entityClass)) {
                     return true;
                 }
             }
@@ -387,11 +387,7 @@ public class SpawningCalculator {
     }
 
     public boolean isMobPositionCorrect(@Nonnull BlockPos posTarget, Class<? extends EntityLiving> mobClass) {
-        if (mobClass == null) {
-            return true;
-        } else {
-            return checker.isPositionAllowing(mobClass, posTarget);
-        }
+        return mobClass == null || checker.isPositionAllowing(mobClass, posTarget);
     }
 
     public boolean isMobNotColliding(@Nonnull BlockPos posTarget, Class<? extends EntityLiving> mobClass) {
@@ -401,6 +397,18 @@ public class SpawningCalculator {
         } else {
             return checker.isNotColliding(mobClass, posTarget);
         }
+    }
+
+    public Map<Class<? extends EntityLiving>, Double> getTotalResult(
+            @Nullable Map<Class<? extends EntityLiving>, Double> resultMap) {
+        if (resultMap == null) {
+            resultMap = new HashMap<>();
+        }
+        initCheckPossibleTargets();
+        for (BlockPos posTarget : possibleTargetSet) {
+            getCumulativeResult(posTarget, resultMap);
+        }
+        return resultMap;
     }
 
     /**
