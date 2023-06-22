@@ -4,19 +4,29 @@ import carpet.CarpetServer;
 import carpet.utils.LRUCache;
 import carpet.utils.Messenger;
 import carpet.utils.SilentChunkReader;
+import net.minecraft.block.Block;
+import net.minecraft.block.BlockLeaves;
+import net.minecraft.block.BlockLog;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommand;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.*;
+import net.minecraft.entity.monster.*;
+import net.minecraft.entity.passive.*;
+import net.minecraft.init.Biomes;
+import net.minecraft.init.Blocks;
 import net.minecraft.util.HttpUtil;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.*;
+import net.minecraft.world.EnumSkyBlock;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
+import net.minecraft.world.WorldType;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.border.WorldBorder;
+import net.minecraft.world.chunk.Chunk;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -141,6 +151,16 @@ public class SpawningCalculator {
         } else {
             throw new CommandException("commands.compare.outOfWorld");
         }
+    }
+
+    /**
+     * Events with probability exactly equaling to 1.0 or 0.0
+     *
+     * @param value The boolean value
+     * @return {@code 1.0} for {@code true}; {@code 0.0} for {@code false}
+     */
+    public static double booleanToChance(boolean value) {
+        return value ? 1.0 : 0.0;
     }
 
     /**
@@ -418,11 +438,15 @@ public class SpawningCalculator {
     public double getSpawningRate(BlockPos posTarget, Class<? extends EntityLiving> mobClass) {
         double rate = 0.0;
         if (isSpawningPossible(posTarget, mobClass)) {
-            int mobId = EntityList.REGISTRY.getIDForObject(mobClass);
-            for (int c = MIN_GROUP_NUM; c <= MAX_GROUP_NUM; ++c) {
-                // TODO: 2023/6/22,0022 Add special check for random failure, e.g. slimes
-                //  EntityLiving#getCanSpawnHere() and isNotColliding()
-                rate += getSpawningStepRate(mobId, posTarget, 0, c);
+            double factor = getChanceValidPosition(mobClass, posTarget) * getChanceNotColliding(mobClass, posTarget);
+            if (factor != 0.0) {
+                int mobId = EntityList.REGISTRY.getIDForObject(mobClass);
+                for (int c = MIN_GROUP_NUM; c <= MAX_GROUP_NUM; ++c) {
+                    // TODO: 2023/6/22,0022 Add special check for random failure, e.g. slimes
+                    //  EntityLiving#getCanSpawnHere() and isNotColliding()
+                    rate += getSpawningStepRate(mobId, posTarget, 0, c);
+                }
+                rate *= factor;
             }
         }
         return rate;
@@ -536,6 +560,133 @@ public class SpawningCalculator {
         value = chance;
         blockMap.put(posTarget, value);
         return chance;
+    }
+
+    /**
+     * {@link EntityLiving#getCanSpawnHere()}
+     */
+    @ParametersAreNonnullByDefault
+    public double getChanceValidPosition(Class<? extends EntityLiving> mobClass, BlockPos posTarget) {
+        if (!checker.isPositionAllowing(mobClass, posTarget)) {
+            return 0.0;
+        }
+        int blockX = posTarget.getX();
+        int blockZ = posTarget.getZ();
+        float mobX = (float) blockX + 0.5F;
+        float mobZ = (float) blockZ + 0.5F;
+        int mobY = posTarget.getY();
+        IBlockState stateDown = access.getBlockState(blockX, mobY - 1, blockZ);
+        Block blockDown = stateDown.getBlock();
+        if (EntityBat.class.isAssignableFrom(mobClass)) {
+            if (mobY >= world.getSeaLevel()) {
+                return 0.0;
+            } else {
+                int lightLevel = access.getLightFromNeighbors(posTarget, true);
+                int limit = 4;
+                double chance = (double) Math.max(0, limit - lightLevel) / limit;
+                // TODO: 2023/6/22,0022 Add Halloween check
+                return chance * getChanceValidPosition(EntityLiving.class, posTarget);
+            }
+        } else if (EntityCreature.class.isAssignableFrom(mobClass)) {
+            if (EntityAnimal.class.isAssignableFrom(mobClass)) {
+                if (EntityOcelot.class.isAssignableFrom(mobClass)) {
+                    return 2.0 / 3.0;
+                } else if (EntityParrot.class.isAssignableFrom(mobClass)) {
+                    return booleanToChance(blockDown instanceof BlockLeaves || blockDown == Blocks.GRASS
+                            || blockDown instanceof BlockLog || blockDown == Blocks.AIR && access.getLight(posTarget) > 8)
+                            * getChanceValidPosition(EntityAnimal.class, posTarget);
+                } else {
+                    return booleanToChance(blockDown == SpawnChecker.getSpawnableBlock(mobClass)
+                            && access.getLight(posTarget) > 8) * getChanceValidPosition(EntityCreature.class, posTarget);
+                }
+            } else if (EntityMob.class.isAssignableFrom(mobClass)) {
+                if (EntityEndermite.class.isAssignableFrom(mobClass)) {
+                    return booleanToChance(posPeriCenter == null || posPeriCenter.squareDistanceTo(mobX, mobY, mobZ) >= 25.0)
+                            * getChanceValidPosition(EntityMob.class, posTarget);
+                } else if (EntityGuardian.class.isAssignableFrom(mobClass)) {
+                    return booleanToChance(access.canBlockSeeSky(posTarget))
+                            * getChanceValidPosition(EntityMob.class, posTarget) / 20.0;
+                } else if (EntitySilverfish.class.isAssignableFrom(mobClass)) {
+                    return booleanToChance(posPeriCenter == null || posPeriCenter.squareDistanceTo(mobX, mobY, mobZ) >= 25.0)
+                            * getChanceValidPosition(EntityMob.class, posTarget);
+                } else if (EntityHusk.class.isAssignableFrom(mobClass)) {
+                    return booleanToChance(access.canSeeSky(posTarget))
+                            * getChanceValidPosition(EntityMob.class, posTarget);
+                } else if (EntityPigZombie.class.isAssignableFrom(mobClass)) {
+                    return 1.0;
+                } else if (EntityStray.class.isAssignableFrom(mobClass)) {
+                    return booleanToChance(access.canSeeSky(posTarget))
+                            * getChanceValidPosition(EntityMob.class, posTarget);
+                } else {
+                    return getChanceValidLight(mobClass, posTarget) * getChanceValidPosition(EntityCreature.class, posTarget);
+                }
+            } else {
+                return booleanToChance(checker.getBlockPathWeight(mobClass, posTarget) >= 0.0F)
+                        * getChanceValidPosition(EntityLiving.class, posTarget);
+            }
+        } else if (EntityGhast.class.isAssignableFrom(mobClass)) {
+            return getChanceValidPosition(EntityLiving.class, posTarget) / 20.0;
+        } else if (EntitySlime.class.isAssignableFrom(mobClass)) {
+            if (EntityMagmaCube.class.isAssignableFrom(mobClass)) {
+                return 1.0;
+            } else {
+                Chunk chunk = access.getChunk(posTarget);
+                Biome biome = access.getBiome(posTarget);
+                double chance;
+                if (biome == Biomes.SWAMPLAND && mobY > 50 && mobY < 70) {
+                    chance = 0.5;
+                    float moonPhase = world.getCurrentMoonPhaseFactor();
+                    chance *= moonPhase;
+                    int lightLevel = access.getLightFromNeighbors(posTarget, true);
+                    chance *= Math.max(0, 8 - lightLevel) / 8.0;
+                    chance *= getChanceValidPosition(EntityLiving.class, posTarget);
+                } else if (chunk != null && chunk.getRandomWithSeed(987234911L).nextInt(10) == 0 && mobY < 40) {
+                    chance = getChanceValidPosition(EntityLiving.class, posTarget) / 10.0;
+                } else {
+                    return 0.0;
+                }
+                if (world.getWorldInfo().getTerrainType() == WorldType.FLAT) {
+                    return chance / 4.0;
+                } else {
+                    return chance;
+                }
+            }
+        } else if (EntityWaterMob.class.isAssignableFrom(mobClass)) {
+            if (EntitySquid.class.isAssignableFrom(mobClass)) {
+                return booleanToChance(mobY > 45 && mobY < world.getSeaLevel())
+                        * getChanceValidPosition(EntityWaterMob.class, posTarget);
+            } else {
+                return 1.0;
+            }
+        } else {
+            return booleanToChance(blockDown != Blocks.MAGMA || SpawnChecker.isImmuneToFire(mobClass));
+        }
+    }
+
+    @ParametersAreNonnullByDefault
+    public double getChanceValidLight(Class<? extends EntityLiving> mobClass, BlockPos pos) {
+        if (!EntityMob.class.isAssignableFrom(mobClass)) {
+            return 0.0;
+        }
+        if (EntityBlaze.class.isAssignableFrom(mobClass) || EntityEndermite.class.isAssignableFrom(mobClass) || EntityGuardian.class.isAssignableFrom(mobClass) || EntitySilverfish.class.isAssignableFrom(mobClass)) {
+            return 1.0;
+        }
+        int skyLight = access.getLightFor(EnumSkyBlock.SKY, pos);
+        double factor = (32 - skyLight) / 32.0;
+        int lightLevel = access.getLightFromNeighbors(pos, true);
+        double rate = Math.max(0, 8 - lightLevel) / 8.0;
+        return factor * rate;
+    }
+
+    /**
+     * Checking random sizes of slimes and magma cubes
+     * <p>
+     * {@link EntityLiving#isNotColliding()}
+     */
+    @ParametersAreNonnullByDefault
+    public double getChanceNotColliding(Class<? extends EntityLiving> mobClass, BlockPos posTarget) {
+        // TODO: 2023/6/22,0022 Check random sizes of slimes and magma cubes
+        return booleanToChance(checker.isNotColliding(mobClass, posTarget));
     }
 
     public enum CheckStage {
