@@ -377,7 +377,7 @@ public class SpawningCalculator {
     public boolean isMobNotColliding(@Nonnull BlockPos posTarget, Class<? extends EntityLiving> mobClass) {
         if (mobClass == null) {
             AxisAlignedBB minBox = SpawnChecker.getMinimumBoundingBox(posTarget);
-            return checker.isNotColliding(minBox);
+            return checker.isNotColliding(posTarget, minBox);
         } else {
             return checker.isNotColliding(mobClass, posTarget);
         }

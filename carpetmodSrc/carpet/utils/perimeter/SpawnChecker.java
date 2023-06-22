@@ -159,6 +159,9 @@ public class SpawnChecker {
 
     public static EnumCreatureType checkCreatureType(Class<? extends Entity> entityType) {
         if (entityType != null) {
+            if (EntityOcelot.class.isAssignableFrom(entityType)) {
+                return EnumCreatureType.MONSTER;
+            }
             for (EnumCreatureType creatureType : EnumCreatureType.values()) {
                 if (creatureType.getCreatureClass().isAssignableFrom(entityType)) {
                     return creatureType;
@@ -215,19 +218,51 @@ public class SpawnChecker {
     }
 
     public boolean isNotColliding(Class<? extends EntityLiving> entityClass, BlockPos posTarget) {
-        AxisAlignedBB boundingBox = getEntityBoundingBox(entityClass, posTarget);
-        // TODO: 2023/6/22,0022 Override for Guardian, MagmaCube, Ocelot
-        return isNotColliding(boundingBox);
+        return isNotColliding(entityClass, posTarget, null);
     }
 
-    public boolean isNotColliding(AxisAlignedBB boundingBox) {
+    public boolean isNotColliding(BlockPos posTarget, @Nullable AxisAlignedBB boundingBox) {
+        return isNotColliding(null, posTarget, boundingBox);
+    }
+
+    public boolean isNotColliding(Class<? extends EntityLiving> entityClass, BlockPos posTarget, @Nullable AxisAlignedBB boundingBox) {
         if (boundingBox == null) {
-            return false;
+            if (entityClass == null) {
+                return false;
+            } else {
+                boundingBox = getEntityBoundingBox(entityClass, posTarget);
+                if (boundingBox == null) {
+                    return false;
+                }
+            }
         }
-        boolean liquidColliding = access.containsAnyLiquid(boundingBox);
-        boolean blockColliding = access.optimizedGetCollisionBoxes(boundingBox, false, null);
+        boolean liquidColliding;
+        boolean blockColliding;
         // entity collision check always returns "Not Colliding" in 1.12.2
         boolean entityColliding = false;
+        if (entityClass != null) {
+            if (EntityGuardian.class.isAssignableFrom(entityClass)) {
+                blockColliding = access.optimizedGetCollisionBoxes(boundingBox, false, null);
+                return !blockColliding && !entityColliding;
+            } else if (EntityWaterMob.class.isAssignableFrom(entityClass)) {
+                return !entityColliding;
+            } else if (EntityOcelot.class.isAssignableFrom(entityClass)) {
+                liquidColliding = access.containsAnyLiquid(boundingBox);
+                blockColliding = access.optimizedGetCollisionBoxes(boundingBox, false, null);
+                if (!liquidColliding && !blockColliding && !entityColliding) {
+                    int posY = posTarget.getY();
+                    if (posY < world.getSeaLevel()) {
+                        return false;
+                    }
+                    IBlockState iblockstate = access.getBlockState(posTarget.getX(), posY - 1, posTarget.getZ());
+                    Block block = iblockstate.getBlock();
+                    return block == Blocks.GRASS || iblockstate.getMaterial() == Material.LEAVES;
+                }
+                return false;
+            }
+        }
+        liquidColliding = access.containsAnyLiquid(boundingBox);
+        blockColliding = access.optimizedGetCollisionBoxes(boundingBox, false, null);
         return !liquidColliding && !blockColliding && !entityColliding;
     }
 
