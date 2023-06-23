@@ -5,7 +5,7 @@ import carpet.helpers.HopperCounter;
 import carpet.helpers.TickSpeed;
 import carpet.utils.Messenger;
 import carpet.utils.SpawnReporter;
-import carpet.utils.perimeter.InverseSpawnCalculator;
+import carpet.utils.perimeter.SpawningCalculator;
 import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.command.NumberInvalidException;
@@ -337,23 +337,23 @@ public class CommandSpawn extends CommandCarpetBase {
 
     private void parseLaunchPredict(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
         try {
-            InverseSpawnCalculator.EnumMode mode;
+            SpawningCalculator.EnumMode mode;
             List<Object> options = new ArrayList<>();
             int iDim;
             if ("block".equalsIgnoreCase(args[1])) {
-                mode = InverseSpawnCalculator.EnumMode.BLOCK;
+                mode = SpawningCalculator.EnumMode.BLOCK;
                 BlockPos posTarget = parseBlockPos(sender, args, 2, true);
                 options.add(posTarget);
                 iDim = 5;
             } else if ("range".equalsIgnoreCase(args[1])) {
-                mode = InverseSpawnCalculator.EnumMode.RANGE;
+                mode = SpawningCalculator.EnumMode.RANGE;
                 BlockPos posCorner = parseBlockPos(sender, args, 2, true);
                 options.add(posCorner);
                 posCorner = parseBlockPos(sender, args, 5, true);
                 options.add(posCorner);
                 iDim = 8;
             } else if ("perimeter".equalsIgnoreCase(args[1])) {
-                mode = InverseSpawnCalculator.EnumMode.PERIMETER;
+                mode = SpawningCalculator.EnumMode.PERIMETER;
                 Vec3d posBase = sender.getPositionVector();
                 double posX = parseDouble(posBase.x, args[2], true);
                 double posY = parseDouble(posBase.y, args[3], false);
@@ -382,7 +382,7 @@ public class CommandSpawn extends CommandCarpetBase {
             } else {
                 world = server.getWorld(dimension.getId());
             }
-            InverseSpawnCalculator.asyncExecute(sender, this, world, mode, options.toArray(new Object[0]));
+            SpawningCalculator.asyncExecute(sender, this, world, mode, options.toArray(new Object[0]));
         } catch (Exception e) {
             if (e instanceof CommandException) {
                 throw (CommandException) e;
