@@ -1,0 +1,14 @@
+--- ../src-base/minecraft/net/minecraft/command/SyntaxErrorException.java
++++ ../src-work/minecraft/net/minecraft/command/SyntaxErrorException.java
+@@ -4,7 +4,11 @@
+ {
+     public SyntaxErrorException()
+     {
++        // carpet12RNY - typo fix
++        this("commands.generic.syntax");
++        /*
+         this("commands.generic.snytax");
++         */
+     }
+ 
+     public SyntaxErrorException(String p_i1361_1_, Object... p_i1361_2_)

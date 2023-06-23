@@ -3,7 +3,9 @@ package carpet.commands;
 import carpet.CarpetSettings;
 import carpet.helpers.HopperCounter;
 import carpet.helpers.TickSpeed;
+import carpet.utils.Messenger;
 import carpet.utils.SpawnReporter;
+import carpet.utils.perimeter.SpawningCalculator;
 import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.command.NumberInvalidException;
@@ -14,6 +16,8 @@ import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.EnumDyeColor;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.DimensionType;
 import net.minecraft.world.World;
 
 import javax.annotation.Nonnull;
@@ -24,15 +28,31 @@ import java.util.Collections;
 import java.util.List;
 
 public class CommandSpawn extends CommandCarpetBase {
-    private static final String MAIN_USAGE = "/spawn (list|entities|rates|mobcaps|tracking|test|mocking) <option>...";
+    private static final String MAIN_USAGE = "/spawn (list | entities | rates | mobcaps | tracking | test | mocking) <option>...";
     private static final String USAGE_LIST = "/spawn list <X> <Y> <Z>";
-    private static final String USAGE_ENTITIES = "/spawn entities [passive|hostile|ambient|water]";
-    private static final String USAGE_MOBCAPS = "/spawn mobcaps [(set <num>)|nether|overworld|end]]";
-    private static final String USAGE_TRACKING = "/spawn tracking [stop|hostile|passive|water|ambient]" +
+    private static final String USAGE_ENTITIES = "/spawn entities [passive | hostile | ambient | water]";
+    private static final String USAGE_MOBCAPS = "/spawn mobcaps [(set <num>) | nether | overworld | end]]";
+    private static final String USAGE_TRACKING = "/spawn tracking [stop | hostile | passive | water | ambient]" +
             "\n| /spawn tracking [re]start [<X1> <Y1> <Z1> <X2> <Y2> <Z2>]";
     private static final String USAGE_TEST = "/spawn test [<ticks> [<counter>]]";
     private static final String USAGE_MOCKING = "/spawn mocking (true|false)";
-    private static final String DETAILED_USAGE = USAGE_LIST + "\n| " + USAGE_ENTITIES + "\n| " + USAGE_MOBCAPS + "\n| " + USAGE_TRACKING + "\n| " + USAGE_TEST + "\n| " + USAGE_MOCKING;
+    private static final String USAGE_PREDICT = "/spawn predict (perimeter | block) <X> <Y> <Z> [<dimension>]" +
+            "\n| /spawn predict range <X1> <Y1> <Z1> <X2> <Y2> <Z2> [<dimension>]";
+    private static final String[] ALL_USAGES = new String[]{
+            USAGE_LIST, USAGE_ENTITIES, USAGE_MOBCAPS, USAGE_TRACKING, USAGE_TEST, USAGE_MOCKING, USAGE_PREDICT
+    };
+    private static final String DETAILED_USAGE;
+
+    static {
+        StringBuilder builder = new StringBuilder();
+        for (int i = 0; i < ALL_USAGES.length; ++i) {
+            if (i > 0) {
+                builder.append("\n| ");
+            }
+            builder.append(ALL_USAGES[i]);
+        }
+        DETAILED_USAGE = builder.toString();
+    }
 
     /**
      * Gets the name of the command
@@ -183,6 +203,10 @@ public class CommandSpawn extends CommandCarpetBase {
                 msgFormatted(sender, SpawnReporter.printEntitiesByType(args[1], world));
             }
             return;
+        } else if ("predict".equalsIgnoreCase(args[0])) {
+            Messenger.print_server_message(server, Messenger.c("r command ", "rbi /spawn predict", "r  is not implemented"));
+            parseLaunchPredict(server, sender, args);
+            return;
         }
         throw new WrongUsageException(DETAILED_USAGE);
     }
@@ -195,10 +219,10 @@ public class CommandSpawn extends CommandCarpetBase {
             return Collections.emptyList();
         }
         if (args.length == 1) {
-            return getListOfStringsMatchingLastWord(args, "list", "mocking", "tracking", "mobcaps", "rates", "entities", "test");
+            return getListOfStringsMatchingLastWord(args, "list", "mocking", "tracking", "mobcaps", "rates", "entities", "test", "predict");
         }
         if ("list".equalsIgnoreCase(args[0]) && args.length <= 4) {
-            return getTabCompletionCoordinate(args, 1, pos);
+            return getTabCompletionMobPlace(sender, args, 1, pos);
         }
         if (args.length == 2) {
             if ("tracking".equalsIgnoreCase(args[0])) {
@@ -219,6 +243,9 @@ public class CommandSpawn extends CommandCarpetBase {
             if ("test".equalsIgnoreCase(args[0])) {
                 return getListOfStringsMatchingLastWord(args, "24000", "72000");
             }
+            if ("predict".equalsIgnoreCase(args[0])) {
+                return getListOfStringsMatchingLastWord(args, "perimeter", "block", "range");
+            }
         }
         if ("test".equalsIgnoreCase(args[0]) && (args.length == 3)) {
             List<String> lst = new ArrayList<>();
@@ -232,11 +259,46 @@ public class CommandSpawn extends CommandCarpetBase {
         if ("mobcaps".equalsIgnoreCase(args[0]) && "set".equalsIgnoreCase(args[1]) && (args.length == 3)) {
             return getListOfStringsMatchingLastWord(args, "70");
         }
-        if ("tracking".equalsIgnoreCase(args[0]) && ("start".equalsIgnoreCase(args[1]) || "restart".equalsIgnoreCase(args[1])) && args.length > 2 && args.length <= 5) {
-            return getTabCompletionCoordinate(args, 2, pos);
+        if ("tracking".equalsIgnoreCase(args[0]) && ("start".equalsIgnoreCase(args[1]) || "restart".equalsIgnoreCase(args[1]))) {
+            switch (args.length) {
+                case 3:
+                case 4:
+                case 5:
+                    return getTabCompletionCoordinate(args, 2, pos);
+                case 6:
+                case 7:
+                case 8:
+                    return getTabCompletionCoordinate(args, 5, pos);
+            }
         }
-        if ("tracking".equalsIgnoreCase(args[0]) && ("start".equalsIgnoreCase(args[1]) || "restart".equalsIgnoreCase(args[1])) && args.length > 5 && args.length <= 8) {
-            return getTabCompletionCoordinate(args, 5, pos);
+        if ("predict".equalsIgnoreCase(args[0])) {
+            boolean suggestDim = false;
+            if ("perimeter".equalsIgnoreCase(args[1])) {
+                if (args.length >= 3 && args.length <= 5) {
+                    return getTabCompletionCoordinateExact(sender, args, 2, pos, 4);
+                } else if (args.length == 6) {
+                    suggestDim = true;
+                }
+            } else if ("block".equalsIgnoreCase(args[1])) {
+                if (args.length >= 3 && args.length <= 5) {
+                    return getTabCompletionMobPlace(sender, args, 2, pos);
+                } else if (args.length == 6) {
+                    suggestDim = true;
+                }
+            } else if ("range".equalsIgnoreCase(args[1])) {
+                if (args.length >= 3 && args.length <= 5) {
+                    return getTabCompletionMobPlace(sender, args, 2, pos);
+                } else if (args.length >= 6 && args.length <= 8) {
+                    return getTabCompletionMobPlace(sender, args, 5, pos);
+                } else if (args.length == 9) {
+                    suggestDim = true;
+                }
+            }
+            if (suggestDim) {
+                List<String> list = getListOfStringsMatchingLastWord(args, "nether", "overworld", "end");
+                list.add("~");
+                return list;
+            }
         }
         return Collections.emptyList();
     }
@@ -271,5 +333,62 @@ public class CommandSpawn extends CommandCarpetBase {
         SpawnReporter.track_spawns = 0L;
         SpawnReporter.lower_spawning_limit = null;
         SpawnReporter.upper_spawning_limit = null;
+    }
+
+    private void parseLaunchPredict(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
+        try {
+            SpawningCalculator.EnumMode mode;
+            List<Object> options = new ArrayList<>();
+            int iDim;
+            if ("block".equalsIgnoreCase(args[1])) {
+                mode = SpawningCalculator.EnumMode.BLOCK;
+                BlockPos posTarget = parseBlockPos(sender, args, 2, true);
+                options.add(posTarget);
+                iDim = 5;
+            } else if ("range".equalsIgnoreCase(args[1])) {
+                mode = SpawningCalculator.EnumMode.RANGE;
+                BlockPos posCorner = parseBlockPos(sender, args, 2, true);
+                options.add(posCorner);
+                posCorner = parseBlockPos(sender, args, 5, true);
+                options.add(posCorner);
+                iDim = 8;
+            } else if ("perimeter".equalsIgnoreCase(args[1])) {
+                mode = SpawningCalculator.EnumMode.PERIMETER;
+                Vec3d posBase = sender.getPositionVector();
+                double posX = parseDouble(posBase.x, args[2], true);
+                double posY = parseDouble(posBase.y, args[3], false);
+                double posZ = parseDouble(posBase.z, args[4], true);
+                Vec3d posCenter = new Vec3d(posX, posY, posZ);
+                options.add(posCenter);
+                iDim = 5;
+            } else {
+                throw new WrongUsageException(USAGE_PREDICT);
+            }
+            DimensionType dimension = null;
+            if (iDim < args.length && !"~".equals(args[iDim])) {
+                if ("overworld".equalsIgnoreCase(args[iDim])) {
+                    dimension = DimensionType.OVERWORLD;
+                } else if ("nether".equalsIgnoreCase(args[iDim])) {
+                    dimension = DimensionType.NETHER;
+                } else if ("end".equalsIgnoreCase(args[iDim])) {
+                    dimension = DimensionType.THE_END;
+                } else {
+                    dimension = DimensionType.getById(parseInt(args[iDim], -1, 1));
+                }
+            }
+            World world;
+            if (dimension == null) {
+                world = sender.getEntityWorld();
+            } else {
+                world = server.getWorld(dimension.getId());
+            }
+            SpawningCalculator.asyncExecute(sender, this, world, mode, options.toArray(new Object[0]));
+        } catch (Exception e) {
+            if (e instanceof CommandException) {
+                throw (CommandException) e;
+            } else {
+                throw new WrongUsageException(USAGE_PREDICT);
+            }
+        }
     }
 }

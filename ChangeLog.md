@@ -6,7 +6,6 @@ Carpet 1.12 with [RNY](https://github.com/Rainyaphthyl)'s Addition
 
 - Bump to release versions after merging pathfinding-logger?
 - Add another mode of mob-cap logger.
-- Make command `/spawn list` smarter: parsing the block position above the floor.
 - Add a spawning rate calculator.
 - Define and throw `ChunkNotGeneratedException`.
 - Make command `/perimeterinfo` check multiple entities.
@@ -14,7 +13,9 @@ Carpet 1.12 with [RNY](https://github.com/Rainyaphthyl)'s Addition
 # Feature Modifications
 
 - Improve help info of command `/spawn`.
+- Fix the bug that the calculation of mob spawning height map uses chunk-based algorithm.
+- Command `/spawn list` becomes smarter: tab-complete the block position above the floor. This is also effective on command `/spawn predict`.
 
 # Code Details
 
-- *None*
+- Fix a Mojang typo in `SyntaxErrorException`.

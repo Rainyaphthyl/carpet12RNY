@@ -2,6 +2,7 @@ package carpet.commands;
 
 import java.util.*;
 import javax.annotation.Nullable;
+import javax.annotation.ParametersAreNonnullByDefault;
 
 import carpet.utils.Messenger;
 import net.minecraft.command.*;
@@ -30,6 +31,7 @@ public class CommandCarpet extends CommandCarpetBase
     /**
      * Return the required permission level for this command.
      */
+    @ParametersAreNonnullByDefault
     public boolean checkPermission(MinecraftServer server, ICommandSender sender)
     {
         return sender.canUseCommand(this.getRequiredPermissionLevel(), this.getName());

@@ -1,9 +1,11 @@
 package carpet.utils;
 
+import carpet.utils.perimeter.SpawnChecker;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.EnumCreatureType;
 import net.minecraft.init.Blocks;
 import net.minecraft.tileentity.TileEntity;
@@ -54,6 +56,7 @@ public class SilentChunkReader implements IBlockAccess {
         this.world = world;
     }
 
+    @SuppressWarnings("unused")
     public static long chunkAsLong(@Nonnull ChunkPos chunkPos) {
         return ChunkPos.asLong(chunkPos.x, chunkPos.z);
     }
@@ -65,6 +68,7 @@ public class SilentChunkReader implements IBlockAccess {
         return ChunkPos.asLong(blockPos.getX(), blockPos.getZ());
     }
 
+    @SuppressWarnings("unused")
     @Nonnull
     public static ChunkPos chunkFromLong(long index) {
         int x = (int) (index & 0xFFFFFFFFL);
@@ -107,15 +111,15 @@ public class SilentChunkReader implements IBlockAccess {
     }
 
     @Nullable
-    private Chunk getChunk(int x, int z) {
-        long index = ChunkPos.asLong(x, z);
+    public Chunk getChunk(int chunkX, int chunkZ) {
+        long index = ChunkPos.asLong(chunkX, chunkZ);
         ChunkProviderServer provider = world.getChunkProvider();
         Chunk chunk = provider.loadedChunks.get(index);
         if (chunk == null) {
             chunk = chunkCache.get(index);
-            if (chunk == null && provider.chunkLoader.isChunkGeneratedAt(x, z)) {
+            if (chunk == null && provider.chunkLoader.isChunkGeneratedAt(chunkX, chunkZ)) {
                 try {
-                    chunk = provider.chunkLoader.loadChunk_silent(world, x, z);
+                    chunk = provider.chunkLoader.loadChunk_silent(world, chunkX, chunkZ);
                 } catch (IOException ignored) {
                 }
                 if (chunk != null) {
@@ -279,6 +283,9 @@ public class SilentChunkReader implements IBlockAccess {
         return state.isNormalCube() ? getStrongPower(pos) : state.getWeakPower(this, pos, facing);
     }
 
+    /**
+     * Checks biomes and structures
+     */
     public List<Biome.SpawnListEntry> getPossibleCreatures(EnumCreatureType creatureType, BlockPos blockPos) {
         Biome biome = getBiome(blockPos);
         List<Biome.SpawnListEntry> entryList = biome == null ? Collections.emptyList() : biome.getSpawnableList(creatureType);
@@ -339,6 +346,30 @@ public class SilentChunkReader implements IBlockAccess {
             height = world.getSeaLevel() + 1;
         }
         return height;
+    }
+
+    /**
+     * This "height" is one-block above the actual topmost spawnable block, e.g. the returned value is {@code 16*n} while the actual range is {@code [0, 16*n-1]}
+     */
+    public int getSpawningColumnHeight(@Nonnull BlockPos blockPos) {
+        return getSpawningColumnHeight(blockPos.getX(), blockPos.getZ());
+    }
+
+    /**
+     * This "height" is one-block above the actual topmost spawnable block, e.g. the returned value is {@code 16*n} while the actual range is {@code [0, 16*n-1]}
+     */
+    public int getSpawningColumnHeight(int blockX, int blockZ) {
+        Chunk chunk = getChunk(blockX >> 4, blockZ >> 4);
+        if (chunk == null) {
+            return 0;
+        } else {
+            int top = chunk.getHeightValue(blockX & 15, blockZ & 15);
+            int height = MathHelper.roundUp(top + 1, SpawnChecker.SECTION_UNIT);
+            if (height <= 0) {
+                height = chunk.getTopFilledSegment() + (SpawnChecker.SECTION_UNIT - 1);
+            }
+            return height;
+        }
     }
 
     public boolean canBlockSeeSky(@Nonnull BlockPos pos) {
@@ -451,5 +482,13 @@ public class SilentChunkReader implements IBlockAccess {
             posMutable.release();
         }
         return !outList.isEmpty();
+    }
+
+    @ParametersAreNonnullByDefault
+    public boolean isCreaturePlaceable(BlockPos posTarget, EntityLiving.SpawnPlacementType placementType) {
+        IBlockState stateDown = getBlockState(posTarget.getX(), posTarget.getY() - 1, posTarget.getZ());
+        IBlockState stateTarget = getBlockState(posTarget);
+        IBlockState stateUp = getBlockState(posTarget.getX(), posTarget.getY() + 1, posTarget.getZ());
+        return SpawnChecker.isEntityPlaceable(placementType, stateDown, stateTarget, stateUp);
     }
 }
