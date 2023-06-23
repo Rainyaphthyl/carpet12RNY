@@ -4,6 +4,8 @@ import carpet.CarpetServer;
 import carpet.utils.LRUCache;
 import carpet.utils.Messenger;
 import carpet.utils.SilentChunkReader;
+import it.unimi.dsi.fastutil.longs.Long2IntMap;
+import it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockLeaves;
 import net.minecraft.block.BlockLog;
@@ -45,10 +47,12 @@ public class SpawningCalculator {
     private final BlockPos.MutableBlockPos posCornerMax = new BlockPos.MutableBlockPos();
     private final Set<BlockPos> possibleTargetSet = new HashSet<>();
     private final Map<BlockPos, Double> distSqCache = new LRUCache<>(1024);
-    private final Map<PredictorKey, Double> spawningRateCache = new LRUCache<>(32768);
+    private final Map<PredictorKey, Double> spawningRateCache = new LinkedHashMap<>(16, 0.75f, true);
     private final Map<Integer, Map<BlockPos, Double>> biomeChanceCache = new HashMap<>();
+    private final Long2IntMap realHeightMap = new Long2IntOpenHashMap();
     private boolean targetCheckFinished = false;
     private boolean rangeCheckFinished = false;
+    private boolean heightCheckFinished = false;
     private int minChunkX = 0;
     private int maxChunkX = 0;
     private int minChunkZ = 0;
@@ -120,29 +124,31 @@ public class SpawningCalculator {
                             calculator = createInstance((WorldServer) world, (Vec3d) options[0]);
                     }
                     Objects.requireNonNull(calculator);
-                    if (mode == EnumMode.BLOCK) {
-                        calculator.recursionCount = 0;
-                        calculator.cachingCount = 0;
-                        Map<Class<? extends EntityLiving>, Double> resultMap = calculator.getCumulativeResult((BlockPos) options[0], null);
-                        long timeFinish = System.currentTimeMillis();
-                        long duration = timeFinish - timeStart;
-                        calculator.spawningRateCache.forEach((k, v) -> System.out.println(k + " -> " + v));
-                        for (Map.Entry<Class<? extends EntityLiving>, Double> entry : resultMap.entrySet()) {
-                            Class<? extends EntityLiving> mobClass = entry.getKey();
-                            Double value = entry.getValue();
-                            ResourceLocation resource = EntityList.REGISTRY.getNameForObject(mobClass);
-                            String name = resource == null ? mobClass.getSimpleName() : resource.getPath();
-                            Double period = value == null ? null : (1.0 / value);
-                            Messenger.m(sender, "w " + name, "g : ",
-                                    "c " + String.format("%.2f", period), "^g " + period, "w  rounds",
-                                    "g , or ", "w " + value);
+                    Map<Class<? extends EntityLiving>, Double> result = calculator.getTotalResult(null);
+                    long timeFinish = System.currentTimeMillis();
+                    long duration = timeFinish - timeStart;
+                    result.forEach((mobClass, value) -> {
+                        ResourceLocation resource = EntityList.REGISTRY.getNameForObject(mobClass);
+                        String name = resource == null ? mobClass.getSimpleName() : resource.getPath();
+                        double ratePerRound = value == null ? Double.NaN : value;
+                        String style;
+                        double ratePerHour;
+                        if (SpawnChecker.checkCreatureType(mobClass).getAnimal()) {
+                            style = "c";
+                            ratePerHour = 180 * ratePerRound;
+                        } else {
+                            style = "w";
+                            ratePerHour = 72000 * ratePerRound;
                         }
-                        Messenger.m(sender, "gi Duration = " + duration + " ms");
-                        Messenger.m(sender, "gi Recursion count = " + calculator.recursionCount);
-                        Messenger.m(sender, "gi Cached result count = " + calculator.cachingCount);
-                        Messenger.m(sender, "gi Cache size = " + calculator.spawningRateCache.size());
-                    }
+                        Messenger.m(sender, style + " " + name + ": rate: ",
+                                "c " + String.format("%.1f", ratePerHour), "^g " + ratePerHour, "w /h, chance: ",
+                                "c " + String.format("%f", ratePerRound), "^g " + ratePerRound);
+                    });
                     CommandBase.notifyCommandListener(sender, command, "Finished mob-spawn-rate calculation");
+                    Messenger.m(sender, "gi Duration = " + duration + " ms");
+                    Messenger.m(sender, "gi Recursion count = " + calculator.recursionCount);
+                    Messenger.m(sender, "gi Cached result count = " + calculator.cachingCount);
+                    Messenger.m(sender, "gi Cache size = " + calculator.spawningRateCache.size());
                 } catch (Throwable e) {
                     CommandBase.notifyCommandListener(sender, command, "Failed to calculate mob-spawn-rate");
                     e.printStackTrace();
@@ -199,8 +205,12 @@ public class SpawningCalculator {
     }
 
     public boolean isEligibleChunk(int chunkX, int chunkZ) {
-        initSetTargetRange();
-        return chunkX >= minChunkX && chunkX <= maxChunkX && chunkZ >= minChunkZ && chunkZ <= maxChunkZ;
+        if (posPeriCenter == null) {
+            return true;
+        } else {
+            initSetTargetRange();
+            return chunkX >= minChunkX && chunkX <= maxChunkX && chunkZ >= minChunkZ && chunkZ <= maxChunkZ;
+        }
     }
 
     public synchronized void initSetTargetRange() {
@@ -220,10 +230,10 @@ public class SpawningCalculator {
             for (int cx = -radius; cx <= radius; ++cx) {
                 ChunkPos chunkPos = new ChunkPos(chunkX + cx, borderCenterZ);
                 if (worldBorder.contains(chunkPos)) {
-                    if (minChunkX < chunkPos.x) {
+                    if (chunkPos.x < minChunkX) {
                         minChunkX = chunkPos.x;
                     }
-                    if (maxChunkX > chunkPos.x) {
+                    if (chunkPos.x > maxChunkX) {
                         maxChunkX = chunkPos.x;
                     }
                 }
@@ -233,10 +243,10 @@ public class SpawningCalculator {
             for (int cz = -radius; cz <= radius; ++cz) {
                 ChunkPos chunkPos = new ChunkPos(borderCenterX, chunkZ + cz);
                 if (worldBorder.contains(chunkPos)) {
-                    if (minChunkZ < chunkPos.z) {
+                    if (chunkPos.z < minChunkZ) {
                         minChunkZ = chunkPos.z;
                     }
-                    if (maxChunkZ > chunkPos.z) {
+                    if (chunkPos.z > maxChunkZ) {
                         maxChunkZ = chunkPos.z;
                     }
                 }
@@ -262,11 +272,12 @@ public class SpawningCalculator {
             return;
         }
         initSetTargetRange();
+        initCheckPossibleHeights();
         BlockPos.MutableBlockPos posIter = new BlockPos.MutableBlockPos();
         for (int x = posCornerMin.getX(); x <= posCornerMax.getX(); ++x) {
             for (int z = posCornerMin.getZ(); z <= posCornerMax.getZ(); ++z) {
                 posIter.setPos(x, -1, z);
-                int height = Math.min(access.getSpawningColumnHeight(posIter), posCornerMax.getY() + 1);
+                int height = Math.min(realHeightMap.get(ChunkPos.asLong(x, z)), posCornerMax.getY() + 1);
                 for (int y = posCornerMin.getY(); y < height; ++y) {
                     posIter.setY(y);
                     if (isSpawningPossible(posIter, null)) {
@@ -276,6 +287,36 @@ public class SpawningCalculator {
             }
         }
         targetCheckFinished = true;
+    }
+
+    public synchronized void initCheckPossibleHeights() {
+        if (heightCheckFinished) {
+            return;
+        }
+        initSetTargetRange();
+        int maxHeight = 0;
+        for (int x = posCornerMin.getX(); x <= posCornerMax.getX(); ++x) {
+            for (int z = posCornerMin.getZ(); z <= posCornerMax.getZ(); ++z) {
+                int height = 0;
+                for (int dx = -20; dx <= 20; ++dx) {
+                    for (int dz = -20; dz <= 20; ++dz) {
+                        int temp = access.getSpawningColumnHeight(x + dx, z + dz);
+                        if (temp > height) {
+                            height = temp;
+                        }
+                    }
+                }
+                if (height > maxHeight) {
+                    maxHeight = height;
+                }
+                long index = ChunkPos.asLong(x, z);
+                realHeightMap.put(index, height);
+            }
+        }
+        if (fullArea) {
+            posCornerMax.setY(maxHeight - 1);
+        }
+        heightCheckFinished = true;
     }
 
     @ParametersAreNonnullByDefault
@@ -399,14 +440,15 @@ public class SpawningCalculator {
         }
     }
 
+    @Nonnull
     public Map<Class<? extends EntityLiving>, Double> getTotalResult(
             @Nullable Map<Class<? extends EntityLiving>, Double> resultMap) {
-        if (resultMap == null) {
-            resultMap = new HashMap<>();
-        }
         initCheckPossibleTargets();
         for (BlockPos posTarget : possibleTargetSet) {
-            getCumulativeResult(posTarget, resultMap);
+            resultMap = getCumulativeResult(posTarget, resultMap);
+        }
+        if (resultMap == null) {
+            resultMap = new HashMap<>();
         }
         return resultMap;
     }
@@ -414,6 +456,7 @@ public class SpawningCalculator {
     /**
      * For all mobs
      */
+    @Nonnull
     @ParametersAreNonnullByDefault
     public Map<Class<? extends EntityLiving>, Double> getCumulativeResult(
             BlockPos posTarget, @Nullable Map<Class<? extends EntityLiving>, Double> resultMap) {
@@ -510,6 +553,9 @@ public class SpawningCalculator {
     }
 
     public double getChancePosInChunk(int blockX, int blockY, int blockZ) {
+        if (!isEligibleChunk(blockX >> 4, blockZ >> 4)) {
+            return 0.0;
+        }
         IBlockState stateTarget = access.getBlockState(blockX, blockY, blockZ);
         if (stateTarget.isNormalCube()) {
             return 0.0;

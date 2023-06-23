@@ -12,7 +12,6 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.world.WorldServer;
@@ -20,10 +19,7 @@ import net.minecraft.world.WorldServer;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 
 public abstract class CommandCarpetBase extends CommandBase {
     /**
@@ -32,13 +28,13 @@ public abstract class CommandCarpetBase extends CommandBase {
     @Nonnull
     @ParametersAreNonnullByDefault
     public static List<String> getTabCompletionMobPlace(ICommandSender sender, String[] inputArgs, int index, @Nullable BlockPos target) {
-        List<String> list = new ArrayList<>();
-        Set<BlockPos> posList = new TreeSet<>();
+        Set<String> tabSet = new TreeSet<>();
+        List<BlockPos> posList = new ArrayList<>();
         if (target == null) {
             Vec3d posBase = sender.getPositionVector();
             BlockPos posOutput = new BlockPos(posBase);
             posList.add(posOutput);
-            list.add("~");
+            tabSet.add("~");
         } else {
             if (sender instanceof EntityPlayerMP) {
                 EntityPlayerMP player = (EntityPlayerMP) sender;
@@ -58,17 +54,17 @@ public abstract class CommandCarpetBase extends CommandBase {
         for (BlockPos posOutput : posList) {
             switch (axis) {
                 case 0:
-                    list.add(Integer.toString(posOutput.getX()));
+                    tabSet.add(Integer.toString(posOutput.getX()));
                     break;
                 case 1:
-                    list.add(Integer.toString(posOutput.getY()));
+                    tabSet.add(Integer.toString(posOutput.getY()));
                     break;
                 case 2:
-                    list.add(Integer.toString(posOutput.getZ()));
+                    tabSet.add(Integer.toString(posOutput.getZ()));
                     break;
             }
         }
-        return list;
+        return new ArrayList<>(tabSet);
     }
 
     @Nonnull
@@ -76,7 +72,7 @@ public abstract class CommandCarpetBase extends CommandBase {
     public static List<String> getTabCompletionCoordinateExact(ICommandSender sender, String[] inputArgs, int index, @Nullable BlockPos target, int decimals) {
         Vec3d posBaseE = sender.getPositionVector();
         BlockPos posBaseB = sender.getPosition();
-        List<String> list = new ArrayList<>();
+        Set<String> tabSet = new TreeSet<>();
         int i = inputArgs.length - 1;
         double posCurrE;
         int posCurrB;
@@ -110,19 +106,19 @@ public abstract class CommandCarpetBase extends CommandBase {
                 }
                 break;
             default:
-                return list;
+                return Collections.emptyList();
         }
-        list.add("~");
+        tabSet.add("~");
         if (decimals > 0 && decimals < 8) {
             String formatter = "%." + decimals + 'f';
-            list.add(String.format(formatter, posCurrE));
+            tabSet.add(String.format(formatter, posCurrE));
         }
-        list.add(Double.toString(posCurrE));
-        list.add(Integer.toString(posCurrB));
+        tabSet.add(Double.toString(posCurrE));
+        tabSet.add(Integer.toString(posCurrB));
         if (posTarget != posCurrB) {
-            list.add(Integer.toString(posTarget));
+            tabSet.add(Integer.toString(posTarget));
         }
-        return list;
+        return new ArrayList<>(tabSet);
     }
 
     @SuppressWarnings("unused")

@@ -222,7 +222,7 @@ public class CommandSpawn extends CommandCarpetBase {
             return getListOfStringsMatchingLastWord(args, "list", "mocking", "tracking", "mobcaps", "rates", "entities", "test", "predict");
         }
         if ("list".equalsIgnoreCase(args[0]) && args.length <= 4) {
-            return getTabCompletionCoordinate(args, 1, pos);
+            return getTabCompletionMobPlace(sender, args, 1, pos);
         }
         if (args.length == 2) {
             if ("tracking".equalsIgnoreCase(args[0])) {
