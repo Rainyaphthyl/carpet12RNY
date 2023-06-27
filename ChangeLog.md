@@ -13,7 +13,8 @@ Carpet 1.12 with [RNY](https://github.com/Rainyaphthyl)'s Addition
 
 # Feature Modifications
 
-- Improve help info of command `/spawn`.
+- Improved help info of command `/spawn`.
+- More options added to command "profile": `/profile (health|entities) <ticks>`. Command `/tick` can be disabled in vanilla survival, totally replaced by `/profile` without `/tick (rate|warp)`.
 
 # Code Details
 
