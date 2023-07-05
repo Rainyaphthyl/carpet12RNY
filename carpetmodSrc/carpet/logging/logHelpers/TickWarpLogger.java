@@ -31,7 +31,7 @@ public class TickWarpLogger {
 
     public static void update_log_HUD() {
         if (TickSpeed.time_bias > 0) {
-            get_instance().log((option, player) -> {
+            get_instance().log(option -> {
                 long totalTicks = TickSpeed.time_warp_scheduled_ticks;
                 long doneTicks = totalTicks - TickSpeed.time_bias;
                 double progressRate = (double) doneTicks / Math.max(totalTicks, 1);

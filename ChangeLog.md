@@ -10,7 +10,7 @@ Carpet 1.12 with [RNY](https://github.com/Rainyaphthyl)'s Addition
 - Add a spawning rate calculator.
 - Define and throw `ChunkNotGeneratedException`.
 - Make command `/perimeterinfo` check multiple entities.
-- Add modes of MSPT logger: `peak`, `average`, `moment`.
+- Add modes of MSPT logger: `peak`, `average`, `sample`.
 - Calculate the actual TPS when a single tick runs for more than 20 ms (`1 / max(50, ms)`).
 
 # Feature Modifications
