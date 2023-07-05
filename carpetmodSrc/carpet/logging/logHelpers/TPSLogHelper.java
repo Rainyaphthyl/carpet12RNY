@@ -1,5 +1,6 @@
 package carpet.logging.logHelpers;
 
+import carpet.CarpetSettings;
 import carpet.helpers.TickSpeed;
 import carpet.logging.Logger;
 import carpet.logging.LoggerRegistry;
@@ -8,10 +9,11 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.text.ITextComponent;
 
+import javax.annotation.Nonnull;
 import java.util.Locale;
 
 public class TPSLogHelper {
-    public static final String[] LOGGER_OPTIONS = new String[]{"sample", "peak", "average"};
+    public static final String[] LOGGER_OPTIONS = new String[]{"average", "sample", "peak"};
     public static final String DEFAULT_OPTION = LOGGER_OPTIONS[0];
     public static final String NAME = "tps";
     private static Logger instance = null;
@@ -33,18 +35,29 @@ public class TPSLogHelper {
             double msptWarping = Double.NaN;
             double msptActual = Double.NaN;
             boolean warping = TickSpeed.time_bias > 0;
+            long[] sampleTimesArray = server.tickTimeArray;
             switch (option) {
-                case "average":
                 case "sample":
-                    msptWarping = MathHelper.average(server.tickTimeArray) * 1.0E-6D;
+                    sampleTimesArray = copy_partial_stats(server);
+                case "average":
+                    msptWarping = MathHelper.average(sampleTimesArray) * 1.0E-6D;
                     if (warping) {
                         msptActual = msptWarping;
                     } else {
                         long stdInterval = TickSpeed.mspt * 1_000_000L;
-                        msptActual = get_average_truncated(server.tickTimeArray, stdInterval, Long.MAX_VALUE) * 1.0E-6D;
+                        msptActual = get_average_truncated(sampleTimesArray, stdInterval, Long.MAX_VALUE) * 1.0E-6D;
                     }
                     break;
                 case "peak":
+                    sampleTimesArray = copy_partial_stats(server);
+                    msptWarping = get_max_truncated(sampleTimesArray, 0, Long.MAX_VALUE) * 1.0E-6D;
+                    if (warping) {
+                        msptActual = msptWarping;
+                    } else {
+                        long stdInterval = TickSpeed.mspt * 1_000_000L;
+                        msptActual = get_max_truncated(sampleTimesArray, stdInterval, Long.MAX_VALUE) * 1.0E-6D;
+                    }
+                    break;
             }
             double tpsActual = 1000.0 / msptActual;
             String colorMspt = Messenger.heatmap_color(msptWarping, TickSpeed.mspt);
@@ -84,28 +97,30 @@ public class TPSLogHelper {
         return (double) sum / values.length;
     }
 
-    public static double get_max_truncated(long[] values, long floor, long ceil) {
-        if (values == null || floor > ceil) {
-            return Double.NaN;
-        }
-        long sum = 0L;
-        int lowers = 0;
-        int uppers = 0;
-        for (long value : values) {
-            if (value < floor) {
-                value = floor;
-                ++lowers;
-            } else if (value > ceil) {
-                value = ceil;
-                ++uppers;
-            }
-            sum += value;
-        }
-        if (lowers == values.length) {
-            return floor;
-        } else if (uppers == values.length) {
+    public static long get_max_truncated(long[] values, long floor, long ceil) {
+        if (floor > ceil) {
             return ceil;
+        } else if (values == null) {
+            return floor;
         }
-        return (double) sum / values.length;
+        long maxVal = floor;
+        for (long value : values) {
+            if (value >= ceil) {
+                return ceil;
+            } else if (value > maxVal) {
+                maxVal = value;
+            }
+        }
+        return maxVal;
+    }
+
+    @Nonnull
+    public static long[] copy_partial_stats(@Nonnull MinecraftServer server) {
+        int length = Math.min(Math.max(1, CarpetSettings.HUDUpdateInterval), server.tickTimeArray.length);
+        long[] sampleTimesArray = new long[length];
+        for (int i = 0, t = server.getTickCounter(); i < length; ++i) {
+            sampleTimesArray[i] = server.tickTimeArray[--t % server.tickTimeArray.length];
+        }
+        return sampleTimesArray;
     }
 }
