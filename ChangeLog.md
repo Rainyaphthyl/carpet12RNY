@@ -21,6 +21,9 @@ Carpet 1.12 with [RNY](https://github.com/Rainyaphthyl)'s Addition
     - `average`: (Default) The average within 100 gt, similar to the old logger.
     - `sample`: The average within `HUDUpdateInterval`.
     - `peak`: The worst tick time within `HUDUpdateInterval`.
+- Modifications of carpet profiling terms:
+    - `carpet`: The carpet server ticking.
+    - `<dim>`: Total tick time of each dimension.
 
 # Code Details
 

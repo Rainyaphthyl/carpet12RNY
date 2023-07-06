@@ -12,11 +12,15 @@ import java.util.stream.Collectors;
 
 public class CarpetProfiler {
     private static final HashMap<String, Long> time_repo = new HashMap<>();
+    private static final String[] dim_names = new String[]{"Overworld", "Nether", "End"};
+    private static final String[] dim_keys = new String[]{"overworld", "the_nether", "the_end"};
     public static int tick_health_requested = 0;
     private static int tick_health_elapsed = 0;
     private static int test_type = 0; //1 for ticks, 2 for entities;
     private static String current_section = null;
     private static long current_section_start = 0;
+    private static String current_dimension = null;
+    private static long current_dimension_start = 0;
     private static long current_tick_start = 0;
 
     public static void prepare_tick_report(int ticks) {
@@ -26,21 +30,15 @@ public class CarpetProfiler {
         time_repo.put("tick", 0L);
         time_repo.put("network", 0L);
         time_repo.put("autosave", 0L);
+        time_repo.put("carpet", 0L);
 
-        time_repo.put("overworld.spawning", 0L);
-        time_repo.put("overworld.blocks", 0L);
-        time_repo.put("overworld.entities", 0L);
-        time_repo.put("overworld.tileentities", 0L);
-
-        time_repo.put("the_nether.spawning", 0L);
-        time_repo.put("the_nether.blocks", 0L);
-        time_repo.put("the_nether.entities", 0L);
-        time_repo.put("the_nether.tileentities", 0L);
-
-        time_repo.put("the_end.spawning", 0L);
-        time_repo.put("the_end.blocks", 0L);
-        time_repo.put("the_end.entities", 0L);
-        time_repo.put("the_end.tileentities", 0L);
+        for (String dimKey : dim_keys) {
+            time_repo.put(dimKey, 0L);
+            time_repo.put(dimKey + ".spawning", 0L);
+            time_repo.put(dimKey + ".blocks", 0L);
+            time_repo.put(dimKey + ".entities", 0L);
+            time_repo.put(dimKey + ".tileentities", 0L);
+        }
         //spawning
         //blocks
         //entities
@@ -51,7 +49,8 @@ public class CarpetProfiler {
         current_tick_start = 0L;
         current_section_start = 0L;
         current_section = null;
-
+        current_dimension_start = 0L;
+        current_dimension = null;
     }
 
     public static void start_section(String dimension, String name) {
@@ -70,6 +69,17 @@ public class CarpetProfiler {
         }
         current_section = key;
         current_section_start = System.nanoTime();
+    }
+
+    public static void start_dimension(String dimension) {
+        if (tick_health_requested == 0L || test_type != 1 || current_tick_start == 0L) {
+            return;
+        }
+        if (current_dimension != null) {
+            end_current_dimension();
+        }
+        current_dimension = dimension;
+        current_dimension_start = System.nanoTime();
     }
 
     public static void start_entity_section(String dimension, Entity e) {
@@ -118,6 +128,21 @@ public class CarpetProfiler {
         current_section_start = 0;
     }
 
+    public static void end_current_dimension() {
+        if (tick_health_requested == 0L || test_type != 1 || current_tick_start == 0L) {
+            return;
+        }
+        if (current_dimension == null) {
+            CarpetSettings.LOG.error("finishing dimension that hasn't started");
+            return;
+        }
+        long end_time = System.nanoTime();
+        long prev_time = time_repo.get(current_dimension);
+        time_repo.put(current_dimension, prev_time + end_time - current_dimension_start);
+        current_dimension = null;
+        current_dimension_start = 0;
+    }
+
     public static void end_current_entity_section() {
         if (tick_health_requested == 0L || test_type != 2) {
             return;
@@ -140,18 +165,22 @@ public class CarpetProfiler {
     }
 
     public static void start_tick_profiling() {
-        current_tick_start = System.nanoTime();
+        if (CarpetProfiler.tick_health_requested != 0L) {
+            current_tick_start = System.nanoTime();
+        }
     }
 
     public static void end_tick_profiling(MinecraftServer server) {
         if (current_tick_start == 0L) {
             return;
         }
-        time_repo.put("tick", time_repo.get("tick") + System.nanoTime() - current_tick_start);
-        tick_health_elapsed--;
-        //CarpetSettings.LOG.error("tick count current at "+time_repo.get("tick"));
-        if (tick_health_elapsed <= 0) {
-            finalize_tick_report(server);
+        if (CarpetProfiler.tick_health_requested != 0L) {
+            time_repo.put("tick", time_repo.get("tick") + System.nanoTime() - current_tick_start);
+            tick_health_elapsed--;
+            //CarpetSettings.LOG.error("tick count current at "+time_repo.get("tick"));
+            if (tick_health_elapsed <= 0) {
+                finalize_tick_report(server);
+            }
         }
     }
 
@@ -167,7 +196,6 @@ public class CarpetProfiler {
 
     public static void cleanup_tick_report() {
         time_repo.clear();
-        time_repo.put("tick", 0L);
         test_type = 0;
         tick_health_elapsed = 0;
         tick_health_requested = 0;
@@ -182,58 +210,45 @@ public class CarpetProfiler {
         long total_tick_time = time_repo.get("tick");
         double divider = 1.0D / tick_health_requested / 1000000;
         Messenger.print_server_message(server, String.format("Average tick time: %.3fms", divider * total_tick_time));
-        long accumulated = 0L;
 
-        accumulated += time_repo.get("autosave");
-        Messenger.print_server_message(server, String.format("Autosave: %.3fms", divider * time_repo.get("autosave")));
+        long value = time_repo.get("autosave");
+        long accumulated_total = value;
+        Messenger.print_server_message(server, String.format("Autosave: %.3fms", divider * value));
 
-        accumulated += time_repo.get("network");
-        Messenger.print_server_message(server, String.format("Network: %.3fms", divider * time_repo.get("network")));
+        value = time_repo.get("network");
+        accumulated_total += value;
+        Messenger.print_server_message(server, String.format("Network: %.3fms", divider * value));
 
-        Messenger.print_server_message(server, "Overworld:");
+        for (int i = 0; i < dim_keys.length; ++i) {
+            long value_dim = time_repo.get(dim_keys[i]);
+            accumulated_total += value_dim;
+            Messenger.print_server_message(server, String.format("%s: %.3fms", dim_names[i], divider * value_dim));
 
-        accumulated += time_repo.get("overworld.entities");
-        Messenger.print_server_message(server, String.format(" - Entities: %.3fms", divider * time_repo.get("overworld.entities")));
+            value = time_repo.get(dim_keys[i] + ".entities");
+            long accumulated_partial = value;
+            Messenger.print_server_message(server, String.format(" - Entities: %.3fms", divider * value));
 
-        accumulated += time_repo.get("overworld.tileentities");
-        Messenger.print_server_message(server, String.format(" - Tile Entities: %.3fms", divider * time_repo.get("overworld.tileentities")));
+            value = time_repo.get(dim_keys[i] + ".tileentities");
+            accumulated_partial += value;
+            Messenger.print_server_message(server, String.format(" - Tile Entities: %.3fms", divider * value));
 
-        accumulated += time_repo.get("overworld.blocks");
-        Messenger.print_server_message(server, String.format(" - Blocks: %.3fms", divider * time_repo.get("overworld.blocks")));
+            value = time_repo.get(dim_keys[i] + ".blocks");
+            accumulated_partial += value;
+            Messenger.print_server_message(server, String.format(" - Blocks: %.3fms", divider * value));
 
-        accumulated += time_repo.get("overworld.spawning");
-        Messenger.print_server_message(server, String.format(" - Spawning: %.3fms", divider * time_repo.get("overworld.spawning")));
+            value = time_repo.get(dim_keys[i] + ".spawning");
+            accumulated_partial += value;
+            Messenger.print_server_message(server, String.format(" - Spawning: %.3fms", divider * value));
 
-        Messenger.print_server_message(server, "Nether:");
+            long rest_dim = value_dim - accumulated_partial;
+            Messenger.print_server_message(server, String.format(" - Rest: %.3fms", divider * rest_dim));
+        }
 
-        accumulated += time_repo.get("the_nether.entities");
-        Messenger.print_server_message(server, String.format(" - Entities: %.3fms", divider * time_repo.get("the_nether.entities")));
+        value = time_repo.get("carpet");
+        accumulated_total += value;
+        Messenger.print_server_message(server, String.format("Carpet Mod: %.3fms", divider * value));
 
-        accumulated += time_repo.get("the_nether.tileentities");
-        Messenger.print_server_message(server, String.format(" - Tile Entities: %.3fms", divider * time_repo.get("the_nether.tileentities")));
-
-        accumulated += time_repo.get("the_nether.blocks");
-        Messenger.print_server_message(server, String.format(" - Blocks: %.3fms", divider * time_repo.get("the_nether.blocks")));
-
-        accumulated += time_repo.get("the_nether.spawning");
-        Messenger.print_server_message(server, String.format(" - Spawning: %.3fms", divider * time_repo.get("the_nether.spawning")));
-
-        Messenger.print_server_message(server, "End:");
-
-        accumulated += time_repo.get("the_end.entities");
-        Messenger.print_server_message(server, String.format(" - Entities: %.3fms", divider * time_repo.get("the_end.entities")));
-
-        accumulated += time_repo.get("the_end.tileentities");
-        Messenger.print_server_message(server, String.format(" - Tile Entities: %.3fms", divider * time_repo.get("the_end.tileentities")));
-
-        accumulated += time_repo.get("the_end.blocks");
-        Messenger.print_server_message(server, String.format(" - Blocks: %.3fms", divider * time_repo.get("the_end.blocks")));
-
-        accumulated += time_repo.get("the_end.spawning");
-        Messenger.print_server_message(server, String.format(" - Spawning: %.3fms", divider * time_repo.get("the_end.spawning")));
-
-        long rest = total_tick_time - accumulated;
-
+        long rest = total_tick_time - accumulated_total;
         Messenger.print_server_message(server, String.format("Rest: %.3fms", divider * rest));
     }
 
