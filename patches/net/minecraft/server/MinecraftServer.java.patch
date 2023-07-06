@@ -231,7 +231,7 @@
 +        LagSpikeHelper.processLagSpikes(null, LagSpikeHelper.TickPhase.AUTOSAVE, LagSpikeHelper.PrePostSubPhase.PRE);
          if (this.field_71315_w % 900 == 0)
          {
-+            CarpetProfiler.start_section(null, "Autosave");
++            CarpetProfiler.start_section(null, "autosave");
              this.field_71304_b.func_76320_a("save");
 +            WorldHelper.startTickTask(TickTask.AUTOSAVE); // RSMM
 +            this.field_71318_t.storeFakePlayerData();
@@ -360,7 +360,7 @@
              this.field_71312_k[j][this.field_71315_w % 100] = System.nanoTime() - i;
          }
  
-+        CarpetProfiler.start_section(null, "Network");
++        CarpetProfiler.start_section(null, "network");
          this.field_71304_b.func_76318_c("connection");
 +        WorldHelper.swapTickTask(TickTask.CONNECTIONS); // RSMM
          this.func_147137_ag().func_151269_c();

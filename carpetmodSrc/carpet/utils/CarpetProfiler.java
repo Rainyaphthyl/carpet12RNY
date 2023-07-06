@@ -24,8 +24,8 @@ public class CarpetProfiler {
         time_repo.clear();
         test_type = 1;
         time_repo.put("tick", 0L);
-        time_repo.put("Network", 0L);
-        time_repo.put("Autosave", 0L);
+        time_repo.put("network", 0L);
+        time_repo.put("autosave", 0L);
 
         time_repo.put("overworld.spawning", 0L);
         time_repo.put("overworld.blocks", 0L);
@@ -184,11 +184,11 @@ public class CarpetProfiler {
         Messenger.print_server_message(server, String.format("Average tick time: %.3fms", divider * total_tick_time));
         long accumulated = 0L;
 
-        accumulated += time_repo.get("Autosave");
-        Messenger.print_server_message(server, String.format("Autosave: %.3fms", divider * time_repo.get("Autosave")));
+        accumulated += time_repo.get("autosave");
+        Messenger.print_server_message(server, String.format("Autosave: %.3fms", divider * time_repo.get("autosave")));
 
-        accumulated += time_repo.get("Network");
-        Messenger.print_server_message(server, String.format("Network: %.3fms", divider * time_repo.get("Network")));
+        accumulated += time_repo.get("network");
+        Messenger.print_server_message(server, String.format("Network: %.3fms", divider * time_repo.get("network")));
 
         Messenger.print_server_message(server, "Overworld:");
 
