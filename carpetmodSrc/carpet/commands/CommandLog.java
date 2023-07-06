@@ -299,7 +299,7 @@ public class CommandLog extends CommandCarpetBase {
                 }
             } else {
                 for (String option : logger.getOptions()) {
-                    if (subs.containsKey(lname) && subs.get(lname).option.equalsIgnoreCase(option)) {
+                    if (subs.containsKey(lname) && option.equalsIgnoreCase(subs.get(lname).option)) {
                         comp.add("l [" + option + "] ");
                     } else {
                         comp.add(color + " [" + option + "] ");
@@ -343,7 +343,7 @@ public class CommandLog extends CommandCarpetBase {
                 }
             } else {
                 for (String option : logger.getOptions()) {
-                    if (subs.containsKey(lname) && subs.get(lname).option.equalsIgnoreCase(option)) {
+                    if (subs.containsKey(lname) && option.equalsIgnoreCase(subs.get(lname).option)) {
                         comp.add("l [" + option + "] ");
                     } else {
                         comp.add(color + " [" + option + "] ");
