@@ -38,7 +38,7 @@ public class TPSLogHelper {
             long[] sampleTimesArray = server.tickTimeArray;
             switch (option) {
                 case "sample":
-                    sampleTimesArray = copy_partial_stats(server);
+                    sampleTimesArray = get_partial_stats(server);
                 case "average":
                     msptWarping = MathHelper.average(sampleTimesArray) * 1.0E-6D;
                     if (warping) {
@@ -49,8 +49,8 @@ public class TPSLogHelper {
                     }
                     break;
                 case "peak":
-                    sampleTimesArray = copy_partial_stats(server);
-                    msptWarping = get_max_truncated(sampleTimesArray, 0, Long.MAX_VALUE) * 1.0E-6D;
+                    sampleTimesArray = get_partial_stats(server);
+                    msptWarping = get_max(sampleTimesArray) * 1.0E-6D;
                     if (warping) {
                         msptActual = msptWarping;
                     } else {
@@ -114,9 +114,24 @@ public class TPSLogHelper {
         return maxVal;
     }
 
-    @Nonnull
-    public static long[] copy_partial_stats(@Nonnull MinecraftServer server) {
-        int length = Math.min(Math.max(1, CarpetSettings.HUDUpdateInterval), server.tickTimeArray.length);
+    public static long get_max(long[] values) {
+        if (values == null) {
+            return Long.MIN_VALUE;
+        }
+        long maxVal = Long.MIN_VALUE;
+        for (long value : values) {
+            if (value > maxVal) {
+                maxVal = value;
+            }
+        }
+        return maxVal;
+    }
+
+    public static long[] get_partial_stats(@Nonnull MinecraftServer server) {
+        int length = Math.max(1, CarpetSettings.HUDUpdateInterval);
+        if (length >= server.tickTimeArray.length) {
+            return server.tickTimeArray;
+        }
         long[] sampleTimesArray = new long[length];
         for (int i = 0, t = server.getTickCounter(); i < length; ++i) {
             sampleTimesArray[i] = server.tickTimeArray[--t % server.tickTimeArray.length];
