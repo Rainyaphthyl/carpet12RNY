@@ -386,7 +386,7 @@
          }
 +        LagSpikeHelper.processLagSpikes(this, LagSpikeHelper.TickPhase.ENTITY, LagSpikeHelper.EntitySubPhase.POST_NORMAL);
 +        CarpetProfiler.end_current_section();
-+        CarpetProfiler.start_section(world_name, "tileentities");
++        CarpetProfiler.start_section(world_name, "tile_entities");
  
          this.field_72984_F.func_76318_c("blockEntities");
 +        WorldHelper.swapTickTask(TickTask.BLOCK_ENTITIES); // RSMM

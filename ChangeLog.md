@@ -22,8 +22,10 @@ Carpet 1.12 with [RNY](https://github.com/Rainyaphthyl)'s Addition
     - `sample`: The average within `HUDUpdateInterval`.
     - `peak`: The worst tick time within `HUDUpdateInterval`.
 - Modifications of carpet profiling terms:
-    - `carpet`: The carpet server ticking.
-    - `<dim>`: Total tick time of each dimension.
+    - Add `carpet`: The carpet server ticking.
+    - Add `<dim>`: Total tick time of each dimension.
+    - Add `<dim>.tile_ticks`, `<dim>.chunk_ticks`, `<dim>.block_events`, `<dim>.rest`.
+    - Remove `<dim>.blocks`.
 
 # Code Details
 

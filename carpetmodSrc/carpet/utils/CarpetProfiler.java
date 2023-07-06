@@ -12,8 +12,9 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 public class CarpetProfiler {
-    private static final String[] dim_keys = new String[]{"overworld", "the_nether", "the_end"};
-    private static final String[] dim_names = new String[]{"Overworld", "Nether", "End"};
+    private static final String[] DIM_KEYS = new String[]{"overworld", "the_nether", "the_end"};
+    private static final String[] DIM_NAMES = new String[]{"Overworld", "Nether", "End"};
+    private static final String[] PREFIXES = new String[]{"", " - ", "   - "};
     private static final HashMap<String, Long> time_repo = new HashMap<>();
     public static int tick_health_requested = 0;
     private static int tick_health_elapsed = 0;
@@ -26,8 +27,8 @@ public class CarpetProfiler {
 
     @Nullable
     public static String get_dim_key(int ordinal) {
-        if (ordinal >= 0 && ordinal < dim_keys.length) {
-            return dim_keys[ordinal];
+        if (ordinal >= 0 && ordinal < DIM_KEYS.length) {
+            return DIM_KEYS[ordinal];
         } else {
             return null;
         }
@@ -42,17 +43,15 @@ public class CarpetProfiler {
         time_repo.put("autosave", 0L);
         time_repo.put("carpet", 0L);
 
-        for (String dimKey : dim_keys) {
+        for (String dimKey : DIM_KEYS) {
             time_repo.put(dimKey, 0L);
             time_repo.put(dimKey + ".spawning", 0L);
-            time_repo.put(dimKey + ".blocks", 0L);
+            time_repo.put(dimKey + ".tile_ticks", 0L);
+            time_repo.put(dimKey + ".chunk_ticks", 0L);
+            time_repo.put(dimKey + ".block_events", 0L);
             time_repo.put(dimKey + ".entities", 0L);
-            time_repo.put(dimKey + ".tileentities", 0L);
+            time_repo.put(dimKey + ".tile_entities", 0L);
         }
-        //spawning
-        //blocks
-        //entities
-        //tileentities
 
         tick_health_elapsed = ticks;
         tick_health_requested = ticks;
@@ -219,47 +218,59 @@ public class CarpetProfiler {
         //print stats
         final long total_tick_time = time_repo.get("tick");
         final double divider = 1.0D / tick_health_requested / 1000000;
-        print_stat_line(server, "Average tick time", divider * total_tick_time);
-
-        long value = time_repo.get("autosave");
-        long accumulated_total = value;
-        print_stat_line(server, "Autosave", divider * value);
-
-        value = time_repo.get("network");
-        accumulated_total += value;
-        print_stat_line(server, "Network", divider * value);
-
-        for (int i = 0; i < dim_keys.length; ++i) {
-            final long value_dim = time_repo.get(dim_keys[i]);
-            accumulated_total += value_dim;
-            print_stat_line(server, dim_names[i], divider * value_dim);
-
-            value = time_repo.get(dim_keys[i] + ".entities");
-            long accumulated_partial = value;
-            print_stat_line(server, " - Entities", divider * value);
-
-            value = time_repo.get(dim_keys[i] + ".tileentities");
-            accumulated_partial += value;
-            print_stat_line(server, " - Tile Entities", divider * value);
-
-            value = time_repo.get(dim_keys[i] + ".blocks");
-            accumulated_partial += value;
-            print_stat_line(server, " - Blocks", divider * value);
-
-            value = time_repo.get(dim_keys[i] + ".spawning");
-            accumulated_partial += value;
-            print_stat_line(server, " - Spawning", divider * value);
-
-            final long rest_dim = value_dim - accumulated_partial;
-            print_stat_line(server, " - Rest", divider * rest_dim);
-        }
+        print_stat_line(server, 0, "Average tick time", divider * total_tick_time);
+        long accumulated_total = 0L;
+        long value;
 
         value = time_repo.get("carpet");
         accumulated_total += value;
-        print_stat_line(server, "Carpet", divider * value);
+        print_stat_line(server, 1, "Carpet", divider * value);
+
+        for (int i = 0; i < DIM_KEYS.length; ++i) {
+            final long value_dim = time_repo.get(DIM_KEYS[i]);
+            accumulated_total += value_dim;
+            print_stat_line(server, 1, DIM_NAMES[i], divider * value_dim);
+
+            long accumulated_partial = 0L;
+
+            value = time_repo.get(DIM_KEYS[i] + ".spawning");
+            accumulated_partial += value;
+            print_stat_line(server, 2, "Spawning", divider * value);
+
+            value = time_repo.get(DIM_KEYS[i] + ".tile_ticks");
+            accumulated_partial += value;
+            print_stat_line(server, 2, "Tile Ticks", divider * value);
+
+            value = time_repo.get(DIM_KEYS[i] + ".chunk_ticks");
+            accumulated_partial += value;
+            print_stat_line(server, 2, "Chunk Ticks", divider * value);
+
+            value = time_repo.get(DIM_KEYS[i] + ".block_events");
+            accumulated_partial += value;
+            print_stat_line(server, 2, "Block Events", divider * value);
+
+            value = time_repo.get(DIM_KEYS[i] + ".entities");
+            accumulated_partial += value;
+            print_stat_line(server, 2, "Entities", divider * value);
+
+            value = time_repo.get(DIM_KEYS[i] + ".tile_entities");
+            accumulated_partial += value;
+            print_stat_line(server, 2, "Tile Entities", divider * value);
+
+            final long rest_dim = value_dim - accumulated_partial;
+            print_stat_line(server, 2, "Rest", divider * rest_dim);
+        }
+
+        value = time_repo.get("network");
+        accumulated_total += value;
+        print_stat_line(server, 1, "Network", divider * value);
+
+        value = time_repo.get("autosave");
+        accumulated_total += value;
+        print_stat_line(server, 1, "Autosave", divider * value);
 
         final long rest = total_tick_time - accumulated_total;
-        print_stat_line(server, "Rest", divider * rest);
+        print_stat_line(server, 1, "Rest", divider * rest);
     }
 
     public static void finalize_tick_report_for_entities(MinecraftServer server) {
@@ -313,10 +324,23 @@ public class CarpetProfiler {
         current_section = null;
     }
 
-    private static void print_stat_line(MinecraftServer server, String name, double result) {
+    private static void print_stat_line(MinecraftServer server, int layer, String name, double result) {
         String literal = String.format("%.3f", result);
         if (!"0.000".equals(literal)) {
-            Messenger.print_server_message(server, name + ": " + literal + "ms");
+            String prefix;
+            if (layer >= 0 && layer < PREFIXES.length) {
+                prefix = PREFIXES[layer];
+            } else {
+                StringBuilder prefixBuilder = new StringBuilder();
+                for (int i = 1; i < layer; ++i) {
+                    prefixBuilder.append("   ");
+                }
+                if (layer > 0) {
+                    prefixBuilder.append(" - ");
+                }
+                prefix = prefixBuilder.toString();
+            }
+            Messenger.print_server_message(server, prefix + name + ": " + literal + "ms");
         }
     }
 }
