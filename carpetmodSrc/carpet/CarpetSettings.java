@@ -34,7 +34,7 @@ public class CarpetSettings
 {
     public static boolean locked = false;
 
-    // Previous build ordinal: 4 (RNY-build-4-20230530)
+    // Previous build ordinal: 5 (RNY-build-5-20230616)
     // TODO: replace these constants at build time
     /**
      * format of version in Carpet-Addition-Naftalluvia(RNY):
@@ -58,7 +58,7 @@ public class CarpetSettings
      *     version name starts with "RNY"
      * </p>
      */
-    public static final String carpetVersion = "RNY-build-5-20230616";
+    public static final String carpetVersion = "RNY-build-6-20230708";
     public static final String minecraftVersion = "1.12.2";
     public static final String mcpMappings = "39-1.12";
 
