@@ -218,7 +218,9 @@ public class CarpetProfiler {
         //print stats
         final long total_tick_time = time_repo.get("tick");
         final double divider = 1.0D / tick_health_requested / 1000000;
-        print_stat_line(server, 0, "Average tick time", divider * total_tick_time);
+        String literal = String.format("%.3f", divider * total_tick_time);
+        Messenger.print_server_message(server,
+                "Average tick time: " + literal + "ms (in " + tick_health_requested + " ticks)");
         long accumulated_total = 0L;
         long value;
 
