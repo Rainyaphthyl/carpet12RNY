@@ -1,10 +1,7 @@
 package carpet.logging;
 
 import carpet.CarpetSettings;
-import carpet.logging.logHelpers.LightCheckReporter;
-import carpet.logging.logHelpers.PathReporter;
-import carpet.logging.logHelpers.RNGMonitor;
-import carpet.logging.logHelpers.TickWarpLogger;
+import carpet.logging.logHelpers.*;
 import com.google.common.base.Charsets;
 import com.google.gson.*;
 import net.minecraft.entity.player.EntityPlayer;
@@ -71,7 +68,7 @@ public class LoggerRegistry {
         registerLogger(PathReporter.NAME, new Logger(server, PathReporter.NAME, PathReporter.DEFAULT_OPTION, PathReporter.LOGGER_OPTIONS, LogHandler.CHAT));
 
         registerLogger("autosave", new Logger(server, "autosave", null, null, LogHandler.HUD));
-        registerLogger("tps", new Logger(server, "tps", null, null, LogHandler.HUD));
+        registerLogger(TPSLogHelper.NAME, new Logger(server, TPSLogHelper.NAME, TPSLogHelper.DEFAULT_OPTION, TPSLogHelper.LOGGER_OPTIONS, LogHandler.HUD));
         registerLogger("packets", new Logger(server, "packets", null, null, LogHandler.HUD));
         registerLogger("counter", new Logger(server, "counter", "white", new String[]{"all", "cactus", "white", "orange", "magenta", "light_blue", "yellow", "lime", "pink", "gray", "silver", "cyan", "purple", "blue", "brown", "green", "red", "black"}, LogHandler.HUD));
         registerLogger("mobcaps", new Logger(server, "mobcaps", "dynamic", new String[]{"dynamic", "overworld", "nether", "end"}, LogHandler.HUD));

@@ -123,6 +123,7 @@ public class CarpetServer // static for now - easier to handle all around the co
     }
 
     public static void tick(MinecraftServer server) {
+        CarpetProfiler.start_section(null, "carpet");
         TickSpeed.tick(server);
         if (CarpetSettings.redstoneMultimeterLegacy) {
             TickStartEventDispatcher.dispatchEvent(server.getTickCounter());
@@ -133,6 +134,7 @@ public class CarpetServer // static for now - easier to handle all around the co
         HUDController.update_hud(server);
         WorldEditBridge.onStartTick();
         PUBSUB.update(server.getTickCounter());
+        CarpetProfiler.end_current_section();
     }
 
     public static void playerConnected(EntityPlayerMP player) {

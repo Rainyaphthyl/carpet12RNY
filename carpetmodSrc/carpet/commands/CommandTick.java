@@ -4,6 +4,7 @@ import carpet.CarpetSettings;
 import carpet.carpetclient.CarpetClientMessageHandler;
 import carpet.helpers.TickSpeed;
 import carpet.utils.CarpetProfiler;
+import carpet.utils.Messenger;
 import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.command.NumberInvalidException;
@@ -48,7 +49,10 @@ public class CommandTick extends CommandCarpetBase {
     @Override
     @ParametersAreNonnullByDefault
     public void execute(final MinecraftServer server, final ICommandSender sender, String[] args) throws CommandException {
-        if (!command_enabled("commandTick", sender)) return;
+        if (!command_enabled("commandTick", sender)) {
+            Messenger.m(sender, "d Do not cheat! Use command ", "y \"/profile\"", "d  instead");
+            return;
+        }
         if (args.length == 0) {
             throw new WrongUsageException(getUsage(sender));
         }

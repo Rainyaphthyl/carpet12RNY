@@ -5,6 +5,7 @@ import carpet.helpers.HopperCounter;
 import carpet.helpers.TickSpeed;
 import carpet.logging.LoggerRegistry;
 import carpet.logging.logHelpers.PacketCounter;
+import carpet.logging.logHelpers.TPSLogHelper;
 import carpet.logging.logHelpers.TickWarpLogger;
 import net.minecraft.entity.EnumCreatureType;
 import net.minecraft.entity.player.EntityPlayer;
@@ -59,7 +60,7 @@ public class HUDController
             log_autosave(server);
 
         if (LoggerRegistry.__tps)
-            log_tps(server);
+            TPSLogHelper.update_log_HUD(server);
 
         if (LoggerRegistry.__mobcaps)
             log_mobcaps();
@@ -104,7 +105,8 @@ public class HUDController
         LoggerRegistry.getLogger("autosave").log(() -> message, "Prev", previous, "Next", next);
     }
 
-    private static void log_tps(MinecraftServer server)
+    @Deprecated
+    private static void log_tps_legacy(MinecraftServer server)
     {
         double MSPT = MathHelper.average(server.tickTimeArray) * 1.0E-6D;
         double TPS = 1000.0D / Math.max((TickSpeed.time_warp_start_time != 0)?0.0:TickSpeed.mspt, MSPT);
@@ -112,7 +114,7 @@ public class HUDController
         ITextComponent[] message = new ITextComponent[]{Messenger.m(null,
                 "g TPS: ", String.format(Locale.US, "%s %.1f",color, TPS),
                 "g  MSPT: ", String.format(Locale.US,"%s %.1f", color, MSPT))};
-        LoggerRegistry.getLogger("tps").log(() -> message, "MSPT", MSPT, "TPS", TPS);
+        TPSLogHelper.get_instance().log(() -> message, "MSPT", MSPT, "TPS", TPS);
     }
 
     private static void log_mobcaps()

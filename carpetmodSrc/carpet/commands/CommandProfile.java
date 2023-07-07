@@ -1,55 +1,73 @@
 package carpet.commands;
 
-import javax.annotation.Nullable;
-
 import carpet.CarpetSettings;
 import carpet.utils.CarpetProfiler;
 import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommandSender;
+import net.minecraft.command.WrongUsageException;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.math.BlockPos;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import javax.annotation.ParametersAreNonnullByDefault;
 import java.util.Collections;
 import java.util.List;
 
-public class CommandProfile extends CommandCarpetBase
-{
+public class CommandProfile extends CommandCarpetBase {
     @Override
-    public String getName()
-    {
+    @Nonnull
+    public String getName() {
         return "profile";
     }
 
     @Override
-    public String getUsage(ICommandSender sender)
-    {
-        return "Usage: /profile <entities>";
+    @Nonnull
+    @ParametersAreNonnullByDefault
+    public String getUsage(ICommandSender sender) {
+        return "/profile (entities | health) <ticks>";
     }
 
     @Override
-    public void execute(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException
-    {
-        if (!command_enabled("commandProfile", sender)) return;
-        if (args.length > 0 && "entities".equalsIgnoreCase(args[0]))
-        {
-            CarpetProfiler.prepare_entity_report(100);
+    @ParametersAreNonnullByDefault
+    public void execute(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
+        if (!command_enabled("commandProfile", sender)) {
+            return;
         }
-        else
-        {
+        if (args.length > 0) {
+            if ("health".equalsIgnoreCase(args[0])) {
+                int step = 100;
+                if (args.length > 1) {
+                    step = parseInt(args[1], 20, 72000);
+                }
+                CarpetProfiler.prepare_tick_report(step);
+                return;
+            } else if ("entities".equalsIgnoreCase(args[0])) {
+                int step = 100;
+                if (args.length > 1) {
+                    step = parseInt(args[1], 20, 72000);
+                }
+                CarpetProfiler.prepare_entity_report(step);
+                return;
+            }
+        } else {
             CarpetProfiler.prepare_tick_report(100);
+            return;
         }
-
+        throw new WrongUsageException(getUsage(sender));
     }
-    public List<String> getTabCompletions(MinecraftServer server, ICommandSender sender, String[] args, @Nullable BlockPos pos)
-    {
-        if (!CarpetSettings.commandProfile)
-        {
-            return Collections.<String>emptyList();
+
+    @Nonnull
+    @ParametersAreNonnullByDefault
+    public List<String> getTabCompletions(MinecraftServer server, ICommandSender sender, String[] args, @Nullable BlockPos pos) {
+        if (!CarpetSettings.commandProfile) {
+            return Collections.emptyList();
         }
-        if (args.length == 1)
-        {
-            return getListOfStringsMatchingLastWord(args, "entities");
+        if (args.length == 1) {
+            return getListOfStringsMatchingLastWord(args, "entities", "health");
+        } else if (args.length == 2) {
+            return getListOfStringsMatchingLastWord(args, "20", "100", "900", "72000");
         }
-        return Collections.<String>emptyList();
+        return Collections.emptyList();
     }
 }
