@@ -52,10 +52,10 @@ public class TPSLogHelper {
                     sampleTimesArray = get_partial_stats(server);
                     msptWarping = get_max(sampleTimesArray) * 1.0E-6D;
                     if (warping) {
-                        msptActual = msptWarping;
+                        msptActual = MathHelper.average(sampleTimesArray) * 1.0E-6D;
                     } else {
                         long stdInterval = TickSpeed.mspt * 1_000_000L;
-                        msptActual = get_max_truncated(sampleTimesArray, stdInterval, Long.MAX_VALUE) * 1.0E-6D;
+                        msptActual = get_average_truncated(sampleTimesArray, stdInterval, Long.MAX_VALUE) * 1.0E-6D;
                     }
                     break;
             }
@@ -97,6 +97,7 @@ public class TPSLogHelper {
         return (double) sum / values.length;
     }
 
+    @SuppressWarnings("unused")
     public static long get_max_truncated(long[] values, long floor, long ceil) {
         if (floor > ceil) {
             return ceil;
