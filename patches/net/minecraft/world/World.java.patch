@@ -649,7 +649,7 @@
      }
  
      public DifficultyInstance func_175649_E(BlockPos p_175649_1_)
-@@ -3361,4 +3604,126 @@
+@@ -3361,4 +3604,130 @@
      {
          return null;
      }
@@ -728,6 +728,10 @@
 +                {
 +                    WorldHelper.onObserverUpdate(this, pos); // RSMM
 +                    ((BlockObserver)iblockstate.func_177230_c()).func_190962_b(iblockstate, this, pos, changedBlock, changedBlockPos);
++                }
++                catch (ThrowableSuppression suppression)
++                {
++                    throw suppression;
 +                }
 +                catch (StackOverflowError e)
 +                {
