@@ -20,7 +20,7 @@
 +                try {
 +                    p_180650_1_.func_175684_a(p_180650_2_, this, MathHelper.func_76136_a(p_180650_4_, 20, 40));
 +                } catch (StackOverflowError suppression) {
-+                    throw new ThrowableSuppression(suppression);
++                    throw new ThrowableSuppression(suppression, p_180650_2_);
 +                }
 +            } else
 +            // CM end

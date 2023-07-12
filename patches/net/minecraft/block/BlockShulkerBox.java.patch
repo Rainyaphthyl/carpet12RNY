@@ -37,7 +37,7 @@
 +            return Container.func_94526_b((IInventory) p_180641_2_.func_175625_s(p_180641_3_));
 +        } catch (ClassCastException exception) {
 +            if (CarpetSettings.updateSuppressionCrashFix) {
-+                throw new ThrowableSuppression(exception);
++                throw new ThrowableSuppression(exception, p_180641_3_);
 +            } else {
 +                throw exception;
 +            }

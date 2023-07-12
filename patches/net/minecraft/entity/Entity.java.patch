@@ -507,8 +507,8 @@
 +                            this.func_191955_a(iblockstate);
 +                        } catch (ThrowableSuppression suppression) {
 +                            throw suppression;
-+                        } catch (StackOverflowError suppression) {
-+                            throw new ThrowableSuppression(suppression);
++                        } catch (StackOverflowError error) {
++                            throw new ThrowableSuppression(error, posIter);
 +                        } catch (Throwable throwable) {
 +                            CrashReport crashreport = CrashReport.func_85055_a(throwable, "Colliding entity with block");
 +                            CrashReportCategory crashreportcategory = crashreport.func_85058_a("Block being collided with");

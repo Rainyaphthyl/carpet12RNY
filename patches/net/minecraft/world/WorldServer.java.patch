@@ -682,7 +682,7 @@
 +                                // CM - start
 +                                // carpet12RNY - updateSuppressionCrashFix - ITT fix
 +                                if (CarpetSettings.updateSuppressionCrashFix && throwable instanceof StackOverflowError) {
-+                                    throw new ThrowableSuppression(throwable);
++                                    throw new ThrowableSuppression(throwable, nextticklistentry1.field_180282_a);
 +                                }
 +                                // CM - end
                                  CrashReport crashreport = CrashReport.func_85055_a(throwable, "Exception while ticking a block");

@@ -688,7 +688,7 @@
 +            }
 +            catch (StackOverflowError e)
 +            {
-+                throw new ThrowableSuppression(e);
++                throw new ThrowableSuppression(e, pos);
 +            }
 +            catch (Throwable throwable)
 +            {
@@ -739,7 +739,7 @@
 +                }
 +                catch (StackOverflowError e)
 +                {
-+                    throw new ThrowableSuppression(e);
++                    throw new ThrowableSuppression(e, pos);
 +                }
 +                catch (Throwable throwable)
 +                {

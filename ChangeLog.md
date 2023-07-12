@@ -10,12 +10,12 @@ Carpet 1.12 with [RNY](https://github.com/Rainyaphthyl)'s Addition
 4. Add a spawning rate calculator.
 5. Define and throw `ChunkNotGeneratedException`.
 6. Make command `/perimeterinfo` check multiple entities.
-7. Display the causes of potential server crashes under `updateSuppressionCrashFix`.
 
 # Feature Modifications
 
 1. Fixed the bug that `updateSuppressionCrashFix` still fails under instant tile ticks ([issue#25](https://github.com/Rainyaphthyl/carpet12RNY/issues/25#issue-1759841478)).
 2. Rule `updateSuppressionCrashFix` is enabled to deal with `ClassCastException` (the magic box).
+3. Display the causes of potential server crashes under `updateSuppressionCrashFix`.
 
 # Code Details
 
