@@ -1,6 +1,14 @@
 --- ../src-base/minecraft/net/minecraft/block/BlockShulkerBox.java
 +++ ../src-work/minecraft/net/minecraft/block/BlockShulkerBox.java
-@@ -32,6 +32,8 @@
+@@ -1,5 +1,7 @@
+ package net.minecraft.block;
+ 
++import carpet.helpers.ThrowableSuppression;
++import carpet.utils.Messenger;
+ import net.minecraft.block.material.EnumPushReaction;
+ import net.minecraft.block.material.MapColor;
+ import net.minecraft.block.material.Material;
+@@ -32,6 +34,8 @@
  import net.minecraft.world.IBlockAccess;
  import net.minecraft.world.World;
  
@@ -9,7 +17,7 @@
  public class BlockShulkerBox extends BlockContainer
  {
      public static final PropertyEnum<EnumFacing> field_190957_a = PropertyDirection.func_177714_a("facing");
-@@ -176,7 +178,7 @@
+@@ -176,7 +180,7 @@
                  NBTTagCompound nbttagcompound = new NBTTagCompound();
                  NBTTagCompound nbttagcompound1 = new NBTTagCompound();
                  nbttagcompound.func_74782_a("BlockEntityTag", ((TileEntityShulkerBox)tileentity).func_190580_f(nbttagcompound1));
@@ -18,3 +26,22 @@
  
                  if (tileentityshulkerbox.func_145818_k_())
                  {
+@@ -211,7 +215,17 @@
+ 
+     public int func_180641_l(IBlockState p_180641_1_, World p_180641_2_, BlockPos p_180641_3_)
+     {
+-        return Container.func_94526_b((IInventory)p_180641_2_.func_175625_s(p_180641_3_));
++        //return Container.calcRedstoneFromInventory((IInventory) worldIn.getTileEntity(pos));
++        // carpet12RNY - updateSuppressionCrashFix - CCE
++        try {
++            return Container.func_94526_b((IInventory) p_180641_2_.func_175625_s(p_180641_3_));
++        } catch (ClassCastException exception) {
++            if (CarpetSettings.updateSuppressionCrashFix) {
++                throw new ThrowableSuppression(exception);
++            } else {
++                throw exception;
++            }
++        }
+     }
+ 
+     public ItemStack func_185473_a(World p_185473_1_, BlockPos p_185473_2_, IBlockState p_185473_3_)

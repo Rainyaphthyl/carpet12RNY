@@ -11,4 +11,9 @@ public class ThrowableSuppression extends RuntimeException {
     public ThrowableSuppression() {
         this("Update Suppression");
     }
+
+    public ThrowableSuppression(Throwable cause) {
+        this();
+        initCause(cause);
+    }
 }
