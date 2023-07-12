@@ -12,11 +12,10 @@ Carpet 1.12 with [RNY](https://github.com/Rainyaphthyl)'s Addition
 6. Make command `/perimeterinfo` check multiple entities.
 7. Make rule `updateSuppressionCrashFix` fix the crashes caused by ClassCastException.
 8. Display the causes of potential server crashes under `updateSuppressionCrashFix`.
-9. Fix the bug that `updateSuppressionCrashFix` still fails under instant tile ticks.
 
 # Feature Modifications
 
-1. *None*
+1. Fix the bug that `updateSuppressionCrashFix` still fails under instant tile ticks ([issue#25](https://github.com/Rainyaphthyl/carpet12RNY/issues/25#issue-1759841478)).
 
 # Code Details
 
