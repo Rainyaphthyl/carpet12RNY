@@ -20,4 +20,5 @@ Carpet 1.12 with [RNY](https://github.com/Rainyaphthyl)'s Addition
 
 # Code Details
 
-1. *None*
+1. Remove method `validateInstantScheduling` and `validateInstantFallingFlag` in `CarpetSettings`.
+2. Rewrite the usages of `instantScheduling` and `instantFallingFlag`.

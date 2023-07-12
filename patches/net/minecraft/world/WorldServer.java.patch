@@ -553,7 +553,18 @@
          return this.field_73064_N.contains(nextticklistentry);
      }
  
-@@ -501,17 +804,29 @@
+@@ -491,7 +794,9 @@
+     {
+         Material material = p_175654_2_.func_176223_P().func_185904_a();
+ 
+-        if (this.field_72999_e && material != Material.field_151579_a)
++        // carpet12RNY - rewrite instantScheduling
++        if ((this.field_72999_e || CarpetSettings.instantScheduling) && material != Material.field_151579_a)
++        //if (this.scheduledUpdatesAreImmediate && material != Material.AIR)
+         {
+             if (p_175654_2_.func_149698_L())
+             {
+@@ -501,17 +806,29 @@
  
                      if (iblockstate.func_185904_a() != Material.field_151579_a && iblockstate.func_177230_c() == p_175654_2_)
                      {
@@ -585,7 +596,7 @@
  
          if (this.func_175667_e(p_175654_1_))
          {
-@@ -531,7 +846,13 @@
+@@ -531,7 +848,13 @@
  
      public void func_180497_b(BlockPos p_180497_1_, Block p_180497_2_, int p_180497_3_, int p_180497_4_)
      {
@@ -600,7 +611,7 @@
          nextticklistentry.func_82753_a(p_180497_4_);
          Material material = p_180497_2_.func_176223_P().func_185904_a();
  
-@@ -549,7 +870,8 @@
+@@ -549,7 +872,8 @@
  
      public void func_72939_s()
      {
@@ -610,7 +621,7 @@
          {
              if (this.field_80004_Q++ >= 300)
              {
-@@ -567,6 +889,8 @@
+@@ -567,6 +891,8 @@
  
      protected void func_184147_l()
      {
@@ -619,7 +630,7 @@
          super.func_184147_l();
          this.field_72984_F.func_76318_c("players");
  
-@@ -621,6 +945,8 @@
+@@ -621,6 +947,8 @@
  
              this.field_72984_F.func_76319_b();
          }
@@ -628,7 +639,7 @@
      }
  
      public void func_82742_i()
-@@ -644,9 +970,18 @@
+@@ -644,9 +972,18 @@
              }
              else
              {
@@ -649,7 +660,7 @@
                  }
  
                  this.field_72984_F.func_76320_a("cleaning");
-@@ -677,12 +1012,15 @@
+@@ -677,12 +1014,15 @@
  
                      if (this.func_175707_a(nextticklistentry1.field_180282_a.func_177982_a(0, 0, 0), nextticklistentry1.field_180282_a.func_177982_a(0, 0, 0)))
                      {
@@ -665,7 +676,7 @@
                                  iblockstate.func_177230_c().func_180650_b(this, nextticklistentry1.field_180282_a, iblockstate, this.field_73012_v);
                              }
                              catch (Throwable throwable)
-@@ -699,6 +1037,7 @@
+@@ -699,6 +1039,7 @@
                          this.func_175684_a(nextticklistentry1.field_180282_a, nextticklistentry1.func_151351_a(), 0);
                      }
                  }
@@ -673,7 +684,7 @@
  
                  this.field_72984_F.func_76319_b();
                  this.field_94579_S.clear();
-@@ -950,11 +1289,18 @@
+@@ -950,11 +1291,18 @@
  
              chunkproviderserver.func_186027_a(p_73044_1_);
  
@@ -693,7 +704,7 @@
                  }
              }
          }
-@@ -1033,9 +1379,15 @@
+@@ -1033,9 +1381,15 @@
                  }
                  else
                  {
@@ -709,7 +720,7 @@
                          return false;
                      }
  
-@@ -1055,6 +1407,7 @@
+@@ -1055,6 +1409,7 @@
          this.field_175729_l.func_76038_a(p_72923_1_.func_145782_y(), p_72923_1_);
          this.field_175741_N.put(p_72923_1_.func_110124_au(), p_72923_1_);
          Entity[] aentity = p_72923_1_.func_70021_al();
@@ -717,7 +728,7 @@
  
          if (aentity != null)
          {
-@@ -1117,7 +1470,10 @@
+@@ -1117,7 +1472,10 @@
  
          for (EntityPlayer entityplayer : this.field_73010_i)
          {
@@ -729,7 +740,7 @@
              {
                  ((EntityPlayerMP)entityplayer).field_71135_a.func_147359_a(new SPacketExplosion(p_72885_2_, p_72885_4_, p_72885_6_, p_72885_8_, explosion.func_180343_e(), (Vec3d)explosion.func_77277_b().get(entityplayer)));
              }
-@@ -1139,10 +1495,15 @@
+@@ -1139,10 +1497,15 @@
          }
  
          this.field_147490_S[this.field_147489_T].add(blockeventdata);
@@ -745,7 +756,7 @@
          while (!this.field_147490_S[this.field_147489_T].isEmpty())
          {
              int i = this.field_147489_T;
-@@ -1150,19 +1511,40 @@
+@@ -1150,19 +1513,40 @@
  
              for (BlockEventData blockeventdata : this.field_147490_S[i])
              {
@@ -787,7 +798,7 @@
          return iblockstate.func_177230_c() == p_147485_1_.func_151337_f() ? iblockstate.func_189547_a(this, p_147485_1_.func_180328_a(), p_147485_1_.func_151339_d(), p_147485_1_.func_151338_e()) : false;
      }
  
-@@ -1173,6 +1555,8 @@
+@@ -1173,6 +1557,8 @@
  
      protected void func_72979_l()
      {
@@ -796,7 +807,7 @@
          boolean flag = this.func_72896_J();
          super.func_72979_l();
  
-@@ -1200,6 +1584,8 @@
+@@ -1200,6 +1586,8 @@
              this.field_73061_a.func_184103_al().func_148540_a(new SPacketChangeGameState(7, this.field_73004_o));
              this.field_73061_a.func_184103_al().func_148540_a(new SPacketChangeGameState(8, this.field_73017_q));
          }
@@ -805,7 +816,7 @@
      }
  
      @Nullable
-@@ -1299,4 +1685,19 @@
+@@ -1299,4 +1687,19 @@
              {
              }
          }
