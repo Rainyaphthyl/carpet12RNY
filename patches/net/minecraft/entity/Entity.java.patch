@@ -384,7 +384,7 @@
          return EnumFacing.func_176731_b(MathHelper.func_76128_c((double)(this.field_70177_z * 4.0F / 360.0F) + 0.5D) & 3);
      }
  
-@@ -2886,4 +3029,137 @@
+@@ -2886,4 +3029,139 @@
      {
          return 1;
      }
@@ -505,8 +505,10 @@
 +                        try {
 +                            iblockstate.func_177230_c().func_180634_a(this.field_70170_p, posIter, iblockstate, this);
 +                            this.func_191955_a(iblockstate);
-+                        } catch (StackOverflowError | ThrowableSuppression suppression) {
-+                            throw new ThrowableSuppression();
++                        } catch (ThrowableSuppression suppression) {
++                            throw suppression;
++                        } catch (StackOverflowError error) {
++                            throw new ThrowableSuppression(error, posIter);
 +                        } catch (Throwable throwable) {
 +                            CrashReport crashreport = CrashReport.func_85055_a(throwable, "Colliding entity with block");
 +                            CrashReportCategory crashreportcategory = crashreport.func_85058_a("Block being collided with");

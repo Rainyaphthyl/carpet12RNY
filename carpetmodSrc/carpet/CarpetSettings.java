@@ -182,34 +182,11 @@ public class CarpetSettings
     @Rule(desc = "Makes update carpet public for all users.", category = CREATIVE)
     public static boolean updateCarpetAll;
 
-    @Rule(desc = "Sets the instant falling flag to true. The boolean used in world population that can be exploited turning true making falling blocks fall instantly.", category = CREATIVE, validator = "validateInstantFallingFlag")
+    @Rule(desc = "Sets the instant falling flag to true. The boolean used in world population that can be exploited turning true making falling blocks fall instantly.", category = CREATIVE)
     public static boolean instantFallingFlag = false;
 
-    private static boolean validateInstantFallingFlag(boolean value) {
-        if (value) {
-            BlockFalling.fallInstantly = true;
-        }else {
-            BlockFalling.fallInstantly = false;
-        }
-        return true;
-    }
-
-    @Rule(desc = "Sets the instant scheduled updates instantly to true. The boolean used in world population that can be exploited turning true making all repeaters, comperators, observers and similar components update instantly.", category = CREATIVE, validator = "validateInstantScheduling")
+    @Rule(desc = "Sets the instant scheduled updates instantly to true. The boolean used in world population that can be exploited turning true making all repeaters, comparators, observers and similar components update instantly.", category = CREATIVE)
     public static boolean instantScheduling = false;
-    private static boolean validateInstantScheduling(boolean value) {
-        if (value) {
-            for (int dim = 0; dim < 3; dim++) {
-                WorldServer world = CarpetServer.minecraft_server.worlds[dim];
-                world.scheduledUpdatesAreImmediate = true;
-            }
-        }else {
-            for (int dim = 0; dim < 3; dim++) {
-                WorldServer world = CarpetServer.minecraft_server.worlds[dim];
-                world.scheduledUpdatesAreImmediate = false;
-            }
-        }
-        return true;
-    }
 
     @Rule(desc = "Beacons send out async block updates when powered", category = CREATIVE)
     public static boolean asyncBeaconUpdates = false;

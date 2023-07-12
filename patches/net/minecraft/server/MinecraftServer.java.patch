@@ -304,23 +304,24 @@
  
                  if (this.field_71315_w % 20 == 0)
                  {
-@@ -686,41 +795,67 @@
+@@ -686,41 +795,69 @@
                  {
                      worldserver.func_72835_b();
                  }
 +                catch (ThrowableSuppression e)
 +                {
-+                    Messenger.print_server_message(this, "You just caused a server crash in world tick.");
++                    ThrowableSuppression.printServerWarning(e, this, "world tick");
 +                }
                  catch (Throwable throwable1)
                  {
                      CrashReport crashreport = CrashReport.func_85055_a(throwable1, "Exception ticking world");
                      worldserver.func_72914_a(crashreport);
 -                    throw new ReportedException(crashreport);
-+                    if(!CarpetSettings.updateSuppressionCrashFix || !(crashreport.func_71505_b() instanceof ThrowableSuppression) ) {
-+                        throw new ReportedException(crashreport);
++                    Throwable cause = crashreport.func_71505_b();
++                    if (CarpetSettings.updateSuppressionCrashFix && cause instanceof ThrowableSuppression) {
++                        ThrowableSuppression.printServerWarning(cause, this, "world tick");
 +                    } else {
-+                        Messenger.print_server_message(this, "You just caused a server crash in world tick.");
++                        throw new ReportedException(crashreport);
 +                    }
                  }
  
@@ -332,17 +333,18 @@
                  }
 +                catch (ThrowableSuppression e)
 +                {
-+                    Messenger.print_server_message(this, "You just caused a server crash in update entities.");
++                    ThrowableSuppression.printServerWarning(e, this, "update entities");
 +                }
                  catch (Throwable throwable)
                  {
                      CrashReport crashreport1 = CrashReport.func_85055_a(throwable, "Exception ticking world entities");
                      worldserver.func_72914_a(crashreport1);
 -                    throw new ReportedException(crashreport1);
-+                    if(!CarpetSettings.updateSuppressionCrashFix || !(crashreport1.func_71505_b() instanceof ThrowableSuppression) ) {
-+                        throw new ReportedException(crashreport1);
++                    Throwable cause = crashreport1.func_71505_b();
++                    if (CarpetSettings.updateSuppressionCrashFix && cause instanceof ThrowableSuppression) {
++                        ThrowableSuppression.printServerWarning(cause, this, "update entities");
 +                    } else {
-+                        Messenger.print_server_message(this, "You just caused a server crash in update entities.");
++                        throw new ReportedException(crashreport1);
 +                    }
                  }
  
@@ -374,7 +376,7 @@
  
          for (int k = 0; k < this.field_71322_p.size(); ++k)
          {
-@@ -728,6 +863,9 @@
+@@ -728,6 +865,9 @@
          }
  
          this.field_71304_b.func_76319_b();
@@ -384,7 +386,7 @@
      }
  
      public boolean func_71255_r()
-@@ -939,7 +1077,7 @@
+@@ -939,7 +1079,7 @@
  
      public String getServerModName()
      {
@@ -393,7 +395,7 @@
      }
  
      public CrashReport func_71230_b(CrashReport p_71230_1_)
-@@ -1512,6 +1650,7 @@
+@@ -1512,6 +1652,7 @@
      {
          if (this.func_152345_ab())
          {
@@ -401,7 +403,7 @@
              this.func_184103_al().func_72389_g();
              this.field_71305_c[0].func_184146_ak().func_186522_a();
              this.func_191949_aK().func_192779_a();
-@@ -1523,4 +1662,9 @@
+@@ -1523,4 +1664,9 @@
              this.func_152344_a(this::func_193031_aM);
          }
      }
