@@ -39,7 +39,7 @@ public class CommandTick extends CommandCarpetBase {
     public String getUsage(ICommandSender sender) {
         return "/tick rate <tps>" +
                 "\n | /tick warp (<ticks>|interrupt|status)" +
-                "\n | /tick (freeze|step [<steps>])" +
+                "\n | /tick (freeze|pause|step [<steps>])" +
                 "\n | /tick superHot [start|stop]";
     }
 
@@ -109,9 +109,9 @@ public class CommandTick extends CommandCarpetBase {
         } else if ("freeze".equalsIgnoreCase(args[0])) {
             TickSpeed.is_paused = !TickSpeed.is_paused;
             if (TickSpeed.is_paused) {
-                notifyCommandListener(sender, this, "Game is paused");
+                notifyCommandListener(sender, this, "Game is paused, but you should NOT use \"/tick freeze\"");
             } else {
-                notifyCommandListener(sender, this, "Game runs normally");
+                notifyCommandListener(sender, this, "Game runs normally, but you should NOT use \"/tick freeze\"");
             }
             return;
         } else if ("step".equalsIgnoreCase(args[0])) {
@@ -132,9 +132,9 @@ public class CommandTick extends CommandCarpetBase {
             }
             TickSpeed.is_superHot = !TickSpeed.is_superHot;
             if (TickSpeed.is_superHot) {
-                notifyCommandListener(sender, this, "Superhot enabled");
+                notifyCommandListener(sender, this, "Superhot enabled, but you should NOT use \"/tick superHot\"");
             } else {
-                notifyCommandListener(sender, this, "Superhot disabled");
+                notifyCommandListener(sender, this, "Superhot disabled, but you should NOT use \"/tick superHot\"");
             }
             return;
         } else if ("health".equalsIgnoreCase(args[0])) {
@@ -151,6 +151,11 @@ public class CommandTick extends CommandCarpetBase {
             }
             CarpetProfiler.prepare_entity_report(step);
             return;
+        } else if ("pause".equalsIgnoreCase(args[0])) {
+            TickSpeed.gamePaused = !TickSpeed.gamePaused;
+            notifyCommandListener(sender, this, TickSpeed.gamePaused ? "Game is paused" : "Game continues");
+            Messenger.s(sender, "Command \"/tick pause\" is a work in progress", "r");
+            return;
         }
         throw new WrongUsageException(getUsage(sender));
     }
@@ -163,7 +168,7 @@ public class CommandTick extends CommandCarpetBase {
             return Collections.emptyList();
         }
         if (args.length == 1) {
-            return getListOfStringsMatchingLastWord(args, "rate", "warp", "freeze", "step", "superHot", "health", "entities");
+            return getListOfStringsMatchingLastWord(args, "rate", "warp", "freeze", "pause", "step", "superHot", "health", "entities");
         }
         if (args.length == 2 && "superHot".equalsIgnoreCase(args[0])) {
             return getListOfStringsMatchingLastWord(args, "stop", "start");
