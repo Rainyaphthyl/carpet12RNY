@@ -2,6 +2,8 @@ package carpet.helpers;
 
 import carpet.CarpetServer;
 import carpet.CarpetSettings;
+import carpet.logging.LoggerRegistry;
+import carpet.logging.logHelpers.RNGMonitor;
 import carpet.logging.logHelpers.TickWarpLogger;
 import carpet.pubsub.PubSubInfoProvider;
 import carpet.utils.Messenger;
@@ -10,14 +12,16 @@ import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.math.MathHelper;
+import redstone.multimeter.common.TickTask;
+import redstone.multimeter.helper.WorldHelper;
 
 import javax.annotation.Nonnull;
 import java.util.Objects;
 
-public class TickSpeed
-{
+public class TickSpeed {
     public static final int PLAYER_GRACE = 2;
     public static float tickrate = 20.0f;
+    private static final PubSubInfoProvider<Float> PUBSUB_TICKRATE = new PubSubInfoProvider<>(CarpetServer.PUBSUB, "carpet.tick.rate", 0, () -> tickrate);
     public static long mspt = 50L;
     public static long warp_temp_mspt = 1L;
     public static long time_bias = 0;
@@ -30,33 +34,27 @@ public class TickSpeed
     public static boolean process_entities = true;
     public static boolean is_paused = false;
     public static boolean is_superHot = false;
-
-    private static PubSubInfoProvider<Float> PUBSUB_TICKRATE = new PubSubInfoProvider<>(CarpetServer.PUBSUB, "carpet.tick.rate", 0, () -> tickrate);
+    public static boolean gamePaused = false;
 
     static {
         new PubSubInfoProvider<>(CarpetServer.PUBSUB, "minecraft.performance.mspt", CarpetSettings.HUDUpdateInterval, TickSpeed::getMSPT);
         new PubSubInfoProvider<>(CarpetServer.PUBSUB, "minecraft.performance.tps", CarpetSettings.HUDUpdateInterval, TickSpeed::getTPS);
     }
 
-    public static void reset_player_active_timeout()
-    {
-        if (player_active_timeout < PLAYER_GRACE)
-        {
+    public static void reset_player_active_timeout() {
+        if (player_active_timeout < PLAYER_GRACE) {
             player_active_timeout = PLAYER_GRACE;
         }
     }
 
-    public static void add_ticks_to_run_in_pause(int ticks)
-    {
-        player_active_timeout = PLAYER_GRACE+ticks;
+    public static void add_ticks_to_run_in_pause(int ticks) {
+        player_active_timeout = PLAYER_GRACE + ticks;
     }
 
-    public static void tickrate(float rate)
-    {
+    public static void tickrate(float rate) {
         tickrate = rate;
-        mspt = (long)(1000.0/tickrate);
-        if (mspt <=0)
-        {
+        mspt = (long) (1000.0 / tickrate);
+        if (mspt <= 0) {
             mspt = 1L;
             tickrate = 1000.0f;
         }
@@ -97,40 +95,31 @@ public class TickSpeed
     /**
      * @return completed ticks
      */
-    public static long finish_time_warp()
-    {
+    public static long finish_time_warp() {
 
         long completed_ticks = time_warp_scheduled_ticks - time_bias;
-        double milis_to_complete = System.nanoTime()-time_warp_start_time;
-        if (milis_to_complete == 0.0)
-        {
+        double milis_to_complete = System.nanoTime() - time_warp_start_time;
+        if (milis_to_complete == 0.0) {
             milis_to_complete = 1.0;
         }
         milis_to_complete /= 1000000.0;
-        int tps = (int) (1000.0D*completed_ticks/milis_to_complete);
-        double mspt = milis_to_complete/completed_ticks;
+        int tps = (int) (1000.0D * completed_ticks / milis_to_complete);
+        double mspt = milis_to_complete / completed_ticks;
         time_warp_scheduled_ticks = 0;
         time_warp_start_time = 0;
-        if (tick_warp_callback != null)
-        {
+        if (tick_warp_callback != null) {
             ICommandManager icommandmanager = Objects.requireNonNull(tick_warp_sender.getServer()).getCommandManager();
-            try
-            {
+            try {
                 int j = icommandmanager.executeCommand(tick_warp_sender, tick_warp_callback);
 
-                if (j < 1)
-                {
-                    if (time_advancerer != null)
-                    {
-                        Messenger.m(time_advancerer, "r Command Callback failed: ", "rb /"+tick_warp_callback,"/"+tick_warp_callback);
+                if (j < 1) {
+                    if (time_advancerer != null) {
+                        Messenger.m(time_advancerer, "r Command Callback failed: ", "rb /" + tick_warp_callback, "/" + tick_warp_callback);
                     }
                 }
-            }
-            catch (Throwable var23)
-            {
-                if (time_advancerer != null)
-                {
-                    Messenger.m(time_advancerer, "r Command Callback failed - unknown error: ", "rb /"+tick_warp_callback,"/"+tick_warp_callback);
+            } catch (Throwable var23) {
+                if (time_advancerer != null) {
+                    Messenger.m(time_advancerer, "r Command Callback failed - unknown error: ", "rb /" + tick_warp_callback, "/" + tick_warp_callback);
                 }
             }
             tick_warp_callback = null;
@@ -155,46 +144,56 @@ public class TickSpeed
         return completed_ticks;
     }
 
-    public static boolean continueWarp()
-    {
-        if (time_bias > 0)
-        {
+    public static boolean continueWarp() {
+        if (time_bias > 0) {
             if (time_bias == time_warp_scheduled_ticks) //first call after previous tick, adjust start time
             {
                 time_warp_start_time = System.nanoTime();
             }
             time_bias -= 1;
             return true;
-        }
-        else
-        {
+        } else {
             finish_time_warp();
             return false;
         }
     }
 
-    public static void tick(MinecraftServer server)
-    {
+    public static void tick() {
         process_entities = true;
-        if (player_active_timeout > 0)
-        {
+        if (player_active_timeout > 0) {
             player_active_timeout--;
         }
-        if (is_paused)
-        {
-            if (player_active_timeout < PLAYER_GRACE)
-            {
+        if (is_paused) {
+            if (player_active_timeout < PLAYER_GRACE) {
                 process_entities = false;
             }
-        }
-        else if (is_superHot)
-        {
-            if (player_active_timeout <= 0)
-            {
+        } else if (is_superHot) {
+            if (player_active_timeout <= 0) {
                 process_entities = false;
 
             }
         }
+    }
+
+    /**
+     * @param server the Minecraft Server instance
+     * @return {@code true} if the game should tick normally, or {@code false} if the game is paused
+     */
+    public static boolean tickOrPause(MinecraftServer server) {
+        boolean paused = gamePaused;
+        if (paused) {
+            server.profiler.startSection("jobs");
+            WorldHelper.startTickTask(TickTask.PACKETS);
+            LagSpikeHelper.processLagSpikes(null, LagSpikeHelper.TickPhase.PLAYER, LagSpikeHelper.PrePostSubPhase.PRE);
+            if (LoggerRegistry.__rngManip) {
+                server.worlds[0].rngMonitor.tryUpdateSeeds(RNGMonitor.RNGAppType.fortune);
+            }
+            server.runFutureTasks();
+            LagSpikeHelper.processLagSpikes(null, LagSpikeHelper.TickPhase.PLAYER, LagSpikeHelper.PrePostSubPhase.POST);
+            server.profiler.endSection();
+            WorldHelper.endTickTask(); // RSMM
+        }
+        return !paused;
     }
 
     public static double getMSPT() {
