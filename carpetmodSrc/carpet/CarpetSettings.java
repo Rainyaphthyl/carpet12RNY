@@ -1076,6 +1076,12 @@ public class CarpetSettings
         vanilla, suppress, flood
     }
 
+    @Rule(
+            desc = "Sends the \"block update\" packets to clients forcibly when a block state is updated. This is designed to synchronize the textures of hoppers, droppers, and dispensers, when you are using a special resource pack.",
+            category = {FIX, FEATURE, NAFTALLUVIA}
+    )
+    public static boolean blockStateTextureSync = false;
+
     // ===== API ===== //
 
     /**
