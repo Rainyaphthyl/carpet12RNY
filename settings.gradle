@@ -5,8 +5,8 @@ rootProject.name = 'carpetmod'
 
 // The version of the mod
 //gradle.ext.modVersion = 'dev' //new java.text.SimpleDateFormat('yy_MM_dd').format(new Date())
-gradle.ext.modVersion = 'RNY-dev-' + (new SimpleDateFormat('yyyyMMdd-HHmm')).format(new Date())
-//gradle.ext.modVersion = 'RNY-build-7-20230712'
+//gradle.ext.modVersion = 'RNY-dev-' + (new SimpleDateFormat('yyyyMMdd-HHmm')).format(new Date())
+gradle.ext.modVersion = 'RNY-build-8-20231123'
 
 // Set to 'client' to make a client-only jar mod, 'server' to make it server-only and 'both' to make it both
 // Only 'server' is fully supported currently
