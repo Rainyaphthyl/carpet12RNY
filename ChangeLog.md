@@ -16,6 +16,6 @@ Carpet 1.12 with [RNY](https://github.com/Rainyaphthyl)'s Addition
 ## Lifetime Tracker
 
 1. Add rule `lifetimeTrackBySize`.
-2. Jockey chicken are tracked.
+2. Chicken jockeys and spider jockeys will be tracked.
 
 # Code Details

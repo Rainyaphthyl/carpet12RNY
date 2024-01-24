@@ -6,7 +6,7 @@
  import javax.annotation.Nullable;
 +
 +import carpet.helpers.lifetime.spawning.JockeySpawningReason;
-+import carpet.helpers.lifetime.spawning.LiteralSpawningReason;
++import carpet.helpers.lifetime.utils.JockeyType;
  import net.minecraft.block.Block;
  import net.minecraft.entity.EntityLiving;
  import net.minecraft.entity.EntityLivingBase;
@@ -15,7 +15,7 @@
              entityskeleton.func_70012_b(this.field_70165_t, this.field_70163_u, this.field_70161_v, this.field_70177_z, 0.0F);
              entityskeleton.func_180482_a(p_180482_1_, (IEntityLivingData)null);
 +            // CM lifetime tracker
-+            entityskeleton.recordSpawning(new JockeySpawningReason(this, JockeySpawningReason.JockeyType.SPIDER));
++            entityskeleton.recordSpawning(new JockeySpawningReason(this, JockeyType.SPIDER));
              this.field_70170_p.func_72838_d(entityskeleton);
              entityskeleton.func_184220_m(this);
          }
