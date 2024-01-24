@@ -1082,6 +1082,13 @@ public class CarpetSettings
     )
     public static boolean blockStateTextureSync = false;
 
+    @Rule(
+            desc = "Treats mobs with different size as different species. E.g. Zombies and Baby Zombies; Slimes of 1x, 2x, and 4x.",
+            category = {CREATIVE, NAFTALLUVIA},
+            extra = "The change takes effect on next start."
+    )
+    public static boolean lifetimeTrackBySize = false;
+
     // ===== API ===== //
 
     /**

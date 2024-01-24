@@ -17,3 +17,12 @@
                              this.field_70170_p.func_72838_d(entityzombie);
                              entityzombie.func_70624_b(entitylivingbase);
                              entityzombie.func_180482_a(this.field_70170_p.func_175649_E(new BlockPos(entityzombie)), (IEntityLivingData)null);
+@@ -455,6 +458,8 @@
+                     entitychicken1.func_70012_b(this.field_70165_t, this.field_70163_u, this.field_70161_v, this.field_70177_z, 0.0F);
+                     entitychicken1.func_180482_a(p_180482_1_, (IEntityLivingData)null);
+                     entitychicken1.func_152117_i(true);
++                    // CM lifetime tracker
++                    entitychicken1.recordSpawning(LiteralSpawningReason.JOCKEY);
+                     this.field_70170_p.func_72838_d(entitychicken1);
+                     this.func_184220_m(entitychicken1);
+                 }

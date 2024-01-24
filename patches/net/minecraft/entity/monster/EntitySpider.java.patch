@@ -1,0 +1,20 @@
+--- ../src-base/minecraft/net/minecraft/entity/monster/EntitySpider.java
++++ ../src-work/minecraft/net/minecraft/entity/monster/EntitySpider.java
+@@ -2,6 +2,8 @@
+ 
+ import java.util.Random;
+ import javax.annotation.Nullable;
++
++import carpet.helpers.lifetime.spawning.LiteralSpawningReason;
+ import net.minecraft.block.Block;
+ import net.minecraft.entity.EntityLiving;
+ import net.minecraft.entity.EntityLivingBase;
+@@ -173,6 +175,8 @@
+             EntitySkeleton entityskeleton = new EntitySkeleton(this.field_70170_p);
+             entityskeleton.func_70012_b(this.field_70165_t, this.field_70163_u, this.field_70161_v, this.field_70177_z, 0.0F);
+             entityskeleton.func_180482_a(p_180482_1_, (IEntityLivingData)null);
++            // CM lifetime tracker
++            entityskeleton.recordSpawning(LiteralSpawningReason.JOCKEY);
+             this.field_70170_p.func_72838_d(entityskeleton);
+             entityskeleton.func_184220_m(this);
+         }
