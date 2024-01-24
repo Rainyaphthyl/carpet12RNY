@@ -15,7 +15,6 @@ public class LiteralSpawningReason extends SpawningReason
 
     // item only
     public static final LiteralSpawningReason BLOCK_DROP = new LiteralSpawningReason("block_drop", "Block drop");
-    public static final LiteralSpawningReason JOCKEY = new LiteralSpawningReason("jockey", "Jockey spawning");
 
     private final String translationKey;
     private final String name;
