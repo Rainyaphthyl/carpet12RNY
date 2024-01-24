@@ -36,12 +36,12 @@ public class JockeySpawningReason extends SpawningReason {
         switch (type) {
             case CHICKEN:
                 return Messenger.c("w Chicken jockey",
-                        "g  (" + LifeTimeTrackerUtil.getEntityTypeDescriptor(partnerClass) + ")");
+                        "g  (", "w " + LifeTimeTrackerUtil.getEntityTypeDescriptor(partnerClass), "g )");
             case SPIDER:
                 return Messenger.c("w Spider jockey");
             default:
                 return Messenger.c("w Unknown jockey",
-                        "g  (" + LifeTimeTrackerUtil.getEntityTypeDescriptor(partnerClass) + ")");
+                        "g  (", "w " + LifeTimeTrackerUtil.getEntityTypeDescriptor(partnerClass), "g )");
         }
     }
 
