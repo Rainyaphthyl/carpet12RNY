@@ -6,6 +6,7 @@ import carpet.helpers.lifetime.spawning.SpawningReason;
 import carpet.helpers.lifetime.trackeddata.BasicTrackedData;
 import carpet.helpers.lifetime.trackeddata.ExperienceOrbTrackedData;
 import carpet.helpers.lifetime.trackeddata.ItemTrackedData;
+import carpet.helpers.lifetime.trackeddata.MultiSizeTrackedData;
 import carpet.helpers.lifetime.utils.LifeTimeTrackerUtil;
 import carpet.helpers.lifetime.utils.SpecificDetailMode;
 import carpet.helpers.lifetime.utils.TextUtil;
@@ -48,7 +49,8 @@ public class LifeTimeWorldTracker
 
     private Optional<BasicTrackedData> getTrackedData(Entity entity)
     {
-        if (LifeTimeTracker.getInstance().willTrackEntity(entity))
+        LifeTimeTracker tracker = LifeTimeTracker.getInstance();
+        if (tracker.willTrackEntity(entity))
         {
             return Optional.of(this.dataMap.computeIfAbsent(entity.getClass(), (e -> {
                 if (entity instanceof EntityItem)
@@ -58,6 +60,9 @@ public class LifeTimeWorldTracker
                 if (entity instanceof EntityXPOrb)
                 {
                     return new ExperienceOrbTrackedData();
+                }
+                if (tracker.isTrackingBySize() && LifeTimeTrackerUtil.isEntitySized(entity)) {
+                    return new MultiSizeTrackedData();
                 }
                 return new BasicTrackedData();
             })));

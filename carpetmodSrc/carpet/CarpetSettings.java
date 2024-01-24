@@ -35,6 +35,7 @@ public class CarpetSettings
     public static boolean locked = false;
 
     // Previous build ordinal: 7 (RNY-build-7-20230712)
+    // Current build ordinal: 8 (RNY-build-8-20231123)
     // TODO: replace these constants at build time
     /**
      * format of version in Carpet-Addition-Naftalluvia(RNY):
@@ -58,7 +59,7 @@ public class CarpetSettings
      *     version name starts with "RNY"
      * </p>
      */
-    public static final String carpetVersion = "RNY-build-8-20231123";
+    public static final String carpetVersion = "undefined";
     public static final String minecraftVersion = "1.12.2";
     public static final String mcpMappings = "39-1.12";
 
@@ -1081,6 +1082,13 @@ public class CarpetSettings
             category = {FIX, FEATURE, NAFTALLUVIA}
     )
     public static boolean blockStateTextureSync = false;
+
+    @Rule(
+            desc = "Treats mobs with different size as different species. E.g. Zombies and Baby Zombies; Slimes of 1x, 2x, and 4x.",
+            category = {CREATIVE, NAFTALLUVIA},
+            extra = "The change takes effect on next start."
+    )
+    public static boolean lifetimeTrackBySize = false;
 
     // ===== API ===== //
 

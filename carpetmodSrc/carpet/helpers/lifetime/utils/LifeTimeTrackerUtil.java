@@ -5,6 +5,8 @@ import net.minecraft.entity.EntityList;
 import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.item.EntityXPOrb;
+import net.minecraft.entity.monster.EntitySlime;
+import net.minecraft.entity.monster.EntityZombie;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.ResourceLocation;
 
@@ -31,5 +33,9 @@ public class LifeTimeTrackerUtil
     {
         ResourceLocation resourcelocation = new ResourceLocation(name);
         return Optional.ofNullable(EntityList.REGISTRY.getObject(resourcelocation));
+    }
+
+    public static boolean isEntitySized(Entity entity) {
+        return entity instanceof EntitySlime || entity instanceof EntityZombie;
     }
 }

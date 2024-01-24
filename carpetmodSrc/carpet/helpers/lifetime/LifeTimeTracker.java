@@ -1,5 +1,6 @@
 package carpet.helpers.lifetime;
 
+import carpet.CarpetSettings;
 import carpet.helpers.lifetime.utils.LifeTimeTrackerUtil;
 import carpet.helpers.lifetime.utils.SpecificDetailMode;
 import carpet.helpers.lifetime.utils.TextUtil;
@@ -20,7 +21,7 @@ public class LifeTimeTracker extends AbstractTracker
 {
     private static boolean attachedServer = false;
     private static final LifeTimeTracker INSTANCE = new LifeTimeTracker();
-
+    private boolean trackingBySize = false;
     private int currentTrackId = 0;
 
     private final Map<WorldServer, LifeTimeWorldTracker> trackers = new Reference2ObjectArrayMap<>();
@@ -175,5 +176,16 @@ public class LifeTimeTracker extends AbstractTracker
                 )
         ));
         return 1;
+    }
+
+    @Override
+    public int startTracking(ICommandSender source, boolean showFeedback) {
+        int result = super.startTracking(source, showFeedback);
+        trackingBySize = CarpetSettings.lifetimeTrackBySize;
+        return result;
+    }
+
+    public boolean isTrackingBySize() {
+        return trackingBySize;
     }
 }
