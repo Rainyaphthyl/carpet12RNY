@@ -40,8 +40,8 @@ public class PortalCaching {
                 mot = pos.add(8, 0, 8);
             } else {
                 pos = new Vec3d(p.x * 0.125, p.y, p.z * 0.125);
-                tp = pos.add(0.5, 0, 0.5);
-                mot = pos.add(1, 0, 1);
+                tp = pos.add(0.0625, 0, 0.0625);
+                mot = pos.add(0.125, 0, 0.125);
             }
             line.add("w  x");
             line.add(String.format("^w Cache: %d\nx: %f\ny: %f\nz: %f\n------------\nmx: %f\nmy: %f\nmz: %f",

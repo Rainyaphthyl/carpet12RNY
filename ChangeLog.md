@@ -17,5 +17,6 @@ Carpet 1.12 with [RNY](https://github.com/Rainyaphthyl)'s Addition
 
 1. Add rule `lifetimeTrackBySize`.
 2. Chicken jockeys and spider jockeys will be tracked.
+3. Fix a bug of "Nether >> Overworld" coordinate display of the Portal Cache Logger: the range was `1.0` and should be `0.125`.
 
 # Code Details
