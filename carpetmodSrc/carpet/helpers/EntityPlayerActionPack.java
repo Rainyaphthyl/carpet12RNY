@@ -1,10 +1,8 @@
 package carpet.helpers;
 
+import carpet.CarpetSettings;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
-import javax.annotation.Nullable;
-
-import carpet.CarpetSettings;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockCommandBlock;
 import net.minecraft.block.BlockStructure;
@@ -21,19 +19,17 @@ import net.minecraft.util.EntitySelectors;
 import net.minecraft.util.EnumActionResult;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
-import net.minecraft.util.math.AxisAlignedBB;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.RayTraceResult;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.math.*;
 import net.minecraft.world.GameType;
 import net.minecraft.world.World;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.util.List;
 
 public class EntityPlayerActionPack
 {
-    private EntityPlayerMP player;
+    private final EntityPlayerMP player;
 
     private boolean doesAttack;
     private int attackInterval;
@@ -47,7 +43,7 @@ public class EntityPlayerActionPack
     private int jumpInterval;
     private int jumpCooldown;
 
-    private BlockPos currentBlock = new BlockPos(-1,-1,-1);
+    private BlockPos currentBlock = new BlockPos(-1, -1, -1);
     private int blockHitDelay;
     private boolean isHittingBlock;
     private float curBlockDamageMP;
@@ -62,6 +58,7 @@ public class EntityPlayerActionPack
         player = playerIn;
         stop();
     }
+
     public void copyFrom(EntityPlayerActionPack other)
     {
         doesAttack = other.doesAttack;
@@ -88,7 +85,8 @@ public class EntityPlayerActionPack
         strafing = other.strafing;
     }
 
-    public String toString() {
+    public String toString()
+    {
         return (doesAttack ? "t" : "f") + ":" +
                 attackInterval + ":" +
                 attackCooldown + ":" +
@@ -104,7 +102,8 @@ public class EntityPlayerActionPack
                 strafing;
     }
 
-    public void fromString(String s){
+    public void fromString(String s)
+    {
         String[] list = s.split(":");
         doesAttack = list[0].equals("t");
         attackInterval = Integer.valueOf(list[1]);
@@ -130,9 +129,10 @@ public class EntityPlayerActionPack
         }
         this.doesAttack = true;
         this.attackInterval = interval;
-        this.attackCooldown = interval+offset;
+        this.attackCooldown = interval + offset;
         return this;
     }
+
     public EntityPlayerActionPack setUse(int interval, int offset)
     {
         if (interval < 1)
@@ -142,9 +142,10 @@ public class EntityPlayerActionPack
         }
         this.doesUse = true;
         this.useInterval = interval;
-        this.useCooldown = interval+offset;
+        this.useCooldown = interval + offset;
         return this;
     }
+
     public EntityPlayerActionPack setUseForever()
     {
         this.doesUse = true;
@@ -152,6 +153,7 @@ public class EntityPlayerActionPack
         this.useCooldown = 1;
         return this;
     }
+
     public EntityPlayerActionPack setAttackForever()
     {
         this.doesAttack = true;
@@ -159,6 +161,7 @@ public class EntityPlayerActionPack
         this.attackCooldown = 1;
         return this;
     }
+
     public EntityPlayerActionPack setJump(int interval, int offset)
     {
         if (interval < 1)
@@ -168,9 +171,10 @@ public class EntityPlayerActionPack
         }
         this.doesJump = true;
         this.jumpInterval = interval;
-        this.jumpCooldown = interval+offset;
+        this.jumpCooldown = interval + offset;
         return this;
     }
+
     public EntityPlayerActionPack setJumpForever()
     {
         this.doesJump = true;
@@ -178,6 +182,7 @@ public class EntityPlayerActionPack
         this.jumpCooldown = 1;
         return this;
     }
+
     public EntityPlayerActionPack setSneaking(boolean doSneak)
     {
         sneaking = doSneak;
@@ -186,6 +191,7 @@ public class EntityPlayerActionPack
             setSprinting(false);
         return this;
     }
+
     public EntityPlayerActionPack setSprinting(boolean doSprint)
     {
         sprinting = doSprint;
@@ -200,59 +206,73 @@ public class EntityPlayerActionPack
         forward = value;
         return this;
     }
+
     public EntityPlayerActionPack setStrafing(float value)
     {
         strafing = value;
         return this;
     }
+
     public boolean look(String where)
     {
         switch (where)
         {
             case "north":
-               look(180.0f,0.0F); return true;
+                look(180.0f, 0.0F);
+                return true;
             case "south":
-                look (0.0F, 0.0F); return true;
+                look(0.0F, 0.0F);
+                return true;
             case "east":
-                look(-90.0F, 0.0F); return true;
+                look(-90.0F, 0.0F);
+                return true;
             case "west":
-                look(90.0F, 0.0F); return true;
+                look(90.0F, 0.0F);
+                return true;
             case "up":
-                look(player.rotationYaw, -90.0F); return true;
+                look(player.rotationYaw, -90.0F);
+                return true;
             case "down":
-                look(player.rotationYaw,  90.0F); return true;
+                look(player.rotationYaw, 90.0F);
+                return true;
             case "left":
             case "right":
                 return turn(where);
         }
         return false;
     }
+
     public EntityPlayerActionPack look(float yaw, float pitch)
     {
-        player.setRotation(yaw, MathHelper.clamp(pitch,-90.0F, 90.0F));
+        player.setRotation(yaw, MathHelper.clamp(pitch, -90.0F, 90.0F));
         return this;
     }
+
     public boolean turn(String where)
     {
         switch (where)
         {
             case "left":
-                turn(-90.0F,0.0F); return true;
+                turn(-90.0F, 0.0F);
+                return true;
             case "right":
-                turn (90.0F, 0.0F); return true;
+                turn(90.0F, 0.0F);
+                return true;
             case "up":
-                turn(0.0F, -5.0F); return true;
+                turn(0.0F, -5.0F);
+                return true;
             case "down":
-                turn(0.0F, 5.0F); return true;
+                turn(0.0F, 5.0F);
+                return true;
         }
         return false;
     }
+
     public EntityPlayerActionPack turn(float yaw, float pitch)
     {
-        player.setRotation(player.rotationYaw+yaw,MathHelper.clamp(player.rotationPitch+pitch,-90.0F, 90.0F));
-        return  this;
+        player.setRotation(player.rotationYaw + yaw, MathHelper.clamp(player.rotationPitch + pitch, -90.0F, 90.0F));
+        return this;
     }
-
 
 
     public EntityPlayerActionPack stop()
@@ -273,13 +293,14 @@ public class EntityPlayerActionPack
 
     public void swapHands()
     {
-        player.connection.processPlayerDigging(new CPacketPlayerDigging(CPacketPlayerDigging.Action.SWAP_HELD_ITEMS,null, null));
+        player.connection.processPlayerDigging(new CPacketPlayerDigging(CPacketPlayerDigging.Action.SWAP_HELD_ITEMS, null, null));
     }
 
     public void dropItem()
     {
-        player.connection.processPlayerDigging(new CPacketPlayerDigging(CPacketPlayerDigging.Action.DROP_ITEM,null, null));
+        player.connection.processPlayerDigging(new CPacketPlayerDigging(CPacketPlayerDigging.Action.DROP_ITEM, null, null));
     }
+
     public void mount()
     {
         List<Entity> entities = player.world.getEntitiesInAABBexcluding(
@@ -293,17 +314,18 @@ public class EntityPlayerActionPack
         }
         Entity closest = entities.get(0);
         double distance = player.getDistanceSq(closest);
-        for (Entity e: entities)
+        for (Entity e : entities)
         {
             double dd = player.getDistanceSq(e);
-            if (dd<distance)
+            if (dd < distance)
             {
                 distance = dd;
                 closest = e;
             }
         }
-        player.startRiding(closest,true);
+        player.startRiding(closest, true);
     }
+
     public void dismount()
     {
         player.dismountRidingEntity();
@@ -313,13 +335,12 @@ public class EntityPlayerActionPack
     {
         if (doesJump)
         {
-            if (--jumpCooldown==0)
+            if (--jumpCooldown == 0)
             {
                 jumpCooldown = jumpInterval;
                 //jumpOnce();
                 player.setJumping(true);
-            }
-            else
+            } else
             {
                 player.setJumping(false);
             }
@@ -327,10 +348,10 @@ public class EntityPlayerActionPack
 
         boolean used = false;
 
-        if (doesUse && (--useCooldown)==0)
+        if (doesUse && (--useCooldown) == 0)
         {
             useCooldown = useInterval;
-            used  = useOnce();
+            used = useOnce();
         }
         if (doesAttack)
         {
@@ -338,8 +359,7 @@ public class EntityPlayerActionPack
             {
                 attackCooldown = attackInterval;
                 if (!(used)) attackOnce();
-            }
-            else
+            } else
             {
                 resetBlockRemoving();
             }
@@ -347,11 +367,11 @@ public class EntityPlayerActionPack
         if (forward != 0.0F)
         {
             //CarpetSettings.LOG.error("moving it forward");
-            player.moveForward = forward*(sneaking?0.3F:1.0F);
+            player.moveForward = forward * (sneaking ? 0.3F : 1.0F);
         }
         if (strafing != 0.0F)
         {
-            player.moveStrafing = strafing*(sneaking?0.3F:1.0F);
+            player.moveStrafing = strafing * (sneaking ? 0.3F : 1.0F);
         }
     }
 
@@ -366,7 +386,7 @@ public class EntityPlayerActionPack
     public void attackOnce()
     {
         RayTraceResult raytraceresult = mouseOver();
-        if(raytraceresult == null) return;
+        if (raytraceresult == null) return;
 
         switch (raytraceresult.typeOfHit)
         {
@@ -380,7 +400,7 @@ public class EntityPlayerActionPack
                 BlockPos blockpos = raytraceresult.getBlockPos();
                 if (player.getEntityWorld().getBlockState(blockpos).getMaterial() != Material.AIR)
                 {
-                    onPlayerDamageBlock(blockpos,raytraceresult.sideHit.getOpposite());
+                    onPlayerDamageBlock(blockpos, raytraceresult.sideHit.getOpposite());
                     this.player.swingArm(EnumHand.MAIN_HAND);
                     break;
                 }
@@ -411,7 +431,7 @@ public class EntityPlayerActionPack
 
                         if (player.getDistanceSq(target) < d0)
                         {
-                            EnumActionResult res = player.interactOn(target,enumhand);
+                            EnumActionResult res = player.interactOn(target, enumhand);
                             if (res == EnumActionResult.SUCCESS)
                             {
                                 return true;
@@ -443,7 +463,7 @@ public class EntityPlayerActionPack
                         }
                 }
             }
-            EnumActionResult res = player.interactionManager.processRightClick(player,player.getEntityWorld(),itemstack,enumhand);
+            EnumActionResult res = player.interactionManager.processRightClick(player, player.getEntityWorld(), itemstack, enumhand);
             if (res == EnumActionResult.SUCCESS)
             {
                 return true;
@@ -488,11 +508,12 @@ public class EntityPlayerActionPack
         List<Entity> list = world.getEntitiesInAABBexcluding(
                 player,
                 player.getEntityBoundingBox().expand(lookVec.x * reach, lookVec.y * reach, lookVec.z * reach).grow(1.0D, 1.0D, 1.0D),
-                Predicates.and(EntitySelectors.NOT_SPECTATING, new Predicate<Entity>() {
-                        public boolean apply(@Nullable Entity entity)
-                        {
-                            return entity != null && entity.canBeCollidedWith();
-                        }
+                Predicates.and(EntitySelectors.NOT_SPECTATING, new Predicate<Entity>()
+                {
+                    public boolean apply(@Nullable Entity entity)
+                    {
+                        return entity != null && entity.canBeCollidedWith();
+                    }
                 })
         );
         double d2 = extendedReach;
@@ -511,8 +532,7 @@ public class EntityPlayerActionPack
                     hitVec = raytraceresult == null ? eyeVec : raytraceresult.hitVec;
                     d2 = 0.0D;
                 }
-            }
-            else if (raytraceresult != null)
+            } else if (raytraceresult != null)
             {
                 double d3 = eyeVec.distanceTo(raytraceresult.hitVec);
 
@@ -525,8 +545,7 @@ public class EntityPlayerActionPack
                             pointedEntity = entity1;
                             hitVec = raytraceresult.hitVec;
                         }
-                    }
-                    else
+                    } else
                     {
                         pointedEntity = entity1;
                         hitVec = raytraceresult.hitVec;
@@ -553,7 +572,7 @@ public class EntityPlayerActionPack
     public boolean clickBlock(BlockPos loc, EnumFacing face) // don't call this one
     {
         World world = player.getEntityWorld();
-        if (player.interactionManager.getGameType()!=GameType.ADVENTURE)
+        if (player.interactionManager.getGameType() != GameType.ADVENTURE)
         {
             if (player.interactionManager.getGameType() == GameType.SPECTATOR)
             {
@@ -579,16 +598,14 @@ public class EntityPlayerActionPack
         if (!world.getWorldBorder().contains(loc))
         {
             return false;
-        }
-        else
+        } else
         {
-            if (player.interactionManager.getGameType()==GameType.CREATIVE)
+            if (player.interactionManager.getGameType() == GameType.CREATIVE)
             {
                 player.connection.processPlayerDigging(new CPacketPlayerDigging(CPacketPlayerDigging.Action.START_DESTROY_BLOCK, loc, face));
                 clickBlockCreative(world, loc, face);
                 this.blockHitDelay = 5;
-            }
-            else if (!this.isHittingBlock || !(currentBlock.equals(loc)))
+            } else if (!this.isHittingBlock || !(currentBlock.equals(loc)))
             {
                 if (this.isHittingBlock)
                 {
@@ -607,13 +624,12 @@ public class EntityPlayerActionPack
                 if (flag && iblockstate.getPlayerRelativeBlockHardness(player, world, loc) >= 1.0F)
                 {
                     this.onPlayerDestroyBlock(loc);
-                }
-                else
+                } else
                 {
                     this.isHittingBlock = true;
                     this.currentBlock = loc;
                     this.curBlockDamageMP = 0.0F;
-                    world.sendBlockBreakProgress(player.getEntityId(), this.currentBlock, (int)(this.curBlockDamageMP * 10.0F) - 1);
+                    world.sendBlockBreakProgress(player.getEntityId(), this.currentBlock, (int) (this.curBlockDamageMP * 10.0F) - 1);
                 }
             }
 
@@ -637,14 +653,13 @@ public class EntityPlayerActionPack
             return true;
         }
         World world = player.getEntityWorld();
-        if (player.interactionManager.getGameType()==GameType.CREATIVE && world.getWorldBorder().contains(posBlock))
+        if (player.interactionManager.getGameType() == GameType.CREATIVE && world.getWorldBorder().contains(posBlock))
         {
             this.blockHitDelay = 5;
             player.connection.processPlayerDigging(new CPacketPlayerDigging(CPacketPlayerDigging.Action.START_DESTROY_BLOCK, posBlock, directionFacing));
             clickBlockCreative(world, posBlock, directionFacing);
             return true;
-        }
-        else if (posBlock.equals(currentBlock))
+        } else if (posBlock.equals(currentBlock))
         {
             IBlockState iblockstate = world.getBlockState(posBlock);
 
@@ -652,8 +667,7 @@ public class EntityPlayerActionPack
             {
                 this.isHittingBlock = false;
                 return false;
-            }
-            else
+            } else
             {
                 this.curBlockDamageMP += iblockstate.getPlayerRelativeBlockHardness(player, world, posBlock);
 
@@ -667,11 +681,10 @@ public class EntityPlayerActionPack
                 }
                 //player.getEntityId()
                 //send to all, even the breaker
-                world.sendBlockBreakProgress(-1, this.currentBlock, (int)(this.curBlockDamageMP * 10.0F) - 1);
+                world.sendBlockBreakProgress(-1, this.currentBlock, (int) (this.curBlockDamageMP * 10.0F) - 1);
                 return true;
             }
-        }
-        else
+        } else
         {
             return this.clickBlock(posBlock, directionFacing);
         }
@@ -680,7 +693,7 @@ public class EntityPlayerActionPack
     private boolean onPlayerDestroyBlock(BlockPos pos)
     {
         World world = player.getEntityWorld();
-        if (player.interactionManager.getGameType()!=GameType.ADVENTURE)
+        if (player.interactionManager.getGameType() != GameType.ADVENTURE)
         {
             if (player.interactionManager.getGameType() == GameType.SPECTATOR)
             {
@@ -703,11 +716,10 @@ public class EntityPlayerActionPack
             }
         }
 
-        if (player.interactionManager.getGameType()==GameType.CREATIVE && !player.getHeldItemMainhand().isEmpty() && player.getHeldItemMainhand().getItem() instanceof ItemSword)
+        if (player.interactionManager.getGameType() == GameType.CREATIVE && !player.getHeldItemMainhand().isEmpty() && player.getHeldItemMainhand().getItem() instanceof ItemSword)
         {
             return false;
-        }
-        else
+        } else
         {
             IBlockState iblockstate = world.getBlockState(pos);
             Block block = iblockstate.getBlock();
@@ -715,12 +727,10 @@ public class EntityPlayerActionPack
             if ((block instanceof BlockCommandBlock || block instanceof BlockStructure) && !player.canUseCommandBlock())
             {
                 return false;
-            }
-            else if (iblockstate.getMaterial() == Material.AIR)
+            } else if (iblockstate.getMaterial() == Material.AIR)
             {
                 return false;
-            }
-            else
+            } else
             {
                 world.playEvent(2001, pos, Block.getStateId(iblockstate));
                 block.onBlockHarvested(world, pos, iblockstate, player);
@@ -733,7 +743,7 @@ public class EntityPlayerActionPack
 
                 this.currentBlock = new BlockPos(this.currentBlock.getX(), -1, this.currentBlock.getZ());
 
-                if (!(player.interactionManager.getGameType()==GameType.CREATIVE))
+                if (!(player.interactionManager.getGameType() == GameType.CREATIVE))
                 {
                     ItemStack itemstack1 = player.getHeldItemMainhand();
 
@@ -762,11 +772,141 @@ public class EntityPlayerActionPack
             this.curBlockDamageMP = 0.0F;
             player.getEntityWorld().sendBlockBreakProgress(player.getEntityId(), this.currentBlock, -1);
             player.resetCooldown();
-            this.currentBlock = new BlockPos(-1,-1,-1);
+            this.currentBlock = new BlockPos(-1, -1, -1);
         }
     }
 
+    public enum ActionType
+    {
+        USE(true)
+                {
+                    @Override
+                    boolean execute(EntityPlayerMP player, Action action)
+                    {
+                        return false;
+                    }
 
+                    @Override
+                    void inactiveTick(EntityPlayerMP player, Action action)
+                    {
+                    }
+                },
+        ATTACK(true)
+                {
+                    @Override
+                    boolean execute(EntityPlayerMP player, Action action)
+                    {
+                        return false;
+                    }
+
+                    @Override
+                    void inactiveTick(EntityPlayerMP player, Action action)
+                    {
+                    }
+                },
+        JUMP(true)
+                {
+                    @Override
+                    boolean execute(EntityPlayerMP player, Action action)
+                    {
+                        return false;
+                    }
+
+                    @Override
+                    void inactiveTick(EntityPlayerMP player, Action action)
+                    {
+                        player.setJumping(false);
+                    }
+                },
+        DROP_ITEM(true)
+                {
+                    @Override
+                    boolean execute(EntityPlayerMP player, Action action)
+                    {
+                        return false;
+                    }
+                },
+        DROP_STACK(true)
+                {
+                    @Override
+                    boolean execute(EntityPlayerMP player, Action action)
+                    {
+                        return false;
+                    }
+                },
+        SWAP_HANDS(true)
+                {
+                    @Override
+                    boolean execute(EntityPlayerMP player, Action action)
+                    {
+                        return false;
+                    }
+                };
+
+        public final boolean preventSpectator;
+
+        ActionType(boolean preventSpectator)
+        {
+            this.preventSpectator = preventSpectator;
+        }
+
+        void start(EntityPlayerMP player, Action action)
+        {
+        }
+
+        abstract boolean execute(EntityPlayerMP player, Action action);
+
+        void inactiveTick(EntityPlayerMP player, Action action)
+        {
+        }
+
+        void stop(EntityPlayerMP player)
+        {
+            inactiveTick(player, null);
+        }
+    }
+
+    public static class Action
+    {
+        public final int interval;
+        public final int offset;
+        private final boolean holding;
+        public boolean done = false;
+        private int count;
+        private int next;
+
+        private Action(boolean holding, int interval, int offset)
+        {
+            this.interval = interval;
+            this.offset = offset;
+            this.holding = holding;
+            next = interval + offset;
+        }
+
+        @Nonnull
+        public static Action once()
+        {
+            return new Action(false, 1, 0);
+        }
+
+        @Nonnull
+        public static Action continuous()
+        {
+            return new Action(true, -1, 0);
+        }
+
+        @Nonnull
+        public static Action interval(int interval)
+        {
+            return new Action(false, interval, 0);
+        }
+
+        @Nonnull
+        public static Action interval(int interval, int offset)
+        {
+            return new Action(false, interval, offset);
+        }
+    }
     /*
     public EnumActionResult processRightClickBlock(EntityPlayerSP player, WorldClient worldIn, BlockPos stack, EnumFacing pos, Vec3d facing, EnumHand vec)
     {
