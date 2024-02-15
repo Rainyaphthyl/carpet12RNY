@@ -17,6 +17,7 @@ Carpet 1.12 with [RNY](https://github.com/Rainyaphthyl)'s Addition
 ## Better Hopper Counters
 
 1. Ported rule `hopperCountersUnlimitedSpeed`.
+2. Ported rule `hopperNoItemCost`.
 
 ## Lifetime Tracker
 

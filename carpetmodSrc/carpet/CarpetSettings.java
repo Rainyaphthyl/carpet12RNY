@@ -1098,6 +1098,13 @@ public class CarpetSettings
     )
     public static boolean hopperCountersUnlimitedSpeed = false;
 
+    // ported from https://github.com/TISUnion/TISCarpet113
+    @Rule(
+            desc = "Hopper with wool block on top outputs item infinitely without having its item decreased",
+            category = {CREATIVE, NAFTALLUVIA}
+    )
+    public static boolean hopperNoItemCost = false;
+
     // ===== API ===== //
 
     /**
