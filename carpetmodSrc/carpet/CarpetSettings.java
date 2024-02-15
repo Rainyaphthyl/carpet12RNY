@@ -1090,6 +1090,14 @@ public class CarpetSettings
     )
     public static boolean lifetimeTrackBySize = false;
 
+    // ported from https://github.com/TISUnion/TISCarpet113
+    @Rule(
+            desc = "Make hopper pointing towards wool has infinity speed to suck in or transfer items",
+            category = {CREATIVE, NAFTALLUVIA},
+            extra = "Only works when hopperCounters option is not off"
+    )
+    public static boolean hopperCountersUnlimitedSpeed = false;
+
     // ===== API ===== //
 
     /**

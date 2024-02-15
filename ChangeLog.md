@@ -14,6 +14,10 @@ Carpet 1.12 with [RNY](https://github.com/Rainyaphthyl)'s Addition
 
 # Feature Modifications
 
+## Better Hopper Counters
+
+1. Ported rule `hopperCountersUnlimitedSpeed`.
+
 ## Lifetime Tracker
 
 1. Add rule `lifetimeTrackBySize`.
