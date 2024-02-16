@@ -23,7 +23,6 @@ public class LifeTimeTracker extends AbstractTracker
     private static boolean attachedServer = false;
     private final Map<WorldServer, LifeTimeWorldTracker> trackers = new Reference2ObjectArrayMap<>();
     private boolean trackingBySize = false;
-    private boolean containingVariance = false;
     private int currentTrackId = 0;
 
     public LifeTimeTracker()
@@ -184,17 +183,11 @@ public class LifeTimeTracker extends AbstractTracker
     {
         int result = super.startTracking(source, showFeedback);
         trackingBySize = CarpetSettings.lifetimeTrackBySize;
-        containingVariance = CarpetSettings.lifetimeTrackerStandardError;
         return result;
     }
 
     public boolean isTrackingBySize()
     {
         return trackingBySize;
-    }
-
-    public boolean isContainingVariance()
-    {
-        return containingVariance;
     }
 }
