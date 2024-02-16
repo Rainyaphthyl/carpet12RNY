@@ -129,8 +129,8 @@ public class LifeTimeStatistic
     {
         double mobCount = getMobCountAvg(ticks, spawningTotal, removalTotal);
         return TextUtil.attachHoverText(
-                Messenger.c(String.format("n %.3f", mobCount), "g  m"),
-                Messenger.c("n Average Mobcap Payload", "g : ", String.format("w %.7f", mobCount), "g  mobs")
+                Messenger.c(String.format("w %.3f", mobCount), "g  m"),
+                Messenger.c(String.format("w %.7f", mobCount), "g  mobs (average mobcap payload)")
         );
     }
 
