@@ -11,8 +11,8 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import net.minecraft.entity.Entity;
 import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.event.HoverEvent;
 
+import javax.annotation.Nonnull;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -70,10 +70,13 @@ public class BasicTrackedData
      */
     public ITextComponent getRemovalCountText(long ticks)
     {
+        long removalCount = this.getRemovalCount();
         return Messenger.c(
                 "q Removal Count",
                 "g : ",
-                CounterUtil.ratePerHourText(this.getRemovalCount(), ticks, "wgg")
+                CounterUtil.ratePerHourText(removalCount, ticks, "wgg"),
+                "w  ",
+                lifeTimeStatistic.getMobCountText(ticks, getSpawningCount(), removalCount)
         );
     }
 
@@ -166,6 +169,8 @@ public class BasicTrackedData
             result.add(Messenger.s(null, "Reasons for removal", "r"));
         }
 
+        long spawningCount = getSpawningCount();
+        long removalCount = getRemovalCount();
         entryList.forEach(entry -> {
             RemovalReason reason = entry.getKey();
             LifeTimeStatistic statistic = entry.getValue();
@@ -179,6 +184,8 @@ public class BasicTrackedData
 
             result.add(Messenger.c(
                     this.getRemovalReasonWithRate(reason, ticks, statistic.count, this.lifeTimeStatistic.count),
+                    "d  / ",
+                    statistic.getMobCountText(ticks, spawningCount, removalCount),
                     "w \n",
                     statistic.getResult("  ", hoverMode)
             ));

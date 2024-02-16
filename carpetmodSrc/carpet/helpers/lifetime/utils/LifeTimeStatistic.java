@@ -125,6 +125,22 @@ public class LifeTimeStatistic
         return text;
     }
 
+    public ITextComponent getMobCountText(long ticks, long spawningTotal, long removalTotal)
+    {
+        double mobCount = getMobCountAvg(ticks, spawningTotal, removalTotal);
+        return TextUtil.attachHoverText(
+                Messenger.c(String.format("n %.3f", mobCount), "g  m"),
+                Messenger.c("n Average Mobcap Payload", "g : ", String.format("w %.7f", mobCount), "g  mobs")
+        );
+    }
+
+    public double getMobCountAvg(long ticks, long spawningTotal, long removalTotal)
+    {
+        double mobCount = (double) timeSum / ticks;
+        mobCount *= (double) spawningTotal / removalTotal;
+        return mobCount;
+    }
+
     public static class StatisticElement
     {
         private final long time;
