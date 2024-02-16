@@ -19,12 +19,12 @@ import java.util.stream.Stream;
 
 public class LifeTimeTracker extends AbstractTracker
 {
-    private static boolean attachedServer = false;
     private static final LifeTimeTracker INSTANCE = new LifeTimeTracker();
-    private boolean trackingBySize = false;
-    private int currentTrackId = 0;
-
+    private static boolean attachedServer = false;
     private final Map<WorldServer, LifeTimeWorldTracker> trackers = new Reference2ObjectArrayMap<>();
+    private boolean trackingBySize = false;
+    private boolean containingVariance = false;
+    private int currentTrackId = 0;
 
     public LifeTimeTracker()
     {
@@ -34,11 +34,6 @@ public class LifeTimeTracker extends AbstractTracker
     public static LifeTimeTracker getInstance()
     {
         return INSTANCE;
-    }
-
-    public LifeTimeWorldTracker getTracker(World world)
-    {
-        return world instanceof WorldServer ? this.trackers.get(world) : null;
     }
 
     public static void attachServer(MinecraftServer minecraftServer)
@@ -51,15 +46,20 @@ public class LifeTimeTracker extends AbstractTracker
         }
     }
 
-//    public static void detachServer()
-//    {
-//        attachedServer = false;
-//        INSTANCE.stop();
-//    }
-
     public static boolean isActivated()
     {
         return attachedServer && INSTANCE.isTracking();
+    }
+
+    //    public static void detachServer()
+    //    {
+    //        attachedServer = false;
+    //        INSTANCE.stop();
+    //    }
+
+    public LifeTimeWorldTracker getTracker(World world)
+    {
+        return world instanceof WorldServer ? this.trackers.get(world) : null;
     }
 
     public boolean willTrackEntity(Entity entity)
@@ -68,6 +68,7 @@ public class LifeTimeTracker extends AbstractTracker
                 entity.getTrackId() == this.getCurrentTrackId() &&
                 LifeTimeTrackerUtil.isTrackedEntity(entity);
     }
+
     public Stream<String> getAvailableEntityType()
     {
         if (!isActivated())
@@ -77,7 +78,7 @@ public class LifeTimeTracker extends AbstractTracker
         return this.trackers.values().stream().
                 flatMap(
                         tracker -> tracker.getDataMap().keySet().
-                        stream().map(LifeTimeTrackerUtil::getEntityTypeDescriptor)
+                                stream().map(LifeTimeTrackerUtil::getEntityTypeDescriptor)
                 ).
                 distinct();
     }
@@ -179,13 +180,21 @@ public class LifeTimeTracker extends AbstractTracker
     }
 
     @Override
-    public int startTracking(ICommandSender source, boolean showFeedback) {
+    public int startTracking(ICommandSender source, boolean showFeedback)
+    {
         int result = super.startTracking(source, showFeedback);
         trackingBySize = CarpetSettings.lifetimeTrackBySize;
+        containingVariance = CarpetSettings.lifetimeTrackerStandardError;
         return result;
     }
 
-    public boolean isTrackingBySize() {
+    public boolean isTrackingBySize()
+    {
         return trackingBySize;
+    }
+
+    public boolean isContainingVariance()
+    {
+        return containingVariance;
     }
 }

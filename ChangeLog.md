@@ -23,6 +23,8 @@ Carpet 1.12 with [RNY](https://github.com/Rainyaphthyl)'s Addition
 
 1. Add rule `lifetimeTrackBySize`.
 2. Chicken jockeys and spider jockeys will be tracked.
+3. Add rule `lifetimeTrackerStandardError`.
+4. *(TO-DO)* The tracker report contains percentages by quantities and by mobcaps.
 
 ## Miscellaneous
 

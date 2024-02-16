@@ -1090,6 +1090,12 @@ public class CarpetSettings
     )
     public static boolean lifetimeTrackBySize = false;
 
+    @Rule(
+            desc = "Adds error analysis into the lifetime reports.",
+            category = {CREATIVE, NAFTALLUVIA}
+    )
+    public static boolean lifetimeTrackerStandardError = false;
+
     // ported from https://github.com/TISUnion/TISCarpet113
     @Rule(
             desc = "Make hopper pointing towards wool has infinity speed to suck in or transfer items",
