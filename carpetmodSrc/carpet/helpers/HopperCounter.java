@@ -389,8 +389,8 @@ public class HopperCounter
         {
             minutes = Math.rint(actualTicks / 120.0) / 10.0;
             return Collections.singletonList(Messenger.m(null,
-                    String.format("%s %s: %d, %s(%s)%s/h, %.1f min", Messenger.stats_error_color(percent, true),
-                            name, linearTotal, rounded.average, rounded.error, rounded.unit, minutes)));
+                    String.format("%s %s: %d, %s(%s)%s/%s, %.1f min", Messenger.stats_error_color(percent, true),
+                            name, linearTotal, rounded.average, rounded.error, rounded.unit, timeUnit.symbol, minutes)));
         }
         List<ITextComponent> list = new ArrayList<>();
         //StringBuilder colorFullName = new StringBuilder(Messenger.color_by_enum(color)).append('b');
@@ -405,7 +405,8 @@ public class HopperCounter
                 "w  for ", String.format("wb %.2f", minutes), "w  min (in game) ",
                 "nb [X]", "^g stop", "!/counter " + name + " stop"));
         list.add(Messenger.c("w Total: " + linearTotal + ", Average: ",
-                "wb " + rounded.average, "w (" + rounded.error + ')', "wb " + rounded.unit, "w /h, E: ",
+                "wb " + rounded.average, "w (" + rounded.error + ')',
+                "wb " + rounded.unit, String.format("w /%s, E: ", timeUnit.symbol),
                 colorStats + ' ' + StatsBundle.round_to_sig_figs(percent, 3) + '%'));
         //boolean flagColor = false;
         List<Integer> indexList = new IntArrayList();
@@ -435,7 +436,7 @@ public class HopperCounter
                     String.format("%s %s", "w", itemName), String.format("%s : %d, ", "g", itemCount),
                     String.format("%sb %s", "w", rounded.average),
                     String.format("%s (%s)", "w", rounded.error),
-                    String.format("%sb %s", "w", rounded.unit), String.format("%s /h", "w"),
+                    String.format("%sb %s", "w", rounded.unit), String.format("%s /%s", "w", timeUnit.symbol),
                     String.format("%s , E: ", "g"), String.format("%s %s%%", colorStats, percentDisplay)));
         }
         return list;
