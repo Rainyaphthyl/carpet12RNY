@@ -13,7 +13,8 @@ import net.minecraft.util.text.ITextComponent;
 import javax.annotation.Nonnull;
 import java.util.*;
 
-public class MultiSizeTrackedData extends BasicTrackedData {
+public class MultiSizeTrackedData extends BasicTrackedData
+{
     private final Map<MobSize, BasicTrackedData> sizedMultiTracker = new EnumMap<>(MobSize.class);
 
     /**
@@ -24,7 +25,8 @@ public class MultiSizeTrackedData extends BasicTrackedData {
      * @param root   count at the top level
      */
     @Nonnull
-    public static ITextComponent getReasonWithDualRate(@Nonnull AbstractReason reason, long ticks, long count, long parent, long root) {
+    public static ITextComponent getReasonWithDualRate(@Nonnull AbstractReason reason, long ticks, long count, long parent, long root)
+    {
         double cent = 100.0 * count;
         double percentA = cent / parent;
         double percentB = cent / root;
@@ -42,42 +44,50 @@ public class MultiSizeTrackedData extends BasicTrackedData {
     }
 
     @Override
-    public void updateSpawning(Entity entity, SpawningReason reason) {
+    public void updateSpawning(Entity entity, SpawningReason reason)
+    {
         BasicTrackedData subTrack = getSubTrack(entity);
         subTrack.updateSpawning(entity, reason);
     }
 
     @Override
-    public void updateRemoval(Entity entity, RemovalReason reason) {
+    public void updateRemoval(Entity entity, RemovalReason reason)
+    {
         BasicTrackedData subTrack = getSubTrack(entity);
         subTrack.updateRemoval(entity, reason);
         lifeTimeStatistic.update(entity);
     }
 
     @Override
-    public long getSpawningCount() {
+    public long getSpawningCount()
+    {
         return sizedMultiTracker.values().stream().mapToLong(BasicTrackedData::getSpawningCount).sum();
     }
 
     @Override
-    public long getRemovalCount() {
+    public long getRemovalCount()
+    {
         return sizedMultiTracker.values().stream().mapToLong(BasicTrackedData::getRemovalCount).sum();
     }
 
     @Override
-    public List<ITextComponent> getSpawningReasonsTexts(long ticks, boolean hoverMode) {
+    public List<ITextComponent> getSpawningReasonsTexts(long ticks, boolean hoverMode)
+    {
         List<ITextComponent> result = Lists.newArrayList();
         // Title for hover mode
         long rootCount = getSpawningCount();
-        if (hoverMode && rootCount > 0) {
+        if (hoverMode && rootCount > 0)
+        {
             result.add(Messenger.s(null, "Reasons for spawning", "e"));
         }
         sizedMultiTracker.forEach((mobSize, subTrack) -> {
             List<Map.Entry<SpawningReason, Long>> entryList = Lists.newArrayList(subTrack.spawningReasons.entrySet());
-            if (!entryList.isEmpty()) {
+            if (!entryList.isEmpty())
+            {
                 entryList.sort(Collections.reverseOrder(Comparator.comparingLong(Map.Entry::getValue)));
                 // Title for mob sizes / ages
-                if (hoverMode) {
+                if (hoverMode)
+                {
                     result.add(Messenger.s(null, "\n"));
                 }
                 result.add(Messenger.c("e Size: ", "eb " + mobSize.toString(), "g :"));
@@ -86,7 +96,8 @@ public class MultiSizeTrackedData extends BasicTrackedData {
                     Long statistic = entry.getValue();
                     // added to upper result which will be sent by Messenger.send
                     // so each element will be in a separate line
-                    if (hoverMode) {
+                    if (hoverMode)
+                    {
                         result.add(Messenger.s(null, "\n"));
                     }
                     result.add(getReasonWithDualRate(reason, ticks, statistic, subTrack.getSpawningCount(), rootCount));
@@ -97,18 +108,24 @@ public class MultiSizeTrackedData extends BasicTrackedData {
     }
 
     @Override
-    public List<ITextComponent> getRemovalReasonsTexts(long ticks, boolean hoverMode) {
+    public List<ITextComponent> getRemovalReasonsTexts(long ticks, boolean hoverMode)
+    {
         List<ITextComponent> result = Lists.newArrayList();
         // Title for hover mode
-        if (hoverMode && getRemovalCount() > 0) {
+        if (hoverMode && getRemovalCount() > 0)
+        {
             result.add(Messenger.s(null, "Reasons for removal", "r"));
         }
+        long spawningCount = getSpawningCount();
+        long removalCount = getRemovalCount();
         sizedMultiTracker.forEach((mobSize, subTrack) -> {
             List<Map.Entry<RemovalReason, LifeTimeStatistic>> entryList = Lists.newArrayList(subTrack.removalReasons.entrySet());
-            if (!entryList.isEmpty()) {
+            if (!entryList.isEmpty())
+            {
                 entryList.sort(Collections.reverseOrder(Comparator.comparingLong(a -> a.getValue().count)));
                 // Title for mob sizes / ages
-                if (hoverMode) {
+                if (hoverMode)
+                {
                     result.add(Messenger.s(null, "\n"));
                 }
                 result.add(Messenger.c("r Size: ", "rb " + mobSize.toString(), "g :"));
@@ -117,7 +134,8 @@ public class MultiSizeTrackedData extends BasicTrackedData {
                     LifeTimeStatistic statistic = entry.getValue();
                     // added to upper result which will be sent by Messenger.send
                     // so each element will be in a separate line
-                    if (hoverMode) {
+                    if (hoverMode)
+                    {
                         result.add(Messenger.s(null, "\n"));
                     }
                     result.add(Messenger.c(
@@ -125,6 +143,8 @@ public class MultiSizeTrackedData extends BasicTrackedData {
                                     reason, ticks, statistic.count,
                                     subTrack.getRemovalCount(), lifeTimeStatistic.count
                             ),
+                            "d  / ",
+                            statistic.getMobCountText(ticks, spawningCount, removalCount),
                             "w \n",
                             statistic.getResult("  ", hoverMode)
                     ));
@@ -135,12 +155,17 @@ public class MultiSizeTrackedData extends BasicTrackedData {
     }
 
     @Nonnull
-    private BasicTrackedData getSubTrack(Entity entity) {
+    private BasicTrackedData getSubTrack(Entity entity)
+    {
         MobSize size = null;
-        if (entity instanceof EntityZombie) {
+        if (entity instanceof EntityZombie)
+        {
             size = ((EntityZombie) entity).isChild() ? MobSize.BABY : MobSize.ADULT;
-        } else if (entity instanceof EntitySlime) {
-            switch (((EntitySlime) entity).getSlimeSize()) {
+        }
+        else if (entity instanceof EntitySlime)
+        {
+            switch (((EntitySlime) entity).getSlimeSize())
+            {
                 case 1:
                     size = MobSize.SMALL;
                     break;

@@ -143,7 +143,10 @@ public class LifeTimeWorldTracker
                     List<ITextComponent> spawningReasons = data.getSpawningReasonsTexts(ticks, true);
                     List<ITextComponent> removalReasons = data.getRemovalReasonsTexts(ticks, true);
                     String currentCommandBase = String.format("/%s %s", LifeTimeTracker.getInstance().getCommandPrefix(), LifeTimeTrackerUtil.getEntityTypeDescriptor(entityType));
-                    // [Creeper] S/R: 21/8, L: 145/145/145.00 (gt)
+                    // [Creeper] S/R: 21/8, L: 145/145/145.00 (gt), M: 12.777 (m/t)
+                    long spawningCount = data.getSpawningCount();
+                    long removalCount = data.getRemovalCount();
+                    double mobCountAvg = data.lifeTimeStatistic.getMobCountAvg(ticks, spawningCount, removalCount);
                     result.add(Messenger.c(
                             "g - [",
                             TextUtil.getFancyText(
@@ -168,7 +171,7 @@ public class LifeTimeWorldTracker
                             "g : ",
                             TextUtil.getFancyText(
                                     null,
-                                    Messenger.c("e " + data.getSpawningCount()),
+                                    Messenger.c("e " + spawningCount),
                                     Messenger.s(null,
                                             Messenger.c(
                                                     data.getSpawningCountText(ticks),
@@ -181,7 +184,7 @@ public class LifeTimeWorldTracker
                             "g /",
                             TextUtil.getFancyText(
                                     null,
-                                    Messenger.c("r " + data.getRemovalCount()),
+                                    Messenger.c("r " + removalCount),
                                     Messenger.s(null,
                                             Messenger.c(
                                                     data.getRemovalCountText(ticks),
@@ -196,7 +199,7 @@ public class LifeTimeWorldTracker
                                     null,
                                     Messenger.c(
                                             "q L", "g : ",
-                                            data.lifeTimeStatistic.getCompressedResult(true)
+                                            data.lifeTimeStatistic.getCompressedResult(false)
                                     ),
                                     Messenger.s(null,
                                             Messenger.c(
@@ -205,6 +208,20 @@ public class LifeTimeWorldTracker
                                             ).getUnformattedText()  // to reduce network load
                                     ),
                                     new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, String.format("%s %s", currentCommandBase, SpecificDetailMode.LIFE_TIME))
+                            ),
+                            "g , ",
+                            TextUtil.getFancyText(
+                                    null,
+                                    Messenger.s(null, "M", "n"),
+                                    Messenger.c("n Mobcap Payload", "g  (Average Mob Count)"),
+                                    null
+                            ),
+                            "g : ",
+                            TextUtil.getFancyText(
+                                    null,
+                                    Messenger.c(data.lifeTimeStatistic.isValid() ? String.format("n %.3f", mobCountAvg) : "g N/A"),
+                                    Messenger.s(null, String.format("%.7f mobs existing under cap", mobCountAvg)),
+                                    new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, currentCommandBase)
                             )
                     ));
                 });

@@ -87,7 +87,7 @@ public class StatsBundle {
     public static String round_to_sig_figs(double value, int digits) {
         int firstIndex = MathHelper.floor(Math.log10(value));
         int decimalPlaces = digits - 1 - firstIndex;
-        String format = "%." + decimalPlaces + 'f';
+        String format = "%." + Math.max(decimalPlaces, 0) + 'f';
         return String.format(format, value);
     }
 
@@ -115,7 +115,7 @@ public class StatsBundle {
         double rate = LEVEL_RATES_MAP.get(level);
         double displayedAverage = average / rate;
         double displayedError = error / rate;
-        String format = "%." + decimalPlaces + 'f';
+        String format = "%." + Math.max(decimalPlaces, 0) + 'f';
         String roundedAverage = String.format(format, displayedAverage);
         String roundedError = String.format(format, displayedError);
         return new RoundedStatsBundle(roundedAverage, roundedError, unitPrefix);

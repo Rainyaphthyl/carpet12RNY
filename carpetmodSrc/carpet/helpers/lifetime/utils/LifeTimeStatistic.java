@@ -12,11 +12,13 @@ public class LifeTimeStatistic
     public static final String COLOR_MIN_TIME = "q ";
     public static final String COLOR_MAX_TIME = "c ";
     public static final String COLOR_AVG_TIME = "p ";
+    public static final String COLOR_TIME_VAR = "n ";
 
     public StatisticElement minTimeElement;
     public StatisticElement maxTimeElement;
     public long count;
     public long timeSum;
+    public long timeSqSum;
 
     public LifeTimeStatistic()
     {
@@ -27,6 +29,7 @@ public class LifeTimeStatistic
     {
         this.count = 0;
         this.timeSum = 0;
+        timeSqSum = 0;
         this.minTimeElement = new StatisticElement(Integer.MAX_VALUE, null, null, null);
         this.maxTimeElement = new StatisticElement(Integer.MIN_VALUE, null, null, null);
     }
@@ -41,6 +44,7 @@ public class LifeTimeStatistic
         long time = entity.getLifeTime();
         this.count++;
         this.timeSum += time;
+        timeSqSum += time * time;
         StatisticElement element = new StatisticElement(time, entity.getEntityWorld().provider.getDimensionType(), entity.getSpawningPosition(), entity.getRemovalPosition());
         if (time < this.minTimeElement.time)
         {
@@ -68,6 +72,10 @@ public class LifeTimeStatistic
             return Messenger.c(indent, "g   N/A");
         }
         indent = Messenger.c(indent, "g - ");
+        double average = (double) this.timeSum / this.count;
+        double variance = count <= 1 ? Double.NaN : (timeSqSum - average * timeSum) / (count - 1);
+        double deviation = Math.sqrt(variance);
+        double stdError = deviation / Math.sqrt(count);
         return Messenger.c(
                 indent,
                 this.minTimeElement.getTimeWithPos("Minimum life time", COLOR_MIN_TIME, hoverMode),
@@ -78,8 +86,22 @@ public class LifeTimeStatistic
                 indent,
                 "w Average life time",
                 "g : ",
-                COLOR_AVG_TIME + String.format("%.4f", (double)this.timeSum / this.count),
-                "g  gt"
+                COLOR_AVG_TIME + String.format("%.4f", average),
+                "g  gt; ",
+                "w SE",
+                "g : \u00B1",
+                COLOR_AVG_TIME + String.format("%.4f", stdError),
+                "g  gt",
+                newLine,
+                indent,
+                "w Deviation",
+                "g : ",
+                COLOR_TIME_VAR + String.format("%.4f", deviation),
+                "g  gt; ",
+                "w Variance",
+                "g : ",
+                COLOR_TIME_VAR + String.format("%.4f", variance),
+                "g  gt\u00B2"
         );
     }
 
@@ -94,7 +116,7 @@ public class LifeTimeStatistic
                 "g /",
                 COLOR_MAX_TIME + this.maxTimeElement.time,
                 "g /",
-                COLOR_AVG_TIME + String.format("%.2f", (double)this.timeSum / this.count)
+                COLOR_AVG_TIME + String.format("%.2f", (double) this.timeSum / this.count)
         );
         if (showGtSuffix)
         {
@@ -103,7 +125,23 @@ public class LifeTimeStatistic
         return text;
     }
 
-    private static class StatisticElement
+    public ITextComponent getMobCountText(long ticks, long spawningTotal, long removalTotal)
+    {
+        double mobCount = getMobCountAvg(ticks, spawningTotal, removalTotal);
+        return TextUtil.attachHoverText(
+                Messenger.c(String.format("w %.3f", mobCount), "g  m"),
+                Messenger.c(String.format("w %.7f", mobCount), "g  mobs (average mobcap payload)")
+        );
+    }
+
+    public double getMobCountAvg(long ticks, long spawningTotal, long removalTotal)
+    {
+        double mobCount = (double) timeSum / ticks;
+        mobCount *= (double) spawningTotal / removalTotal;
+        return mobCount;
+    }
+
+    public static class StatisticElement
     {
         private final long time;
         private final DimensionType dimensionType;
