@@ -9,7 +9,7 @@ public enum TimeUnit
     day("d", 72000 * 24),
     week("week", 72000 * 24 * 7);
     public final String symbol;
-    public final double scale;
+    public final long scale;
 
     TimeUnit(String symbol, long scale)
     {

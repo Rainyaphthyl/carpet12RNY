@@ -187,7 +187,7 @@ public class HopperCounter
     }
 
     @Nonnull
-    public static StatsBundle get_reliable_average(long ticks, long linearTotal, long squaredTotal)
+    public StatsBundle getReliableAverage(long ticks, long linearTotal, long squaredTotal)
     {
         double average;
         double error;
@@ -203,8 +203,8 @@ public class HopperCounter
             double divisor = ticks * (ticks - 1);
             error = Math.sqrt(temp / divisor);
         }
-        average *= 72000;
-        error *= 72000;
+        average *= timeUnit.scale;
+        error *= timeUnit.scale;
         return new StatsBundle(average, error);
     }
 
@@ -380,7 +380,7 @@ public class HopperCounter
     @Nonnull
     private List<ITextComponent> formatReliable(boolean brief)
     {
-        StatsBundle stats = get_reliable_average(actualTicks, linearTotal, squaredTotal);
+        StatsBundle stats = getReliableAverage(actualTicks, linearTotal, squaredTotal);
         double percent = 100.0 * stats.error / stats.average;
         String colorStats = Messenger.stats_error_color(percent, true);
         StatsBundle.RoundedStatsBundle rounded = stats.getRoundedBundle();
@@ -412,7 +412,7 @@ public class HopperCounter
         List<ItemWithMeta> itemList = new ArrayList<>(linearPartials.keySet());
         List<StatsBundle> statsList = linearPartials.object2LongEntrySet().stream().map(e -> {
             indexList.add(indexList.size());
-            return get_reliable_average(actualTicks, e.getLongValue(), squaredPartials.getLong(e.getKey()));
+            return getReliableAverage(actualTicks, e.getLongValue(), squaredPartials.getLong(e.getKey()));
         }).collect(Collectors.toList());
         List<Double> percentList = statsList.stream().map(e -> 100.0 * e.error / e.average)
                 .collect(Collectors.toList());
