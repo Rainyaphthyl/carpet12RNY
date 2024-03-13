@@ -19,6 +19,7 @@ Carpet 1.12 with [RNY](https://github.com/Rainyaphthyl)'s Addition
 1. Ported rule `hopperCountersUnlimitedSpeed`.
 2. Ported rule `hopperNoItemCost`.
 3. Fix a logger format bug about which causes game crash.
+4. Counter result is displayed with more time units (gt, s, min, h, d, week).
 
 ## Lifetime Tracker
 
